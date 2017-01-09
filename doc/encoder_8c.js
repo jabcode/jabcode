@@ -1,0 +1,27 @@
+var encoder_8c =
+[
+    [ "analyzeInputData", "encoder_8c.html#a8dff43aa9eb81a4ea389996421d277eb", null ],
+    [ "assignDockedSymbols", "encoder_8c.html#a8d2d7e70f0765ce3bf905ae96d6aa35a", null ],
+    [ "checkDockedSymbolSize", "encoder_8c.html#a28c4728ccc9a066086f00d0672ecee6a", null ],
+    [ "convert_dec_to_bin", "encoder_8c.html#a611d456bccfb05f0354297fbe3409688", null ],
+    [ "createBitmap", "encoder_8c.html#ab962cd662dc4d7929eee785612ed358d", null ],
+    [ "createEncode", "encoder_8c.html#a12356fa4f2b83d9aa3a5b163c33b3c26", null ],
+    [ "createMatrix", "encoder_8c.html#af82357c1514c870e5350aa8854d29b5f", null ],
+    [ "destroyEncode", "encoder_8c.html#a50ad2714d06e4b8c73ef17a6ae9a6aa9", null ],
+    [ "determineMissingParams", "encoder_8c.html#ae7a39cca8af3b7a9ada459769d5cb6d8", null ],
+    [ "divideMessage", "encoder_8c.html#af64c29796516370314bbf5532c273837", null ],
+    [ "encodeData", "encoder_8c.html#a790084c288e7fbf2917cb809d64a48f5", null ],
+    [ "encodeMetadata", "encoder_8c.html#ab1108c055eb0979faac360abe6518eed", null ],
+    [ "fitCoderate", "encoder_8c.html#a4b75d52cd8ddb4555d550f1ac1891e14", null ],
+    [ "genColorPalette", "encoder_8c.html#aec3b2b02a89e0b23b7a2171eefd35270", null ],
+    [ "generateJABCode", "encoder_8c.html#a3435aa5890a31dee240f7e1ff5597ade", null ],
+    [ "getCodePara", "encoder_8c.html#a5baf22c3435baacb44e04170ea194968", null ],
+    [ "getMetadataLength", "encoder_8c.html#a6296d0e367e08f45e5efa708d39dc2e7", null ],
+    [ "interleaveColorPalette", "encoder_8c.html#a0fd8a020b88ed08fc61343181bfc5be5", null ],
+    [ "placeMetadata", "encoder_8c.html#a3601e4fe923e9aefd443c20552b67709", null ],
+    [ "reportError", "encoder_8c.html#af15ce062faa23e134672a80866b41f29", null ],
+    [ "setDefaultEccLevels", "encoder_8c.html#ab4f467e8c7aaf3a9fb6af0917f3f0f3c", null ],
+    [ "setDefaultPalette", "encoder_8c.html#aad6a82cf3e7ee818af8970049c659e83", null ],
+    [ "swap_byte", "encoder_8c.html#aec19e494a16d68ca67f7aab6c3dcfb75", null ],
+    [ "swap_int", "encoder_8c.html#a56d758043d2bf9aa41ab23b578c71ed3", null ]
+];
