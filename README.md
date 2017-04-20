@@ -36,6 +36,6 @@ run `jabcodeWriter --help` for the detailed usage
 ## Documentation
 
 * The API documentation is available at [Documentation](https://jabcode.github.io/jabcode/)
-* The technical specification of the barcode is available as BSI TR03137 - Part 2 at [BSI](https://www.bsi.bund.de/EN/Publications/TechnicalGuidelines/TR03137/BSITR03137.html)
+* The technical specification of the barcode is available as [BSI TR03137 - Part 2](https://www.bsi.bund.de/EN/Publications/TechnicalGuidelines/TR03137/BSITR03137.html)
 
 
