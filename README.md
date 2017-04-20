@@ -1,8 +1,8 @@
-#JAB Code
+# JAB Code
 
 JAB Code (Just Another Bar Code) is a 2D color bar code, which can encode more data than traditional black/white codes.
 
-##Project Structure
+## Project Structure
     .
     ├── docs                  # Documentation
     ├── spec                  # JAB Code specification
@@ -11,7 +11,7 @@ JAB Code (Just Another Bar Code) is a 2D color bar code, which can encode more d
          ├── jabcodeReader    # JAB Code reader application
          └── jabcodeWriter    # JAB Code writer application
 
-##Build Instructions
+## Build Instructions
 The JAB Code core library, reader and writer applications are written in C (C11) and tested under Ubuntu 14.04 with gcc 4.8.4 and GNU Make 3.8.1. 
 
 Follow the following steps to build the core library and applications. 
@@ -24,17 +24,18 @@ Step 3: Build the JAB Code reader by running make command in src/jabcodeReader.
 
 The built library can be found in src/jabcode/build. The built reader and writer applications can be found in src/jabcodeReader/bin and src/jabcodeWriter/bin.
 
-##Usage
+## Usage
 The usage of jabcodeWriter and jabcodeReader can be obtained by running the programs with the argument "--help".
 
-#####jabcodeReader
-run "jabcodeReader --help" for the detailed usage
+##### jabcodeReader
+run `jabcodeReader --help` for the detailed usage
 
-#####jabcodeWriter
-run "jabcodeWriter --help" for the detailed usage
+##### jabcodeWriter
+run `jabcodeWriter --help` for the detailed usage
 
-##Documentation
-See https://jabcode.github.io/jabcode/
+## Documentation
 
+* The API documentation is available at [Documentation](https://jabcode.github.io/jabcode/)
+* The technical specification of the barcode is available as BSI TR03137 - Part 2 at [BSI](https://www.bsi.bund.de/EN/Publications/TechnicalGuidelines/TR03137/BSITR03137.html)
 
 
