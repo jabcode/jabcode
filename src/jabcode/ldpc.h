@@ -17,7 +17,8 @@
 #define LPDC_METADATA_SEED 	38545
 #define LPDC_MESSAGE_SEED 	785465
 
-static const jab_vector2d default_ecl = {5, 6};
+static const jab_vector2d default_ecl = {4, 7};		//default (wc, wr) for LDPC, corresponding to the values in the specification.
+//static const jab_vector2d default_ecl = {5, 6};	//This (wc, wr) could be used, if higher robustness is preferred to capacity.
 
 extern jab_data *encodeLDPC(jab_data* data, jab_int32* coderate_params, jab_int32* from_to, jab_int32 index);
 extern jab_int32 decodeLDPChd(jab_byte* data, jab_int32 length, jab_int32 wc, jab_int32 wr);
