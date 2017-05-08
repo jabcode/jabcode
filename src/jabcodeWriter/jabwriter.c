@@ -34,7 +34,7 @@ void printUsage()
     printf("--symbol-width\t\tMaster symbol width in pixel.\n");
     printf("--symbol-height\t\tMaster symbol height in pixel.\n");
 	printf("--symbol-number\t\tNumber of symbols (1 - 61, default: 1).\n");
-    printf("--ecc-level\t\tError correction levels (0 - 10, default: 6%%). If\n\t\t\t"
+    printf("--ecc-level\t\tError correction levels (0 - 10, default: 8%%). If\n\t\t\t"
 						  "different for each symbol, starting from master and\n\t\t\t"
 						  "then slave symbols (ecc0 ecc1 ecc2 ...). For master\n\t\t\t"
 						  "symbol, level 0 means using the default level, for\n\t\t\t"

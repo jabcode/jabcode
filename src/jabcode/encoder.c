@@ -524,21 +524,7 @@ jab_int32* analyzeInputData(jab_data* input, jab_int32* encoded_length)
  */
 jab_float fitCoderate(jab_byte ecc_level)
 {
-    jab_float p= ((jab_int32)ecc_level)/100.0f;
-    jab_float H=-p*log(p)-(1-p)*log(1-p);
-    jab_float Hpi,pi;
-    jab_float coderate=0.0f;
-    //find coderate with ecc_level as input
-    for (jab_int32 i=4;i<pow(2,8);i++)
-    {
-        pi=(1+pow(1-2.0f*p,i))/2.0f;
-        Hpi=-pi*log(pi)-(1-pi)*log(1-pi);
-        if((Hpi-H)/Hpi>coderate)
-        {
-            coderate=(Hpi-H)/Hpi;
-        }
-    }
-    return coderate;
+    return convert_ecc2coderate[ecc_level];
 }
 
 /**
@@ -835,7 +821,7 @@ jab_boolean determineMissingParams(jab_encode *enc,jab_int32 *data_length,jab_in
             if(i>=32 && capacity<gross_message_length)
             {
                 jab_int32 level=-1;
-                for (jab_int32 j=0; j<50; j++)
+                for (jab_int32 j=0; j<11; j++)
                 {
                     coderate=fitCoderate(j);//fit code rate
                     if(coderate > 0)
@@ -2560,8 +2546,7 @@ jab_boolean generateJABCode(jab_encode* enc, jab_data* data)
             }
         }
     }
-    for(jab_int32 i=0;i<enc->symbol_number;i++)
-        enc->ecc_levels[i]=enc->ecc_levels[i]*5;
+
 
     //if no master symbol exists in multi-symbol code
     if(enc->symbol_number > 1 && enc->symbol_positions[0] != 0)

@@ -190,6 +190,12 @@ static const jab_int32 mode_switch[7][16]=
          {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}};		//byte mode
 
 
+/**
+ * @brief code rate of each ecc level
+*/
+static const jab_float convert_ecc2coderate[11] = {0.43f, 0.63f, 0.57f, 0.55f, 0.50f, 0.43f, 0.34f, 0.25f, 0.20f, 0.17f, 0.14f};
+
+
 extern jab_int32* analyzeInputData(jab_data* input, jab_int32* encoded_length);
 extern jab_data* encodeData(jab_data* data, jab_int32 encoded_length, jab_int32* encode_seq);
 extern void createMatrix(jab_encode* enc, jab_int32 index, jab_data* ecc_encoded_data, jab_byte* palette_index);
