@@ -1249,33 +1249,45 @@ jab_boolean encodeMetadata(jab_encode* enc, jab_int32 index, jab_int32 *coderate
             enc->symbols[index].encoded_metadata->data[7]=(jab_char) 0;
             enc->symbols[index].encoded_metadata->data[8]=(jab_char) 1;
             if(!is_square)
-                length_V=3;
+			{
+				length_V=3;
+			}
             else
-                length_V=2;
+			{
+				length_V=2;
+				correction=4;
+			}
             side_version_part=1;
-            correction=4;
         }
         else if((is_square && enc->symbol_versions[0].x<17) || (!is_square && enc->symbol_versions[0].x<17 && enc->symbol_versions[0].y<17))
         {
             enc->symbols[index].encoded_metadata->data[7]=(jab_char) 1;
             enc->symbols[index].encoded_metadata->data[8]=(jab_char) 0;
             if(!is_square)
-                length_V=4;
+			{
+				length_V=4;
+			}
             else
-                length_V=3;
+			{
+				length_V=3;
+				correction=8;
+			}
             side_version_part=2;
-            correction=8;
         }
         else
         {
             enc->symbols[index].encoded_metadata->data[7]=(jab_char) 1;
             enc->symbols[index].encoded_metadata->data[8]=(jab_char) 1;
             if(!is_square)
-                length_V=5;
+			{
+				length_V=5;
+			}
             else
-                length_V=4;
+			{
+				length_V=4;
+				correction=16;
+			}
             side_version_part=3;
-            correction=16;
         }
 
         //part III V
