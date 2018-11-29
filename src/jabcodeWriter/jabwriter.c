@@ -30,7 +30,7 @@ void printUsage()
     printf("--output\t\tOutput png file.\n");
     printf("--color-number\t\tNumber of colors (2, 4, 8, 16, 32, 64, 128, 256,\n\t\t\t"
 							 "default: 8).\n");
-	printf("--module-size\t\tModule size in pixel (default: 10 pixels).\n");
+	printf("--module-size\t\tModule size in pixel (default: 12 pixels).\n");
     printf("--symbol-width\t\tMaster symbol width in pixel.\n");
     printf("--symbol-height\t\tMaster symbol height in pixel.\n");
 	printf("--symbol-number\t\tNumber of symbols (1 - 61, default: 1).\n");
