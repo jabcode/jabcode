@@ -16,7 +16,6 @@ A demo webinterface is [provided](https://jabcode.org/create) to evaluate the li
 ## Project Structure
     .
     ├── docs                  # Documentation
-    ├── spec                  # JAB Code specification
     └── src                   # Source code
          ├── jabcode          # JAB Code core library
          ├── jabcodeReader    # JAB Code reader application
