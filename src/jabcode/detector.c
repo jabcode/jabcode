@@ -2920,6 +2920,7 @@ void preprocessImage(jab_bitmap* bitmap)
  *								 COMPATIBLE_DECODE: also output partly decoded data even if some symbols are not correctly decoded
  * @param status the decoding status code (0: not detectable, 1: not decodable, 2: partly decoded with COMPATIBLE_DECODE mode, 3: fully decoded)
  * @param symbols the decoded symbols
+ * @param max_symbol_number the maximal possible number of symbols to be decoded
  * @return the decoded data | NULL if failed
 */
 jab_data* decodeJABCodeEx(jab_bitmap* bitmap, jab_int32 mode, jab_int32* status, jab_decoded_symbol* symbols, jab_int32 max_symbol_number)

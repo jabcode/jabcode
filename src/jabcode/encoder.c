@@ -1088,7 +1088,7 @@ void placeMasterMetadataPartII(jab_encode* enc)
 /**
  * @brief Get color index for the color palette
  * @param index the color index in the palette
- * @param size the color palette size
+ * @param index_size the size of index
  * @param color_number the number of colors
 */
 void getColorPaletteIndex(jab_byte* index, jab_int32 index_size, jab_int32 color_number)
