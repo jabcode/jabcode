@@ -94,17 +94,14 @@ void genColorPalette(jab_int32 color_number, jab_byte* palette)
  */
 void setDefaultPalette(jab_int32 color_number, jab_byte* palette)
 {
-    if(color_number == 2)
-    {
-    	memcpy(palette + 0, jab_default_palette + FP0_CORE_COLOR_BW * 3, 3);
-    	memcpy(palette + 3, jab_default_palette + FPX_CORE_COLOR_BW * 3, 3);
-    }
-    else if(color_number == 4)
+    if(color_number == 4)
     {
     	memcpy(palette + 0, jab_default_palette + FP0_CORE_COLOR * 3, 3);
     	memcpy(palette + 3, jab_default_palette + FP1_CORE_COLOR * 3, 3);
     	memcpy(palette + 6, jab_default_palette + FP2_CORE_COLOR * 3, 3);
     	memcpy(palette + 9, jab_default_palette + FP3_CORE_COLOR * 3, 3);
+    	memcpy(palette + 12,jab_default_palette + AP0_CORE_COLOR * 3, 3);
+    	memcpy(palette + 15,jab_default_palette + APX_CORE_COLOR * 3, 3);
     }
     else if(color_number == 8)
     {
@@ -155,20 +152,19 @@ void swap_byte(jab_byte * a, jab_byte * b)
 
 /**
  * @brief Convert decimal to binary
- * @param d the decimal value
- * @param encoded_data the encoded data array
+ * @param dec the decimal value
+ * @param bin the data in binary representation
  * @param start_position the position to write in encoded data array
  * @param length the length of the converted binary sequence
  */
-void convert_dec_to_bin(jab_int32 d,jab_data* encoded_data,jab_int32 start_position, jab_int32 length)
+void convert_dec_to_bin(jab_int32 dec, jab_char* bin, jab_int32 start_position, jab_int32 length)
 {
-    if(d<0)
-        d=256+d;
-    for (jab_int32 j=0;j<length;j++)
+    if(dec < 0) dec += 256;
+    for (jab_int32 j=0; j<length; j++)
     {
-        jab_int32 t=d%2;
-        encoded_data->data[start_position+length-1-j]=(jab_char) t;
-        d/=2;
+        jab_int32 t = dec % 2;
+        bin[start_position+length-1-j] = (jab_char)t;
+        dec /= 2;
     }
 }
 
@@ -185,7 +181,7 @@ jab_encode* createEncode(jab_int32 color_number, jab_int32 symbol_number)
     if(enc == NULL)
         return NULL;
 
-    if(color_number != 2  && color_number != 4  && color_number != 8   && color_number != 16 &&
+    if(color_number != 4  && color_number != 8   && color_number != 16 &&
        color_number != 32 && color_number != 64 && color_number != 128 && color_number != 256)
     {
         color_number = DEFAULT_COLOR_NUMBER;
@@ -200,7 +196,14 @@ jab_encode* createEncode(jab_int32 color_number, jab_int32 symbol_number)
     enc->module_size 		 = DEFAULT_MODULE_SIZE;
 
     //set default color palette
-    enc->palette = (jab_byte *)calloc(color_number * 3, sizeof(jab_byte));
+    if(enc->color_number == 4)
+	{
+		enc->palette = (jab_byte *)calloc(6 * 3, sizeof(jab_byte));
+	}
+	else
+	{
+		enc->palette = (jab_byte *)calloc(color_number * 3, sizeof(jab_byte));
+	}
     if(enc->palette == NULL)
     {
         reportError("Memory allocation for palette failed");
@@ -215,13 +218,13 @@ jab_encode* createEncode(jab_int32 color_number, jab_int32 symbol_number)
         return NULL;
     }
     //set default error correction levels
-    enc->ecc_levels = (jab_byte *)calloc(symbol_number, sizeof(jab_byte));
-    if(enc->ecc_levels == NULL)
+    enc->symbol_ecc_levels = (jab_byte *)calloc(symbol_number, sizeof(jab_byte));
+    if(enc->symbol_ecc_levels == NULL)
     {
         reportError("Memory allocation for ecc levels failed");
         return NULL;
     }
-    setDefaultEccLevels(enc->symbol_number, enc->ecc_levels);
+    setDefaultEccLevels(enc->symbol_number, enc->symbol_ecc_levels);
     //allocate memory for symbol positions
     enc->symbol_positions= (jab_int32 *)calloc(symbol_number, sizeof(jab_int32));
     if(enc->symbol_positions == NULL)
@@ -236,13 +239,6 @@ jab_encode* createEncode(jab_int32 color_number, jab_int32 symbol_number)
         reportError("Memory allocation for symbols failed");
         return NULL;
     }
-    //allocate memory for docked symbols
-    enc->docked_symbol = (jab_int32 *)calloc(enc->symbol_number * 4, sizeof(jab_int32)); //maximum 4 docked symbols
-    if(enc->docked_symbol == NULL)
-    {
-        reportError("Memory allocation for docked symbols failed");
-        return NULL;
-    }
     return enc;
 }
 
@@ -252,19 +248,19 @@ jab_encode* createEncode(jab_int32 color_number, jab_int32 symbol_number)
  */
 void destroyEncode(jab_encode* enc)
 {
-    if(enc->palette)			free(enc->palette);
-    if(enc->symbol_versions)	free(enc->symbol_versions);
-    if(enc->ecc_levels)			free(enc->ecc_levels);
-    if(enc->symbol_positions)	free(enc->symbol_positions);
-    if(enc->bitmap)				free(enc->bitmap);
-    if(enc->docked_symbol)      free(enc->docked_symbol);
+    free(enc->palette);
+    free(enc->symbol_versions);
+    free(enc->symbol_ecc_levels);
+    free(enc->symbol_positions);
+    free(enc->bitmap);
     if(enc->symbols)
     {
         for(jab_int32 i=0; i<enc->symbol_number; i++)
         {
-            if(enc->symbols[i].data_map)			free(enc->symbols[i].data_map);
-            if(enc->symbols[i].encoded_metadata)	free(enc->symbols[i].encoded_metadata);
-            if(enc->symbols[i].matrix)				free(enc->symbols[i].matrix);
+        	free(enc->symbols[i].data);
+            free(enc->symbols[i].data_map);
+            free(enc->symbols[i].metadata);
+            free(enc->symbols[i].matrix);
         }
         free(enc->symbols);
     }
@@ -353,7 +349,7 @@ jab_int32* analyzeInputData(jab_data* input, jab_int32* encoded_length)
         {
             if (jab_enconing_table[tmp][j]>-1 && jab_enconing_table[tmp][j]<64) //check if character is in encoding table
                 curr_seq_len[(i+1)*14+j]=curr_seq_len[(i+1)*14+j+7]=character_size[j];
-            else if(jab_enconing_table[tmp][j]==-18 && tmp1==10 || jab_enconing_table[tmp][j]<-18 && tmp1==32)//read next character to decide if encodalbe in current mode
+            else if((jab_enconing_table[tmp][j]==-18 && tmp1==10) || (jab_enconing_table[tmp][j]<-18 && tmp1==32))//read next character to decide if encodalbe in current mode
             {
                 curr_seq_len[(i+1)*14+j]=curr_seq_len[(i+1)*14+j+7]=character_size[j];
                 jp_to_nxt_char=1; //jump to next character
@@ -370,7 +366,7 @@ jab_int32* analyzeInputData(jab_data* input, jab_int32* encoded_length)
             prev_mode[curr_seq_counter*14+j]=j;
             for (jab_int32 k=0;k<14;k++)
             {
-                if(len>=curr_seq_len[(i+1)*14+j]+curr_seq_len[i*14+k]+latch_shift_to[k][j] && k<13 || k==13 && prev==j)
+                if((len>=curr_seq_len[(i+1)*14+j]+curr_seq_len[i*14+k]+latch_shift_to[k][j] && k<13) || (k==13 && prev==j))
                 {
                     len=curr_seq_len[(i+1)*14+j]+curr_seq_len[i*14+k]+latch_shift_to[k][j];
                     if (temp_switch_mode[2*k]==k)
@@ -408,8 +404,8 @@ jab_int32* analyzeInputData(jab_data* input, jab_int32* encoded_length)
                         prev_mode_index=index;
                     }
                 }
-                else if (((curr_seq_len[(i+1)*14+prev_mode[curr_seq_counter*14+j]]>len ||
-                        jp_to_nxt_char==1 && curr_seq_len[(i+1)*14+prev_mode[curr_seq_counter*14+j]]+character_size[(prev_mode[curr_seq_counter*14+j])%7]>len)) && j == 13 )
+                else if ((curr_seq_len[(i+1)*14+prev_mode[curr_seq_counter*14+j]]>len ||
+                        (jp_to_nxt_char==1 && curr_seq_len[(i+1)*14+prev_mode[curr_seq_counter*14+j]]+character_size[prev_mode[curr_seq_counter*14+j]%7]>len)) && j == 13 )
                    {
                        curr_seq_len[(i+1)*14+prev_mode[curr_seq_counter*14+j]]=len;
                        prev_mode[(curr_seq_counter+1)*14+prev_mode[curr_seq_counter*14+j]]=j;
@@ -518,400 +514,159 @@ jab_int32* analyzeInputData(jab_data* input, jab_int32* encoded_length)
 }
 
 /**
- * @brief Transform error correction level to code rate
- * @param ecc_level the error correction level
- * @return the code rate
- */
-jab_float fitCoderate(jab_byte ecc_level)
+ * @brief Check if master symbol shall be encoded in default mode
+ * @param enc the encode parameters
+ * @return JAB_SUCCESS | JAB_FAILURE
+*/
+jab_boolean isDefaultMode(jab_encode* enc)
 {
-    return convert_ecc2coderate[ecc_level];
+	if(enc->color_number == 8 && (enc->symbol_ecc_levels[0] == 0 || enc->symbol_ecc_levels[0] == DEFAULT_ECC_LEVEL))
+	{
+		return JAB_SUCCESS;
+	}
+	return JAB_FAILURE;
 }
 
 /**
- * @brief Divide the message in case of multi-symbol code into parts depending on error correction level and side size of each symbol
+ * @brief Calculate the (encoded) metadata length
  * @param enc the encode parameters
- * @param data_length the message length
- * @param coderate_params the code rate and ecc parameters wc and wr for each symbol
- * @param from_to the start and end point of encoded message part for each symbol
- * @return 0: success | 1: error
- */
-jab_boolean divideMessage(jab_encode *enc,jab_int32 *data_length,jab_int32 *coderate_params,jab_int32 *from_to)
+ * @param index the symbol index
+ * @return the metadata length (encoded length for master symbol)
+*/
+jab_int32 getMetadataLength(jab_encode* enc, jab_int32 index)
 {
-    jab_int32* net_mess=(jab_int32 *)malloc(sizeof(jab_int32)*(enc->symbol_number));
-    if(net_mess == NULL){
-        reportError("Memory allocation for message length failed");
-        return 1;
-    }
-    jab_int32* capacity=(jab_int32 *)malloc(sizeof(jab_int32)*(enc->symbol_number));
-    if(capacity == NULL){
-        reportError("Memory allocation for message length failed");
-        free(net_mess);
-        return 1;
-    }
-    jab_int32 possible_net_mess=0;
-    jab_float symbol_rate=0.0f;
-    //set all ecc levels
-    for(jab_int32 i=0;i<enc->symbol_number;i++)
+    jab_int32 length = 0;
+
+    if (index == 0) //master symbol, encoded length
     {
-        if(i>0 && enc->ecc_levels[i]==0)
-        {
-            for(jab_int32 j=0;j<4*(enc->symbol_number-1);j++)
-            {
-                //set ecc level equal to host
-                if(enc->docked_symbol[j]==i)
-                    enc->ecc_levels[i]=enc->ecc_levels[(jab_int32)j/4];
-            }
-        }
-
-        if(enc->ecc_levels[i]==0)
-            symbol_rate=1-4.0f/7.0f; //default
-        else
-            symbol_rate=fitCoderate(enc->ecc_levels[i]);
-        //calculate capacity of complete code
-        jab_int32 side_size_x=VERSION2SIZE(enc->symbol_versions[i].x);
-        jab_int32 side_size_y=VERSION2SIZE(enc->symbol_versions[i].y);
-        //number of modules for alignment pattern
-        jab_int32 number_of_alignment_pattern_x = (side_size_x-(DISTANCE_TO_BORDER*2-1))/MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS-1;
-        jab_int32 number_of_alignment_pattern_y = (side_size_y-(DISTANCE_TO_BORDER*2-1))/MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS-1;
-        if (number_of_alignment_pattern_x < 0)
-            number_of_alignment_pattern_x=0;
-        if (number_of_alignment_pattern_y < 0)
-            number_of_alignment_pattern_y=0;
-        jab_int32 nb_modules_alignmet=(number_of_alignment_pattern_x+2)*(number_of_alignment_pattern_y+2)*7;
-        //number of modules for color palette
-        jab_int32 nb_modules_palette=enc->color_number > 64 ? 64*2 : enc->color_number*2;
-        //number of modules for metadata
-        getMetadataLength(enc,i);
-        jab_int32 nb_of_bpmm=enc->color_number >= 8 ? 3 : log(enc->color_number)/log(2);
-        jab_int32 nb_of_bpm=log(enc->color_number)/log(2);
-        jab_int32 nb_modules_metadata=enc->symbols[i].encoded_metadata->length;
-        if (i==0)
-        {
-            if((nb_modules_metadata-6)%nb_of_bpmm!=0)
-            {
-                nb_modules_metadata=(nb_modules_metadata-6)/nb_of_bpmm;
-                nb_modules_metadata+=1;
-            }
-            else
-                nb_modules_metadata=(nb_modules_metadata-6)/nb_of_bpmm;
-            nb_modules_metadata+=6;
-            jab_int32 nb_modules_finder=4*10;
-            capacity[i]=side_size_x*side_size_y-nb_modules_alignmet-nb_modules_finder-nb_modules_palette-nb_modules_metadata;
-            capacity[i]*=nb_of_bpm;
-        }
-        else
-        {
-            if((nb_modules_metadata)%nb_of_bpmm!=0)
-            {
-                nb_modules_metadata=(nb_modules_metadata)/nb_of_bpmm;
-                nb_modules_metadata+=1;
-            }
-            else
-                nb_modules_metadata=(nb_modules_metadata)/nb_of_bpmm;
-            capacity[i]=side_size_x*side_size_y-nb_modules_alignmet-nb_modules_palette-nb_modules_metadata;
-            capacity[i]*=nb_of_bpm;
-        }
-        net_mess[i]=capacity[i]*symbol_rate;
-        possible_net_mess+=net_mess[i];
+    	//default mode, no metadata
+    	if(isDefaultMode(enc))
+		{
+			length = 0;
+		}
+		else
+		{
+			//Part I
+			length += 6;
+			//Part II
+			length += 12;
+			//Part III
+			length += 12;	//E in Part III
+			//V in Part III
+			jab_int32 longerSide = enc->symbol_versions[index].x > enc->symbol_versions[index].y ? enc->symbol_versions[index].x : enc->symbol_versions[index].y;
+			if(enc->symbol_versions[index].x != enc->symbol_versions[index].y) //Rectangle symbol
+			{
+				if (longerSide < 5)
+					length += 8;
+				else if (longerSide < 9)
+					length += 12;
+				else if (longerSide < 17)
+					length += 16;
+				else
+					length += 20;
+			}
+			else //Square symbol
+			{
+				if (longerSide < 9)
+					length += 4;
+				else if (longerSide < 17)
+					length += 6;
+				else
+					length += 8;
+			}
+		}
     }
-    //check if message fits into code
-    if(possible_net_mess < *data_length)
+    else //slave symbol, original length
     {
-        reportError("Message does not fit into the specified symbol version. Use a higher symbol version");
-        free(net_mess);
-        free(capacity);
-        return 1;
-    }
-    else
-    {
-        jab_float relation=*data_length/(jab_float)possible_net_mess;
-        jab_int32 div_mess=0,host;
-        for (jab_int32 i=0;i<enc->symbol_number;i++)
+    	//Part I
+        length += 2;
+        //Part II
+        jab_int32 host_index = enc->symbols[index].host;
+        //V in Part II, compare symbol shape and size with host symbol
+        if (enc->symbol_versions[index].x != enc->symbol_versions[host_index].x || enc->symbol_versions[index].y != enc->symbol_versions[host_index].y)
+		{
+			length += 5;
+		}
+        //E in Part II
+        if (enc->symbol_ecc_levels[index] != enc->symbol_ecc_levels[host_index])
         {
-//            jab_int32 E=10;
-//            if(enc->symbol_versions[i].x>4 || enc->symbol_versions[i].y>4)
-//                E=12;
-//            if(enc->symbol_versions[i].x>8 || enc->symbol_versions[i].y>8)
-//                E=14;
-//            if(enc->symbol_versions[i].x>16 || enc->symbol_versions[i].y>16)
-//                E=16;
-            //divide message
-            if(i==enc->symbol_number-1)
-                net_mess[i]=*data_length-div_mess;
-            else
-                net_mess[i]*=relation;
-            div_mess+=net_mess[i];
-            //ecc level host
-            jab_byte same_ecc=0;
-
-            if(i>0 && enc->ecc_levels[i]==0)
-            {
-                for (jab_int32 j=0;j<4*(enc->symbol_number-1);j++)
-                {
-                    //set ecc level equal to host
-                    if(enc->docked_symbol[j]==i && enc->ecc_levels[i]==enc->ecc_levels[(jab_int32)j/4])
-                    {
-                        same_ecc=1;
-                        host=j/4;
-                    }
-                }
-            }
-
-            //update coderate parameters
-            jab_float min=(jab_float)capacity[i];
-
-            if(same_ecc==1)
-            {
-                jab_int32 temp=capacity[i]*(coderate_params[2*host+1]-coderate_params[2*host])/coderate_params[2*host+1];
-                if(temp>=net_mess[i])
-                {
-                    div_mess+=temp-net_mess[i];
-                    net_mess[i]=temp;
-                    coderate_params[2*i]=coderate_params[2*host];
-                    coderate_params[2*i+1]=coderate_params[2*host+1];
-                }
-                else
-                {
-                    jab_int32 nb_bits_metadata=enc->symbols[i].encoded_metadata->length;
-                    enc->ecc_levels[i]=enc->ecc_levels[host]+1;
-                    getMetadataLength(enc,i);
-                    jab_int32 new_nb_bits_metadata=enc->symbols[i].encoded_metadata->length;
-                    capacity[i]-=(new_nb_bits_metadata-nb_bits_metadata);
-                    same_ecc=0;
-                }
-            }
-            if(same_ecc==0)
-            {
-       //         for (jab_int32 k=3;k<=pow(2,E/2)+2;k++)
-                for (jab_int32 k=3;k<=6+2;k++)
-                {
-               //     for (jab_int32 j=k+1;j<=pow(2,E/2)+3;j++)
-                    for (jab_int32 j=k+1;j<=6+3;j++)
-                    {
-                        jab_int32 dist=(capacity[i]/j)*j-(capacity[i]/j)*k-net_mess[i];
-                        if(dist<min && dist>=0)
-                        {
-                            coderate_params[2*i+1]=j;
-                            coderate_params[2*i]=k;
-                            min=dist;
-                        }
-                    }
-                }
-            }
-            div_mess-=net_mess[i];
-            net_mess[i]=capacity[i]/coderate_params[2*i+1];
-            net_mess[i]*=coderate_params[2*i+1]-coderate_params[2*i];
-            div_mess+=net_mess[i];
-            if (i==0)
-                from_to[2*i]=0;
-            else
-                from_to[2*i]=from_to[2*i-1];
-            from_to[2*i+1]=from_to[2*i]+net_mess[i];
-            if(div_mess>*data_length)
-                *data_length=div_mess;
+            length += 6;
         }
     }
-    free(net_mess);
-    free(capacity);
-    return 0;
+    return length;
 }
 
 /**
- * @brief Determine the side version and error correction level if not specified for master symbol
+ * @brief Calculate the data capacity of a symbol
  * @param enc the encode parameters
- * @param data_length the message length
- * @param coderate_params the code rate and ecc parameters wc and wr
- * @return 0: success | 1: error
+ * @param index the symbol index
+ * @return the data capacity
  */
-jab_boolean determineMissingParams(jab_encode *enc,jab_int32 *data_length,jab_int32 *coderate_params)
+jab_int32 getSymbolCapacity(jab_encode* enc, jab_int32 index)
 {
-    //assignDockedSymbols(enc);
-    jab_float coderate=0.0f;
-    jab_int32 gross_message_length=0;
-    jab_int32 nb_of_bpmm=enc->color_number >= 8 ? 3 : log(enc->color_number)/log(2);
-    jab_int32 nb_of_bpm=log(enc->color_number)/log(2);
-    //calculate required number of data moduls depending on data_length
-    if((jab_int32)enc->ecc_levels[0] > 0)
-    {
-        coderate=fitCoderate(enc->ecc_levels[0]);//fit code rate
-        gross_message_length=ceil((*data_length)/coderate);
-    }
-    else
-    {
-        enc->ecc_levels[0]=5;
-        coderate_params[0]=default_ecl.x;
-        coderate_params[1]=default_ecl.y;
- //       coderate=1-coderate_params[0]/(jab_float)coderate_params[1];
-        gross_message_length=ceil(( *data_length * coderate_params[1])/((jab_float)(coderate_params[1]-coderate_params[0])));
-    }
+	//number of modules for finder patterns
+    jab_int32 nb_modules_fp;
+    if(index == 0)	//master symbol
+	{
+		nb_modules_fp = 4 * 17;
+	}
+	else			//slave symbol
+	{
+		nb_modules_fp = 4 * 7;
+	}
+    //number of modules for color palette
+    jab_int32 nb_modules_palette = enc->color_number > 64 ? 64*2 : enc->color_number * 2;
+	//number of modules for alignment pattern
+	jab_int32 side_size_x = VERSION2SIZE(enc->symbol_versions[index].x);
+	jab_int32 side_size_y = VERSION2SIZE(enc->symbol_versions[index].y);
+	jab_int32 number_of_aps_x = (side_size_x-(DISTANCE_TO_BORDER*2-1)) / MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS - 1;
+	jab_int32 number_of_aps_y = (side_size_y-(DISTANCE_TO_BORDER*2-1)) / MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS - 1;
+	if (number_of_aps_x < 0)	number_of_aps_x = 0;
+	if (number_of_aps_y < 0)	number_of_aps_y = 0;
+	jab_int32 nb_modules_ap = ((number_of_aps_x+2) * (number_of_aps_y+2) - 4) * 7;
+	//number of modules for metadata
+	jab_int32 nb_of_bpm = log(enc->color_number) / log(2);
+	jab_int32 nb_modules_metadata = 0;
+	if(index == 0)	//master symbol
+	{
+		jab_int32 nb_metadata_bits = getMetadataLength(enc, index);
+		if(nb_metadata_bits > 0)
+		{
+			nb_modules_metadata = (nb_metadata_bits - 6) / nb_of_bpm; //modules for PartII and PartIII
+			if((nb_metadata_bits - 6) % nb_of_bpm != 0)
+			{
+				nb_modules_metadata++;
+			}
+			nb_modules_metadata += 6; //add black/white modules for PartI
+		}
+	}
+	jab_int32 capacity = (side_size_x*side_size_y - nb_modules_fp - nb_modules_ap - nb_modules_palette - nb_modules_metadata) * nb_of_bpm;
+	return capacity;
+}
 
-    //number of modules for outer layer of finder pattern
-    jab_int32 nb_modules_finder=4*17;
-    if(enc->symbol_versions->x==0 || enc->symbol_versions->y==0)
-    {
-        //determine minimum square symbol to fit data
-        for (jab_int32 i=1;i<33;i++)
-        {
-            jab_int32 side_size=VERSION2SIZE(i);
-            //number of modules for alignment pattern
-            jab_int32 number_of_alignment_pattern_x = (side_size-(DISTANCE_TO_BORDER*2-1))/MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS-1;
-            if (number_of_alignment_pattern_x < 0)
-                number_of_alignment_pattern_x=0;
-            jab_int32 nb_modules_alignmet=((number_of_alignment_pattern_x+2)*(number_of_alignment_pattern_x+2)-4)*7;
-            //number of modules for color palette
-            jab_int32 nb_modules_palette=enc->color_number > 64 ? 64*2 : enc->color_number*2;
-            //number of modules for metadata
-            jab_int32 nb_modules_metadata=44;
-            //jab_int32 E=10;
-            if(i>4)
-            {
-                nb_modules_metadata+=4;
-                //E=12;
-            }
-            if(i>8)
-            {
-                nb_modules_metadata+=6;
-                //E=14;
-            }
-            if(i>16)
-            {
-                nb_modules_metadata+=6;
-                //E=16;
-            }
-            if((nb_modules_metadata-6)%nb_of_bpmm!=0)
-            {
-                nb_modules_metadata=(nb_modules_metadata-6)/nb_of_bpmm;
-                nb_modules_metadata+=1;
-            }
-            else
-                nb_modules_metadata=(nb_modules_metadata-6)/nb_of_bpmm;
-            nb_modules_metadata+=6;
-
-        //    nb_modules_metadata/=log(enc->color_number)/log(2);
-            //does message fit into symbol
-            jab_int32 capacity=side_size*side_size-nb_modules_alignmet-nb_modules_finder-nb_modules_palette-nb_modules_metadata;
-            capacity*=nb_of_bpm;
-            if(capacity>=gross_message_length)
-            {
-                enc->symbol_versions[0].x=enc->symbol_versions[0].y=i;
-                //update coderate parameter
-                jab_float min=(jab_float)capacity;
-//                for (jab_int32 i=3;i<=pow(2,E/2)+2;i++)
-                for (jab_int32 k=3;k<=6+2;k++)
-                {
-          //          for (jab_int32 j=i+1;j<=pow(2,E/2)+3;j++)
-                    for (jab_int32 j=k+1;j<=6+3;j++)
-                    {
-                  //      jab_int32 dist=((jab_int32)(capacity/((jab_float)j)))*j-((jab_int32)(capacity/((jab_float)j)))*i-*data_length;
-                 //       jab_float dist=capacity*(j-i)/((jab_float)j)-*data_length;
-                        jab_int32 dist=(capacity/j)*j-(capacity/j)*k-*data_length;
-                        if(dist<min && dist>=0)
-                        {
-                            coderate_params[1]=j;
-                            coderate_params[0]=k;
-                            min=dist;
-                        }
-
-                    }
-                }
-                *data_length=(capacity/coderate_params[1])*coderate_params[1]-(capacity/coderate_params[1])*coderate_params[0];
-                getMetadataLength(enc,0);
-                break;
-            }
-            if(i>=32 && capacity<gross_message_length)
-            {
-                jab_int32 level=-1;
-                for (jab_int32 j=0; j<11; j++)
-                {
-                    coderate=fitCoderate(j);//fit code rate
-                    if(coderate > 0)
-                    {
-                        gross_message_length=ceil((*data_length)/coderate);
-                        if(gross_message_length < capacity)
-                            level=j;
-                    }
-                }
-                if(level >= 0)
-                {
-                    JAB_REPORT_ERROR(("Message does not fit into one symbol with default ecc level. Please use an ecc level lower than %d with '--ecc-level %d'", level, level))
-                    return 1;
-                }
-                if(*data_length >= capacity || level < 0)
-                {
-                    reportError("Message does not fit into one symbol. Use more symbols.");
-                    return 1;
-                }
-            }
-        }
-    }
-    else //check if message fits into specified symbol
-    {
-        jab_int32 side_size_x=VERSION2SIZE(enc->symbol_versions[0].x);
-        jab_int32 side_size_y=VERSION2SIZE(enc->symbol_versions[0].y);
-        //number of modules for alignment pattern
-        jab_int32 number_of_alignment_pattern_x = (side_size_x-(DISTANCE_TO_BORDER*2-1))/MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS-1;
-        jab_int32 number_of_alignment_pattern_y = (side_size_y-(DISTANCE_TO_BORDER*2-1))/MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS-1;
-        if (number_of_alignment_pattern_x < 0)
-            number_of_alignment_pattern_x=0;
-        if (number_of_alignment_pattern_y < 0)
-            number_of_alignment_pattern_y=0;
-        jab_int32 nb_modules_alignmet=((number_of_alignment_pattern_y+2)*(number_of_alignment_pattern_x+2)-4)*7;
-        //number of modules for color palette
-        jab_int32 nb_modules_palette=enc->color_number > 64 ? 64*2 : enc->color_number*2;
-        //number of modules for metadata
-        getMetadataLength(enc,0);
-        jab_int32 E=10;
-        if(enc->symbol_versions[0].x>4 || enc->symbol_versions[0].y>4)
-            E=12;
-        if(enc->symbol_versions[0].x>8 || enc->symbol_versions[0].y>8)
-            E=14;
-        if(enc->symbol_versions[0].x>16 || enc->symbol_versions[0].y>16)
-            E=16;
-        jab_int32 nb_modules_metadata=enc->symbols[0].encoded_metadata->length;
-        if((nb_modules_metadata-6)%nb_of_bpmm!=0)
-        {
-            nb_modules_metadata=(nb_modules_metadata-6)/nb_of_bpmm;
-            nb_modules_metadata+=1;
-        }
-        else
-            nb_modules_metadata=(nb_modules_metadata-6)/nb_of_bpmm;
-        nb_modules_metadata+=6;
-        jab_int32 capacity=side_size_x*side_size_y-nb_modules_alignmet-nb_modules_finder-nb_modules_palette-nb_modules_metadata;
-        capacity*=nb_of_bpm;
-        if(capacity<gross_message_length)
-        {
-            reportError("Message does not fit into user specified symbol version: Use higher symbol version");
-            return 1;
-        }
-        else
-        {
-            //update coderate parameters
-            jab_float min=(jab_float)capacity;
-       //     for (jab_int32 i=3;i<=pow(2,E/2)+2;i++)
-            for (jab_int32 i=3;i<=6+2;i++)
-            {
-                for (jab_int32 j=i+1;j<=6+3;j++)
-    //            for (jab_int32 j=i+1;j<=pow(2,E/2)+3;j++)
-                {
-                   // jab_int32 dist=((jab_int32)(capacity/((jab_float)j)))*j-((jab_int32)(capacity/((jab_float)j)))*i-*data_length;
-                   // jab_float dist=capacity*(j-i)/((jab_float)j)-*data_length;
-                    jab_int32 dist=(capacity/j)*j-(capacity/j)*i-*data_length;
-                    if(dist<min && dist>=0)
-                    {
-                        coderate_params[1]=j;//((pow(2,E/2)+3)*(capacity-data_length))/capacity;
-                        coderate_params[0]=i;//coderate_params[1]*(capacity-data_length)/capacity;
-                        min=dist;
-                    }
-
-                }
-            }
-         //   *data_length=((jab_int32)(capacity/(jab_float)coderate_params[1]))*coderate_params[1]-((jab_int32)(capacity/(jab_float)coderate_params[1]))*coderate_params[0];
-            *data_length=(capacity/coderate_params[1])*coderate_params[1]-(capacity/coderate_params[1])*coderate_params[0];
-         //   *data_length=capacity*(coderate_params[1]-coderate_params[0])/(jab_float)coderate_params[1];
-        }
-    }
-
-    return 0;
+/**
+ * @brief Get the optimal error correction capability
+ * @param capacity the symbol capacity
+ * @param net_data_length the original data length
+ * @param wcwr the LPDC parameters wc and wr
+ * @return JAB_SUCCESS | JAB_FAILURE
+ */
+void getOptimalECC(jab_int32 capacity, jab_int32 net_data_length, jab_int32* wcwr)
+{
+	jab_float min = capacity;
+	for (jab_int32 k=3; k<=6+2; k++)
+	{
+		for (jab_int32 j=k+1; j<=6+3; j++)
+		{
+			jab_int32 dist = (capacity/j)*j - (capacity/j)*k - net_data_length; //max_gross_payload = floor(capacity / wr) * wr
+			if(dist<min && dist>=0)
+			{
+				wcwr[1] = j;
+				wcwr[0] = k;
+				min = dist;
+			}
+		}
+	}
 }
 
 /**
@@ -955,10 +710,10 @@ jab_data* encodeData(jab_data* data, jab_int32 encoded_length,jab_int32* encode_
                 if(encode_seq[counter+1] == 6 || encode_seq[counter+1] == 13)
                     length-=4;
                 if(length < ENC_MAX)
-                    convert_dec_to_bin(mode_switch[encode_seq[counter]][encode_seq[counter+1]],encoded_data,position,length);
+                    convert_dec_to_bin(mode_switch[encode_seq[counter]][encode_seq[counter+1]],encoded_data->data,position,length);
                 else
                 {
-                    reportError("Ecoding failure");
+                    reportError("Encoding data failed");
                     free(encoded_data);
                     return NULL;
                 }
@@ -966,7 +721,7 @@ jab_data* encodeData(jab_data* data, jab_int32 encoded_length,jab_int32* encode_
                 if(encode_seq[counter+1] == 6 || encode_seq[counter+1] == 13)
                     position-=4;
                 //check if latch or shift
-                if(encode_seq[counter+1]>6 && encode_seq[counter+1]<=13 || encode_seq[counter+1]==13 && encode_seq[counter+2]!=13)
+                if((encode_seq[counter+1]>6 && encode_seq[counter+1]<=13) || (encode_seq[counter+1]==13 && encode_seq[counter+2]!=13))
                     shift_back=1;//remember to shift back to mode from which was invoked
             }
             //if not byte mode
@@ -975,7 +730,7 @@ jab_data* encodeData(jab_data* data, jab_int32 encoded_length,jab_int32* encode_
                 if(jab_enconing_table[tmp][encode_seq[counter+1]%7]>-1 && character_size[encode_seq[counter+1]%7] < ENC_MAX)
                 {
                     //encode character
-                    convert_dec_to_bin(jab_enconing_table[tmp][encode_seq[counter+1]%7],encoded_data,position,character_size[encode_seq[counter+1]%7]);
+                    convert_dec_to_bin(jab_enconing_table[tmp][encode_seq[counter+1]%7],encoded_data->data,position,character_size[encode_seq[counter+1]%7]);
                     position+=character_size[encode_seq[counter+1]%7];
                     counter++;
                 }
@@ -985,18 +740,18 @@ jab_data* encodeData(jab_data* data, jab_int32 encoded_length,jab_int32* encode_
                     if (tmp1 < 0)
                         tmp1+=256;
                     //read next character to see if more efficient encoding possible
-                    if (((tmp==44 || tmp== 46 || tmp==58) && tmp1==32) || tmp==13 && tmp1==10)
+                    if (((tmp==44 || tmp== 46 || tmp==58) && tmp1==32) || (tmp==13 && tmp1==10))
                         decimal_value=abs(jab_enconing_table[tmp][encode_seq[counter+1]%7]);
                     else if (tmp==13 && tmp1!=10)
                         decimal_value=18;
                     else
                     {
-                        reportError("Ecoding failure");
+                        reportError("Encoding data failed");
                         free(encoded_data);
                         return NULL;
                     }
                     if (character_size[encode_seq[counter+1]%7] < ENC_MAX)
-                    convert_dec_to_bin(decimal_value,encoded_data,position,character_size[encode_seq[counter+1]%7]);
+                    convert_dec_to_bin(decimal_value,encoded_data->data,position,character_size[encode_seq[counter+1]%7]);
                     position+=character_size[encode_seq[counter+1]%7];
                     counter++;
                     end_of_loop--;
@@ -1023,20 +778,20 @@ jab_data* encodeData(jab_data* data, jab_int32 encoded_length,jab_int32* encode_
                         else
                             break;
                     }
-                    convert_dec_to_bin(byte_counter > 15 ? 0 : byte_counter,encoded_data,position,4);
+                    convert_dec_to_bin(byte_counter > 15 ? 0 : byte_counter,encoded_data->data,position,4);
                     position+=4;
                     if(byte_counter > 15)
                     {
-                        convert_dec_to_bin(byte_counter-15-1,encoded_data,position,13);
+                        convert_dec_to_bin(byte_counter-15-1,encoded_data->data,position,13);
                         position+=13;
                     }
                     byte_offset=byte_counter;
                 }
                 if (character_size[encode_seq[counter+1]%7] < ENC_MAX)
-                    convert_dec_to_bin(tmp,encoded_data,position,character_size[encode_seq[counter+1]%7]);
+                    convert_dec_to_bin(tmp,encoded_data->data,position,character_size[encode_seq[counter+1]%7]);
                 else
                 {
-                    reportError("Encoding failure");
+                    reportError("Encoding data failed");
                     free(encoded_data);
                     return NULL;
                 }
@@ -1063,597 +818,323 @@ jab_data* encodeData(jab_data* data, jab_int32 encoded_length,jab_int32* encode_
         }
         current_encoded_length++;
     }
-    jab_int32 remaining=encoded_length-position;
-    if(position<encoded_length)
-    {
-        if (encode_seq[counter]>6)
-            encode_seq[counter]=encode_seq[counter-1];
-        if (encode_seq[counter]==0 && encoded_length-position>=5)
-        {
-            convert_dec_to_bin(28,encoded_data,position,5);
-            remaining=encoded_length-position-5;
-            if(encoded_length-position>=10)
-            {
-                convert_dec_to_bin(31,encoded_data,position+5,5);
-                remaining=encoded_length-position-10;
-            }
-            if(encoded_length-position>=12)
-            {
-                convert_dec_to_bin(3,encoded_data,position+10,2);
-                remaining=encoded_length-position-12;
-            }
-        }
-        else if (encode_seq[counter]==1  && encoded_length-position>=5)
-        {
-            convert_dec_to_bin(31,encoded_data,position,5);
-            remaining=encoded_length-position-5;
-            if(encoded_length-position>=7)
-            {
-                convert_dec_to_bin(3,encoded_data,position+5,2);
-                remaining=encoded_length-position-7;
-            }
-        }
-        else if (encode_seq[counter]==2  && encoded_length-position>=4)
-        {
-            convert_dec_to_bin(15,encoded_data,position,4);
-            remaining=encoded_length-position-4;
-            if(encoded_length-position>=6)
-            {
-                convert_dec_to_bin(3,encoded_data,position+4,2);
-                remaining=encoded_length-position-6;
-            }
-            if(encoded_length-position>=11)
-            {
-                convert_dec_to_bin(31,encoded_data,position+6,5);
-                remaining=encoded_length-position-11;
-            }
-            if(encoded_length-position>=13)
-            {
-                convert_dec_to_bin(3,encoded_data,position+11,2);
-                remaining=encoded_length-position-13;
-            }
-        }
-        else if (encode_seq[counter]==5 && encoded_length-position>=6)
-        {
-            convert_dec_to_bin(63,encoded_data,position,6);
-            remaining=encoded_length-position-6;
-            if(encoded_length-position>=8)
-            {
-                convert_dec_to_bin(3,encoded_data,position+6,2);
-                remaining=encoded_length-position-8;
-            }
-            if(encoded_length-position>=13)
-            {
-                convert_dec_to_bin(28,encoded_data,position+8,5);
-                remaining=encoded_length-position-13;
-            }
-            if(encoded_length-position>=18)
-            {
-                convert_dec_to_bin(31,encoded_data,position+13,5);
-                remaining=encoded_length-position-18;
-            }
-            if(encoded_length-position>=20)
-            {
-                convert_dec_to_bin(3,encoded_data,position+18,2);
-                remaining=encoded_length-position-20;
-            }
-        }
-        jab_int32 bit;
-        for (jab_int32 i=encoded_length-remaining;i<encoded_length;i++)
-        {
-            bit=i%2;
-            encoded_data->data[i]=(jab_char) bit;
-        }
-    }
     return encoded_data;
 }
 
 /**
  * @brief Encode metadata
  * @param enc the encode parameters
- * @param index the symbol index
- * @param coderate_params the wc and wr of the symbol
- * @param mask_index the mask reference
  * @return JAB_SUCCESS | JAB_FAILURE
 */
-jab_boolean encodeMetadata(jab_encode* enc, jab_int32 index, jab_int32 *coderate_params, jab_int32 mask_index)
+jab_boolean encodeMasterMetadata(jab_encode* enc)
 {
-    jab_int32* metadata_coderate_params=(jab_int32 *)malloc(sizeof(jab_int32)*6);
-    if(metadata_coderate_params == NULL){
-        reportError("Memory allocation for metadata coderate parameter failed");
-        return JAB_FAILURE;
-    }
-    jab_int32* metadata_part=(jab_int32 *)malloc(sizeof(jab_int32)*6);
-    if(metadata_part == NULL){
-        free(metadata_coderate_params);
-        reportError("Memory allocation for metadta part failed");
-        return JAB_FAILURE;
-    }
-
-    jab_int32 start_pos;
-    jab_int32 d;
-    if (enc->symbols[index].index==0) //if master symbol
-    {
-        //part I in master
-        switch (enc->color_number) // set number of module colors
-        {
-            case 2:
-                enc->symbols[index].encoded_metadata->data[0]=(jab_char) 0;
-                enc->symbols[index].encoded_metadata->data[1]=(jab_char) 0;
-                enc->symbols[index].encoded_metadata->data[2]=(jab_char) 0;
-                break;
-            case 4:
-                enc->symbols[index].encoded_metadata->data[0]=(jab_char) 0;
-                enc->symbols[index].encoded_metadata->data[1]=(jab_char) 0;
-                enc->symbols[index].encoded_metadata->data[2]=(jab_char) 1;
-                break;
-            case 8:
-                enc->symbols[index].encoded_metadata->data[0]=(jab_char) 0;
-                enc->symbols[index].encoded_metadata->data[1]=(jab_char) 1;
-                enc->symbols[index].encoded_metadata->data[2]=(jab_char) 0;
-                break;
-            case 16:
-                enc->symbols[index].encoded_metadata->data[0]=(jab_char) 0;
-                enc->symbols[index].encoded_metadata->data[1]=(jab_char) 1;
-                enc->symbols[index].encoded_metadata->data[2]=(jab_char) 1;
-                break;
-            case 32:
-                enc->symbols[index].encoded_metadata->data[0]=(jab_char) 1;
-                enc->symbols[index].encoded_metadata->data[1]=(jab_char) 0;
-                enc->symbols[index].encoded_metadata->data[2]=(jab_char) 0;
-                break;
-            case 64:
-                enc->symbols[index].encoded_metadata->data[0]=(jab_char) 1;
-                enc->symbols[index].encoded_metadata->data[1]=(jab_char) 0;
-                enc->symbols[index].encoded_metadata->data[2]=(jab_char) 1;
-                break;
-            case 128:
-                enc->symbols[index].encoded_metadata->data[0]=(jab_char) 1;
-                enc->symbols[index].encoded_metadata->data[1]=(jab_char) 1;
-                enc->symbols[index].encoded_metadata->data[2]=(jab_char) 0;
-                break;
-            case 256:
-                enc->symbols[index].encoded_metadata->data[0]=(jab_char) 1;
-                enc->symbols[index].encoded_metadata->data[1]=(jab_char) 1;
-                enc->symbols[index].encoded_metadata->data[2]=(jab_char) 1;
-                break;
-        }
-        metadata_coderate_params[0]=2;
-        metadata_coderate_params[1]=-1;
-        metadata_part[0]=0;
-        metadata_part[1]=3;
-        //part II in master symbol
-        //variable SS, VF and V
-        jab_byte is_square=0;
-        jab_byte length_V=0;
-        //part II SS
-        if (enc->symbol_versions[0].x != enc->symbol_versions[0].y)
-            enc->symbols[index].encoded_metadata->data[6]=(jab_char) 1;
-        else
-        {
-            enc->symbols[index].encoded_metadata->data[6]=(jab_char) 0;
-            is_square=1;
-        }
-        //part II VF
-        jab_byte side_version_part=0;
-        jab_int32 correction=0;
-        if((is_square && enc->symbol_versions[0].x<5) || (!is_square && enc->symbol_versions[0].x<5 && enc->symbol_versions[0].y<5))
-        {
-            enc->symbols[index].encoded_metadata->data[7]=(jab_char) 0;
-            enc->symbols[index].encoded_metadata->data[8]=(jab_char) 0;
-            length_V=2;
-            side_version_part=0;
-        }
-        else if((is_square && enc->symbol_versions[0].x<9) || (!is_square && enc->symbol_versions[0].x<9 && enc->symbol_versions[0].y<9))
-        {
-            enc->symbols[index].encoded_metadata->data[7]=(jab_char) 0;
-            enc->symbols[index].encoded_metadata->data[8]=(jab_char) 1;
-            if(!is_square)
-			{
-				length_V=3;
-			}
-            else
-			{
-				length_V=2;
-				correction=4;
-			}
-            side_version_part=1;
-        }
-        else if((is_square && enc->symbol_versions[0].x<17) || (!is_square && enc->symbol_versions[0].x<17 && enc->symbol_versions[0].y<17))
-        {
-            enc->symbols[index].encoded_metadata->data[7]=(jab_char) 1;
-            enc->symbols[index].encoded_metadata->data[8]=(jab_char) 0;
-            if(!is_square)
-			{
-				length_V=4;
-			}
-            else
-			{
-				length_V=3;
-				correction=8;
-			}
-            side_version_part=2;
-        }
-        else
-        {
-            enc->symbols[index].encoded_metadata->data[7]=(jab_char) 1;
-            enc->symbols[index].encoded_metadata->data[8]=(jab_char) 1;
-            if(!is_square)
-			{
-				length_V=5;
-			}
-            else
-			{
-				length_V=4;
-				correction=16;
-			}
-            side_version_part=3;
-        }
-
-        //part III V
-        jab_int32 counter_partIII=0;
-        d = enc->symbol_versions[0].x-correction-1;
-        start_pos = 20+counter_partIII;
-        for(jab_int32 j=0;j<length_V;j++)
-        {
-            enc->symbols[index].encoded_metadata->data[start_pos+length_V-1-j]=(jab_char)d%2;
-            d/=2;
-            counter_partIII++;
-        }
-        if(!is_square)
-        {
-            start_pos=20+counter_partIII;
-            d=enc->symbol_versions[0].y-1;
-            for(jab_int32 j=0;j<length_V;j++)
-            {
-                enc->symbols[index].encoded_metadata->data[start_pos+length_V-1-j]=(jab_char)d%2;
-                d/=2;
-                counter_partIII++;
-            }
-        }
-        //part II mask index MSK
-        d=mask_index;
-        for (jab_int32 j=0;j<3;j++)
-        {
-            enc->symbols[index].encoded_metadata->data[9+3-1-j]=(jab_char)d%2;
-            d/=2;
-        }
-        //part II slave flag SF
-        jab_byte slaves_selected=0;
-        if (enc->symbol_number>1)
-        {
-            enc->symbols[index].encoded_metadata->data[12]=(jab_char) 1;
-            slaves_selected=1;
-        }
-        else
-            enc->symbols[index].encoded_metadata->data[12]=(jab_char) 0;
-        //ldpc params for part II
-        metadata_coderate_params[2]=2;
-        metadata_coderate_params[3]=-1;
-        metadata_part[2]=6;
-        metadata_part[3]=13;
-        //part III error correction parameter E
-        start_pos=20+counter_partIII;
-        d=coderate_params[0]-3;
-        for (jab_int32 j=0;j<(10+2*side_version_part)/2;j++)
-        {
-            enc->symbols[index].encoded_metadata->data[start_pos+(10+2*side_version_part)/2-1-j]=(jab_char)d%2;
-            d/=2;
-            counter_partIII++;
-        }
-        start_pos=20+counter_partIII;
-        d=coderate_params[1]-4;
-        for (jab_int32 j=0;j<(10+2*side_version_part)/2;j++)
-        {
-            enc->symbols[index].encoded_metadata->data[start_pos+(10+2*side_version_part)/2-1-j]=(jab_char)d%2;
-            d/=2;
-            counter_partIII++;
-        }
-        //part III slave position S
-		if(slaves_selected)
+	//part I in master
+	jab_int32 Nc, SS, VF, MSK, V, E1, E2;
+	jab_int32 partI_length 	= 3;
+	jab_int32 partII_length	= 6;
+	jab_int32 partIII_length= 0;
+	jab_int32 V_length;
+	jab_int32 E_length = 6;
+	//set master metadata variables
+	Nc = log(enc->color_number)/log(2.0) - 1;
+	if(enc->symbol_versions[0].x == enc->symbol_versions[0].y)
+		SS = 0;
+	else
+		SS = 1;
+	if(SS == 0)
+	{
+		if(enc->symbol_versions[0].x < 5)
 		{
-			for(jab_int32 i=0; i<4; i++)
-			{
-				if(enc->docked_symbol[i] != 0)
-					enc->symbols[index].encoded_metadata->data[20+counter_partIII]=(jab_char)1;
-				else
-					enc->symbols[index].encoded_metadata->data[20+counter_partIII]=(jab_char)0;
-				counter_partIII++;
-			}
+			VF = 0;
+			V = enc->symbol_versions[0].x - 1;
+			V_length = 2;
+
 		}
-        //ldpc params for part III
-        if(counter_partIII >= 36)
-            metadata_coderate_params[4]=3;
-        else
-            metadata_coderate_params[4]=2;
-        metadata_coderate_params[5]=-1;
-        metadata_part[4]=20;
-        metadata_part[5]=20+counter_partIII;
-    }
-    else //slave symbol
-    {
-        //part I in slave metadata
-        //host symbol search
-        jab_int32 host_symbol = 0;
-        jab_int32 written_metadata = 0;
-        for(jab_int32 i=0; i<4*enc->symbol_number; i++)
-        {
-            if(enc->docked_symbol[i] == index)
-            {
-                host_symbol = i / 4;
-            }
-        }
-        //differnet shape and size as in host
-        if(enc->symbols[index].side_size.x != enc->symbols[host_symbol].side_size.x || enc->symbols[index].side_size.y != enc->symbols[host_symbol].side_size.y)
-        {
-            enc->symbols[index].encoded_metadata->data[0] = (jab_char) 1;
-            //write side version (not docked side) V in part II
-            //find docked side
-            jab_int32 dx = jab_decode_order[enc->symbol_positions[index]].x - jab_decode_order[enc->symbol_positions[host_symbol]].x;
-            jab_int32 dy = jab_decode_order[enc->symbol_positions[index]].y - jab_decode_order[enc->symbol_positions[host_symbol]].y;
-            if(dx == 0)
-            {
-                start_pos = 6 + written_metadata;
-                d = enc->symbol_versions[index].y - 1;
-                for(jab_int32 j=0; j<5; j++)
-                {
-                    enc->symbols[index].encoded_metadata->data[start_pos+5-1-j] = (jab_char)d%2;
-                    d/=2;
-                    written_metadata++;
-                }
-            }
-            else if(dy == 0)
-            {
-                start_pos = 6 + written_metadata;
-                d=enc->symbol_versions[index].x - 1;
-                for (jab_int32 j=0; j<5; j++)
-                {
-                    enc->symbols[index].encoded_metadata->data[start_pos+5-1-j] = (jab_char)d%2;
-                    d/=2;
-                    written_metadata++;
-                }
-            }
-        }
-        else //same size and shape
-            enc->symbols[index].encoded_metadata->data[0]=(jab_char) 0;
+		else if(enc->symbol_versions[0].x < 9)
+		{
+			VF = 1;
+			V = enc->symbol_versions[0].x - 4 - 1;
+			V_length = 2;
+		}
+		else if(enc->symbol_versions[0].x < 17)
+		{
+			VF = 2;
+			V = enc->symbol_versions[0].x - 8 - 1;
+			V_length = 3;
+		}
+		else
+		{
+			VF = 3;
+			V = enc->symbol_versions[0].x - 16 - 1;
+			V_length = 4;
+		}
+	}
+	else
+	{
+		if(enc->symbol_versions[0].x < 5 && enc->symbol_versions[0].y < 5)
+		{
+			VF = 0;
+			V = ((enc->symbol_versions[0].x - 1) << 2) + (enc->symbol_versions[0].y - 1);
+			V_length = 4;
+		}
+		else if(enc->symbol_versions[0].x < 9 && enc->symbol_versions[0].y < 9)
+		{
+			VF = 1;
+			V = ((enc->symbol_versions[0].x - 1) << 3) + (enc->symbol_versions[0].y - 1);
+			V_length = 6;
+		}
+		else if(enc->symbol_versions[0].x < 17 && enc->symbol_versions[0].y < 17)
+		{
+			VF = 2;
+			V = ((enc->symbol_versions[0].x - 1) << 4) + (enc->symbol_versions[0].y - 1);
+			V_length = 8;
+		}
+		else
+		{
+			VF = 3;
+			V = ((enc->symbol_versions[0].x -1) << 5) + (enc->symbol_versions[0].y - 1);
+			V_length = 10;
+		}
+	}
+	MSK = DEFAULT_MASKING_REFERENCE;
+	E1 = enc->symbols[0].wcwr[0] - 3;
+	E2 = enc->symbols[0].wcwr[1] - 4;
+	partIII_length += (V_length + E_length);
 
-        //slave position SF
-        if(enc->docked_symbol[4*index] > 0 || enc->docked_symbol[4*index + 1] > 0 || enc->docked_symbol[4*index + 2] >0 || enc->docked_symbol[4*index + 3] > 0)
-            enc->symbols[index].encoded_metadata->data[2] = (jab_char) 1;
-        else
-            enc->symbols[index].encoded_metadata->data[2] = (jab_char) 0;
-		//slave S in partII
-        if(enc->symbols[index].encoded_metadata->data[2] > 0)
-        {
-			for(jab_int32 i=0; i<4; i++)
-			{
-				if(enc->docked_symbol[4*index + i] == -1)
-					continue;
-				if(enc->docked_symbol[4*index + i] != 0)
-					enc->symbols[index].encoded_metadata->data[6+written_metadata]=(jab_char) 1;
-				else
-					enc->symbols[index].encoded_metadata->data[6+written_metadata]=(jab_char) 0;
-				written_metadata++;
-			}
-        }
-        //part I ldpc params
-        metadata_coderate_params[0]=2;
-        metadata_coderate_params[1]=-1;
-        metadata_part[0]=0;
-        metadata_part[1]=3;
-        //part II ldpc
-        metadata_coderate_params[2]=2;
-        metadata_coderate_params[3]=-1;
-        metadata_part[2]=6;
-        metadata_part[3]=6+written_metadata;
+	//write each part of master metadata
+	//Part I
+	jab_data* partI = (jab_data *)malloc(sizeof(jab_data) + partI_length*sizeof(jab_char));
+	if(partI == NULL)
+	{
+		reportError("Memory allocation for metadata Part I in master symbol failed");
+		return JAB_FAILURE;
+	}
+	partI->length = partI_length;
+	convert_dec_to_bin(Nc, partI->data, 0, partI->length);
+	//Part II
+	jab_data* partII = (jab_data *)malloc(sizeof(jab_data) + partII_length*sizeof(jab_char));
+	if(partII == NULL)
+	{
+		reportError("Memory allocation for metadata Part II in master symbol failed");
+		return JAB_FAILURE;
+	}
+	partII->length = partII_length;
+	convert_dec_to_bin(SS,  partII->data, 0, 1);
+	convert_dec_to_bin(VF,  partII->data, 1, 2);
+	convert_dec_to_bin(MSK, partII->data, 3, 3);
+	//Part III
+	jab_data* partIII = (jab_data *)malloc(sizeof(jab_data) + partIII_length*sizeof(jab_char));
+	if(partIII == NULL)
+	{
+		reportError("Memory allocation for metadata Part III in master symbol failed");
+		return JAB_FAILURE;
+	}
+	partIII->length = partIII_length;
+	convert_dec_to_bin(V,  partIII->data, 0, V_length);
+	convert_dec_to_bin(E1, partIII->data, V_length, 3);
+	convert_dec_to_bin(E2, partIII->data, V_length+3, 3);
 
-        jab_int32 start_pos_partIII=6+2*written_metadata;
-        written_metadata=0;
-        //same wc and wr as host SE
-        if(coderate_params[2*index]==coderate_params[2*host_symbol] && coderate_params[2*index+1]==coderate_params[2*host_symbol+1])
-        {
-            enc->symbols[index].encoded_metadata->data[1]=(jab_char) 0;
-        }
-        else //write wc and wr
-        {
-            enc->symbols[index].encoded_metadata->data[1]=(jab_char) 1;
-            //pick length of E
-            jab_int32 E=10;
-            if(enc->symbols[index].side_size.x > 4 || enc->symbols[index].side_size.y > 4)
-                E=12;
-            if(enc->symbols[index].side_size.x > 8 || enc->symbols[index].side_size.y > 8)
-                E=14;
-            if(enc->symbols[index].side_size.x > 16 || enc->symbols[index].side_size.y > 16)
-                E=16;
-            start_pos = start_pos_partIII;
-            d=coderate_params[2*index] - 3;
-            for (jab_int32 j=0;j<E/2;j++)
-            {
-                enc->symbols[index].encoded_metadata->data[start_pos+E/2-1-j]=(jab_char)d%2;
-                d/=2;
-                written_metadata++;
-            }
-            start_pos = start_pos_partIII + written_metadata;
-            d=coderate_params[2*index+1] - 4;
-            for (jab_int32 j=0;j<E/2;j++)
-            {
-                enc->symbols[index].encoded_metadata->data[start_pos+E/2-1-j]=(jab_char)d%2;
-                d/=2;
-                written_metadata++;
-            }
-        }
-        //part III ldpc
-        if (written_metadata>=36)
-            metadata_coderate_params[4]=3;
-        else
-            metadata_coderate_params[4]=2;
-        metadata_coderate_params[5]=-1;
-        metadata_part[4]=start_pos_partIII;
-        metadata_part[5]=start_pos_partIII+written_metadata;
-    }
-    //call ldpc for metadata
-    for (jab_int32 j=0;j<3;j++)
-    {
-        if(metadata_part[2*j+1]-metadata_part[2*j]>=3)
-        {
-            jab_data* ecc_encoded_metadata = encodeLDPC(enc->symbols[index].encoded_metadata,metadata_coderate_params,metadata_part,j);
-            if(ecc_encoded_metadata == NULL)
-            {
-                reportError("LDPC encoding of metadata failed");
-                return JAB_FAILURE;
-            }
-            jab_int32 loop=0;
-            for (jab_int32 k=0;k<ecc_encoded_metadata->length;k++)
-            {
-                enc->symbols[index].encoded_metadata->data[metadata_part[2*j]+k]=ecc_encoded_metadata->data[loop];
-                loop++;
-            }
-            free(ecc_encoded_metadata);
-        }
-    }
-    free(metadata_part);
-    free(metadata_coderate_params);
+	//encode each part of master metadata
+	jab_int32 wcwr[2] = {2, -1};
+	//Part I
+	jab_data* encoded_partI   = encodeLDPC(partI, wcwr);
+	if(encoded_partI == NULL)
+	{
+		reportError("LDPC encoding master metadata Part I failed");
+		return JAB_FAILURE;
+	}
+	//Part II
+	jab_data* encoded_partII  = encodeLDPC(partII, wcwr);
+	if(encoded_partII == NULL)
+	{
+		reportError("LDPC encoding master metadata Part II failed");
+		return JAB_FAILURE;
+	}
+	//Part III
+	jab_data* encoded_partIII = encodeLDPC(partIII, wcwr);
+	if(encoded_partIII == NULL)
+	{
+		reportError("LDPC encoding master metadata Part III failed");
+		return JAB_FAILURE;
+	}
+
+	jab_int32 encoded_metadata_length = encoded_partI->length + encoded_partII->length + encoded_partIII->length;
+	enc->symbols[0].metadata = (jab_data *)malloc(sizeof(jab_data) + encoded_metadata_length*sizeof(jab_char));
+	if(enc->symbols[0].metadata == NULL)
+	{
+		reportError("Memory allocation for encoded metadata in master symbol failed");
+		return JAB_FAILURE;
+	}
+	enc->symbols[0].metadata->length = encoded_metadata_length;
+	//copy encoded parts into metadata
+	memcpy(enc->symbols[0].metadata->data, encoded_partI->data, encoded_partI->length);
+	memcpy(enc->symbols[0].metadata->data+encoded_partI->length, encoded_partII->data, encoded_partII->length);
+	memcpy(enc->symbols[0].metadata->data+encoded_partI->length+encoded_partII->length, encoded_partIII->data, encoded_partIII->length);
+
+	free(partI);
+	free(partII);
+	free(partIII);
+	free(encoded_partI);
+	free(encoded_partII);
+	free(encoded_partIII);
     return JAB_SUCCESS;
 }
 
 /**
- * @brief Place metadata after mask reference is determined
+ * @brief Update master symbol metadata PartII if the default masking reference is changed
  * @param enc the encode parameter
- * @param palette_index the index in the color palette
+ * @param mask_ref the masking reference
+ * @return JAB_SUCCESS | JAB_FAILURE
 */
-void placeMetadata(jab_encode* enc, jab_byte* palette_index)
+jab_boolean updateMasterMetadataPartII(jab_encode* enc, jab_int32 mask_ref)
+{
+	//Part II
+	jab_data* partII = (jab_data *)malloc(sizeof(jab_data) + 6*sizeof(jab_char));
+	if(partII == NULL)
+	{
+		reportError("Memory allocation for metadata Part II in master symbol failed");
+		return JAB_FAILURE;
+	}
+	partII->length = 6;
+	//set SS and VF
+	if(enc->symbol_versions[0].x == enc->symbol_versions[0].y)
+		partII->data[0] = 0;
+	else
+		partII->data[0] = 1;
+	if(enc->symbol_versions[0].x < 5 && enc->symbol_versions[0].y < 5)
+	{
+		partII->data[1] = 0;
+		partII->data[2] = 0;
+	}
+	else if(enc->symbol_versions[0].x < 9 && enc->symbol_versions[0].y < 9)
+	{
+		partII->data[1] = 0;
+		partII->data[2] = 1;
+	}
+	else if(enc->symbol_versions[0].x < 17 && enc->symbol_versions[0].y < 17)
+	{
+		partII->data[1] = 1;
+		partII->data[2] = 0;
+	}
+	else
+	{
+		partII->data[1] = 1;
+		partII->data[2] = 1;
+	}
+	//update masking reference in PartII
+	convert_dec_to_bin(mask_ref, partII->data, 3, 3);
+	//encode new PartII
+	jab_int32 wcwr[2] = {2, -1};
+	jab_data* encoded_partII = encodeLDPC(partII, wcwr);
+	if(encoded_partII == NULL)
+	{
+		reportError("LDPC encoding master metadata Part II failed");
+		return JAB_FAILURE;
+	}
+	//update metadata
+	memcpy(enc->symbols[0].metadata->data+6, encoded_partII->data, encoded_partII->length);
+
+	free(partII);
+	free(encoded_partII);
+	return JAB_SUCCESS;
+}
+
+/**
+ * @brief Update master symbol metadata PartII if the default masking reference is changed
+ * @param enc the encode parameter
+*/
+void placeMasterMetadataPartII(jab_encode* enc)
 {
     //rewrite metadata in master with mask information
-    jab_int32 color_number_metadata = enc->color_number > 8 ? 8 : enc->color_number;
-    jab_int32 nb_of_bits_per_metadata_mod=log(color_number_metadata)/log(2);
-    jab_int32 written_metadata_part=0,module_count=0;
+    jab_int32 nb_of_bits_per_mod = log(enc->color_number)/log(2);
     jab_int32 x = MASTER_METADATA_X;
     jab_int32 y = MASTER_METADATA_Y;
-    jab_int32 index=0;
-
-    for(jab_int32 i=0;i<enc->symbols[index].encoded_metadata->length;i++)
-    {
-        jab_int32 index_color=0;
-        if(i<6)
-        {
-            index_color=((jab_int32)enc->symbols[index].encoded_metadata->data[written_metadata_part])*(color_number_metadata-1);
-            written_metadata_part++;
-        }
-        else
-        {
-            for(jab_int32 j=0;j<nb_of_bits_per_metadata_mod;j++)
-            {
-                if(written_metadata_part < enc->symbols[index].encoded_metadata->length)
-                    index_color+=((jab_int32)enc->symbols[index].encoded_metadata->data[written_metadata_part]) << (nb_of_bits_per_metadata_mod-1-j); //*pow(2,nb_of_bits_per_metadata_mod-1-j);
-                else //write binary zero if metadata finished but space of module not used completely
-                    index_color+=0;
-                written_metadata_part++;
-                i++;
-            }
-            i--;
-        }
-        enc->symbols[index].matrix[y*enc->symbols[index].side_size.x+x]=palette_index[index_color];
-        enc->symbols[index].data_map[y*enc->symbols[index].side_size.x+x]=0;
+    jab_int32 module_count = 0;
+    //skip PartI and color palette
+    jab_int32 color_palette_size = MIN(enc->color_number, 64);
+    jab_int32 module_offset = 6 + color_palette_size*2;
+    for(jab_int32 i=0; i<module_offset; i++)
+	{
+		module_count++;
+        getNextMetadataModuleInMaster(enc->symbols[0].side_size.y, enc->symbols[0].side_size.x, module_count, &x, &y);
+	}
+	//update PartII
+	jab_int32 partII_bit_start = 6;
+	jab_int32 partII_bit_end = 17;
+	jab_int32 metadata_index = partII_bit_start;
+	while(metadata_index <= partII_bit_end)
+	{
+    	jab_byte color_index = enc->symbols[0].matrix[y*enc->symbols[0].side_size.x + x];
+		for(jab_int32 j=0; j<nb_of_bits_per_mod; j++)
+		{
+			if(metadata_index <= partII_bit_end)
+			{
+				jab_byte bit = enc->symbols[0].metadata->data[metadata_index];
+				if(bit == 0)
+					color_index &= ~(1UL << (nb_of_bits_per_mod-1-j));
+				else
+					color_index |= 1UL << (nb_of_bits_per_mod-1-j);
+				metadata_index++;
+			}
+			else
+				break;
+		}
+        enc->symbols[0].matrix[y*enc->symbols[0].side_size.x + x] = color_index;
         module_count++;
-        getNextMetadataModuleInMaster(enc->symbols[index].side_size.y, enc->symbols[index].side_size.x, module_count, &x, &y);
+        getNextMetadataModuleInMaster(enc->symbols[0].side_size.y, enc->symbols[0].side_size.x, module_count, &x, &y);
     }
 }
 
 /**
- * @brief Interleave color palette
+ * @brief Get color index for the color palette
  * @param index the color index in the palette
  * @param size the color palette size
  * @param color_number the number of colors
 */
-void interleaveColorPalette(jab_byte* index, jab_int32 size, jab_int32 color_number)
+void getColorPaletteIndex(jab_byte* index, jab_int32 index_size, jab_int32 color_number)
 {
-	if(size < 16 || size > 256) return;
+	for(jab_int32 i=0; i<index_size; i++)
+	{
+		index[i] = i;
+	}
+
+	if(color_number < 128)
+		return;
 
 	jab_byte tmp[color_number];
 	for(jab_int32 i=0; i<color_number; i++)
+	{
 		tmp[i] = i;
-
-	if(color_number == 16)
-	{
-		memcpy(index + 4, tmp + 12, 4);
-		memcpy(index + 8, tmp + 4, 8);
 	}
-	else if(color_number == 32)
-	{
-		memcpy(index + 2, tmp + 6, 2);
-		memcpy(index + 4, tmp + 24, 2);
-		memcpy(index + 6, tmp + 30, 2);
 
-		memcpy(index + 8,  tmp + 2, 4);
-		memcpy(index + 12, tmp + 8, 16);
-		memcpy(index + 28, tmp + 26, 4);
-	}
-	else if(color_number == 64)
+	if(color_number == 128)
 	{
-		memcpy(index + 1, tmp + 3,  1);
-		memcpy(index + 2, tmp + 12, 1);
-		memcpy(index + 3, tmp + 15, 1);
-		memcpy(index + 4, tmp + 48, 1);
-		memcpy(index + 5, tmp + 51, 1);
-		memcpy(index + 6, tmp + 60, 1);
-		memcpy(index + 7, tmp + 63, 1);
-
-		memcpy(index + 8,  tmp + 1, 2);
-		memcpy(index + 10, tmp + 4, 8);
-		memcpy(index + 18, tmp + 13, 2);
-		memcpy(index + 20, tmp + 16, 32);
-		memcpy(index + 52, tmp + 49, 2);
-		memcpy(index + 54, tmp + 52, 8);
-		memcpy(index + 62, tmp + 61, 2);
-	}
-	else if(color_number == 128)
-	{
-		memcpy(index + 1, tmp + 3,  1);
-		memcpy(index + 2, tmp + 12, 1);
-		memcpy(index + 3, tmp + 15, 1);
-		memcpy(index + 4, tmp + 112, 1);
-		memcpy(index + 5, tmp + 115, 1);
-		memcpy(index + 6, tmp + 124, 1);
-		memcpy(index + 7, tmp + 127, 1);
-
-		memcpy(index + 8,  tmp + 1, 2);
-		memcpy(index + 10, tmp + 4, 8);
-		memcpy(index + 18, tmp + 13, 2);
-		memcpy(index + 20, tmp + 32, 16);
-		memcpy(index + 36, tmp + 80, 16);
-		memcpy(index + 52, tmp + 113, 2);
-		memcpy(index + 54, tmp + 116, 8);
-		memcpy(index + 62, tmp + 125, 2);
+		memcpy(index + 0,  tmp + 0, 16);
+		memcpy(index + 16, tmp + 32, 16);
+		memcpy(index + 32, tmp + 80, 16);
+		memcpy(index + 48, tmp + 112, 16);
 	}
 	else if(color_number == 256)
 	{
-		memcpy(index + 1, tmp + 3,  1);
-		memcpy(index + 2, tmp + 28, 1);
-		memcpy(index + 3, tmp + 31, 1);
-		memcpy(index + 4, tmp + 224, 1);
-		memcpy(index + 5, tmp + 227, 1);
-		memcpy(index + 6, tmp + 252, 1);
-		memcpy(index + 7, tmp + 255, 1);
+		memcpy(index + 0, tmp + 0,  4);
+		memcpy(index + 4, tmp + 8,  4);
+		memcpy(index + 8, tmp + 20, 4);
+		memcpy(index + 12,tmp + 28, 4);
 
-		memcpy(index + 8,  tmp + 1,  2);
-		memcpy(index + 10, tmp + 8,  4);
-		memcpy(index + 14, tmp + 20, 4);
-		memcpy(index + 18, tmp + 29, 2);
+		memcpy(index + 16, tmp + 64, 4);
+		memcpy(index + 20, tmp + 72, 4);
+		memcpy(index + 24, tmp + 84, 4);
+		memcpy(index + 28, tmp + 92, 4);
 
-		memcpy(index + 20, tmp + 64, 4);
-		memcpy(index + 24, tmp + 72, 4);
-		memcpy(index + 28, tmp + 84, 4);
-		memcpy(index + 32, tmp + 92, 4);
+		memcpy(index + 32, tmp + 160, 4);
+		memcpy(index + 36, tmp + 168, 4);
+		memcpy(index + 40, tmp + 180, 4);
+		memcpy(index + 44, tmp + 188, 4);
 
-		memcpy(index + 36, tmp + 160, 4);
-		memcpy(index + 40, tmp + 168, 4);
-		memcpy(index + 44, tmp + 180, 4);
-		memcpy(index + 48, tmp + 188, 4);
-
-		memcpy(index + 52, tmp + 225, 2);
-		memcpy(index + 54, tmp + 232, 4);
-		memcpy(index + 58, tmp + 244, 4);
-		memcpy(index + 62, tmp + 253, 2);
+		memcpy(index + 48, tmp + 224, 4);
+		memcpy(index + 52, tmp + 232, 4);
+		memcpy(index + 56, tmp + 244, 4);
+		memcpy(index + 60, tmp + 252, 4);
 	}
 }
 
@@ -1662,24 +1143,23 @@ void interleaveColorPalette(jab_byte* index, jab_int32 size, jab_int32 color_num
  * @param enc the encode parameter
  * @param index the symbol index
  * @param ecc_encoded_data encoded data
- * @param palette_index the index of the color palette
+ * @return JAB_SUCCESS | JAB_FAILURE
 */
-void createMatrix(jab_encode* enc, jab_int32 index, jab_data* ecc_encoded_data, jab_byte* palette_index)
+jab_boolean createMatrix(jab_encode* enc, jab_int32 index, jab_data* ecc_encoded_data)
 {
     //Allocate matrix
     enc->symbols[index].matrix = (jab_byte *)calloc(enc->symbols[index].side_size.x * enc->symbols[index].side_size.y, sizeof(jab_byte));
     if(enc->symbols[index].matrix == NULL)
     {
         reportError("Memory allocation for symbol matrix failed");
-        return;
+        return JAB_FAILURE;
     }
-
     //Allocate boolean matrix
     enc->symbols[index].data_map = (jab_byte *)malloc(enc->symbols[index].side_size.x * enc->symbols[index].side_size.y * sizeof(jab_byte));
     if(!enc->symbols[index].data_map)
     {
-        reportError("Memory allocation for boolean matrix failed");
-        return;
+        reportError("Memory allocation for data map failed");
+        return JAB_FAILURE;
     }
     memset(enc->symbols[index].data_map, 1, enc->symbols[index].side_size.x * enc->symbols[index].side_size.y * sizeof(jab_byte));
 
@@ -1705,25 +1185,13 @@ void createMatrix(jab_encode* enc, jab_int32 index, jab_data* ecc_encoded_data, 
     jab_int32 y_offset;
     jab_byte left;
     //set alignment patterns
-    jab_byte apx_core_color_index, apx_peri_color_index;
-    if(enc->color_number ==2)
-	{
-		apx_core_color_index = enc->color_number - 1;
-		apx_peri_color_index = 0;
-	}
-	else if(enc->color_number == 4)
-	{
-		apx_core_color_index = enc->color_number - 1;
-		apx_peri_color_index = 0;
-	}
-	else
-	{
-		apx_core_color_index = palette_index[APX_CORE_COLOR];
-		apx_peri_color_index = palette_index[7 - APX_CORE_COLOR];
-	}
+    jab_int32 Nc = log(enc->color_number)/log(2.0) - 1;
+	jab_byte apx_core_color = apx_core_color_index[Nc];
+	jab_byte apx_peri_color = apn_core_color_index[Nc];
+
     for(jab_int32 i=0;i<=number_of_alignment_pattern_x+1;i++)
     {
-        if (i%2==1 )
+        if (i%2 == 1)
             left=0;
         else
             left=1;
@@ -1734,40 +1202,40 @@ void createMatrix(jab_encode* enc, jab_int32 index, jab_data* ecc_encoded_data, 
             //left alignment patterns
             if((i != 0 || j!=0) && (i != 0 || j!=(number_of_alignment_pattern_y+1)) && (i != (number_of_alignment_pattern_x+1) || j!=0) && (i != number_of_alignment_pattern_x+1 || j!=number_of_alignment_pattern_y+1) && left==1)
             {
-                 enc->symbols[index].matrix[(y_offset-2)        *enc->symbols[index].side_size.x    +x_offset-2 ]=
-                        enc->symbols[index].matrix[(y_offset-2) *enc->symbols[index].side_size.x    +x_offset-1 ]=
-                        enc->symbols[index].matrix[(y_offset-1) *enc->symbols[index].side_size.x    +x_offset-2 ]=
-                        enc->symbols[index].matrix[(y_offset-1) *enc->symbols[index].side_size.x    +x_offset   ]=
-                        enc->symbols[index].matrix[y_offset     *enc->symbols[index].side_size.x    +x_offset-1 ]=
-                        enc->symbols[index].matrix[y_offset     *enc->symbols[index].side_size.x    +x_offset   ]=apx_peri_color_index;//palette_index[7 - APX_CORE_COLOR];//0;
-                 enc->symbols[index].matrix[(y_offset-1)        *enc->symbols[index].side_size.x    +x_offset-1 ]=apx_core_color_index;//palette_index[APX_CORE_COLOR];//7;
+            	enc->symbols[index].matrix[(y_offset-2) *enc->symbols[index].side_size.x + x_offset-2 ]=
+				enc->symbols[index].matrix[(y_offset-2) *enc->symbols[index].side_size.x + x_offset-1 ]=
+				enc->symbols[index].matrix[(y_offset-1) *enc->symbols[index].side_size.x + x_offset-2 ]=
+				enc->symbols[index].matrix[(y_offset-1) *enc->symbols[index].side_size.x + x_offset   ]=
+				enc->symbols[index].matrix[y_offset     *enc->symbols[index].side_size.x + x_offset-1 ]=
+				enc->symbols[index].matrix[y_offset     *enc->symbols[index].side_size.x + x_offset   ]=apx_peri_color;
+				enc->symbols[index].matrix[(y_offset-1) *enc->symbols[index].side_size.x + x_offset-1 ]=apx_core_color;
 
-                 enc->symbols[index].data_map[(y_offset-2)        *enc->symbols[index].side_size.x    +x_offset-2 ]=
-                         enc->symbols[index].data_map[(y_offset-2)*enc->symbols[index].side_size.x    +x_offset-1 ]=
-                         enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x    +x_offset-2 ]=
-                         enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x    +x_offset   ]=
-                         enc->symbols[index].data_map[y_offset    *enc->symbols[index].side_size.x    +x_offset-1 ]=
-                         enc->symbols[index].data_map[y_offset    *enc->symbols[index].side_size.x    +x_offset   ]=
-                         enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x    +x_offset-1 ]=0;
+				enc->symbols[index].data_map[(y_offset-2)*enc->symbols[index].side_size.x + x_offset-2 ]=
+				enc->symbols[index].data_map[(y_offset-2)*enc->symbols[index].side_size.x + x_offset-1 ]=
+				enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x + x_offset-2 ]=
+				enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x + x_offset   ]=
+				enc->symbols[index].data_map[y_offset    *enc->symbols[index].side_size.x + x_offset-1 ]=
+				enc->symbols[index].data_map[y_offset    *enc->symbols[index].side_size.x + x_offset   ]=
+				enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x + x_offset-1 ]=0;
             }
             //right alignment patterns
             else if((i != 0 || j!=0) && (i != 0 || j!=(number_of_alignment_pattern_y+1)) && (i != (number_of_alignment_pattern_x+1) || j!=0) && (i != number_of_alignment_pattern_x+1 || j!=number_of_alignment_pattern_y+1) && left==0)
             {
-                enc->symbols[index].matrix[(y_offset-2)        *enc->symbols[index].side_size.x    +x_offset   ]=
-                       enc->symbols[index].matrix[(y_offset-2) *enc->symbols[index].side_size.x    +x_offset-1 ]=
-                       enc->symbols[index].matrix[(y_offset-1) *enc->symbols[index].side_size.x    +x_offset-2 ]=
-                       enc->symbols[index].matrix[(y_offset-1) *enc->symbols[index].side_size.x    +x_offset   ]=
-                       enc->symbols[index].matrix[y_offset     *enc->symbols[index].side_size.x    +x_offset-1 ]=
-                       enc->symbols[index].matrix[y_offset     *enc->symbols[index].side_size.x    +x_offset-2 ]=apx_peri_color_index;//palette_index[7 - APX_CORE_COLOR];//0;
-                enc->symbols[index].matrix[(y_offset-1)        *enc->symbols[index].side_size.x    +x_offset-1 ]=apx_core_color_index;//palette_index[APX_CORE_COLOR];//7;
+            	enc->symbols[index].matrix[(y_offset-2) *enc->symbols[index].side_size.x + x_offset   ]=
+				enc->symbols[index].matrix[(y_offset-2) *enc->symbols[index].side_size.x + x_offset-1 ]=
+				enc->symbols[index].matrix[(y_offset-1) *enc->symbols[index].side_size.x + x_offset-2 ]=
+				enc->symbols[index].matrix[(y_offset-1) *enc->symbols[index].side_size.x + x_offset   ]=
+				enc->symbols[index].matrix[y_offset     *enc->symbols[index].side_size.x + x_offset-1 ]=
+				enc->symbols[index].matrix[y_offset     *enc->symbols[index].side_size.x + x_offset-2 ]=apx_peri_color;
+				enc->symbols[index].matrix[(y_offset-1) *enc->symbols[index].side_size.x + x_offset-1 ]=apx_core_color;
 
-                enc->symbols[index].data_map[(y_offset-2)        *enc->symbols[index].side_size.x    +x_offset   ]=
-                        enc->symbols[index].data_map[(y_offset-2)*enc->symbols[index].side_size.x    +x_offset-1 ]=
-                        enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x    +x_offset-2 ]=
-                        enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x    +x_offset   ]=
-                        enc->symbols[index].data_map[y_offset    *enc->symbols[index].side_size.x    +x_offset-1 ]=
-                        enc->symbols[index].data_map[y_offset    *enc->symbols[index].side_size.x    +x_offset-2 ]=
-                        enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x    +x_offset-1 ]=0;
+				enc->symbols[index].data_map[(y_offset-2)*enc->symbols[index].side_size.x + x_offset   ]=
+				enc->symbols[index].data_map[(y_offset-2)*enc->symbols[index].side_size.x + x_offset-1 ]=
+				enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x + x_offset-2 ]=
+				enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x + x_offset   ]=
+				enc->symbols[index].data_map[y_offset    *enc->symbols[index].side_size.x + x_offset-1 ]=
+				enc->symbols[index].data_map[y_offset    *enc->symbols[index].side_size.x + x_offset-2 ]=
+				enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x + x_offset-1 ]=0;
             }
             if (left==0)
                 left=1;
@@ -1789,45 +1257,32 @@ void createMatrix(jab_encode* enc, jab_int32 index, jab_data* ecc_encoded_data, 
                     if (i==k || j==k)
                     {
                         jab_byte fp0_color_index, fp1_color_index, fp2_color_index, fp3_color_index;
-                        if(enc->color_number == 2)
-						{
-							fp0_color_index = palette_index[abs((k%2)-0)];
-							fp1_color_index = palette_index[abs((k%2)-1)];
-							fp2_color_index = palette_index[abs((k%2)-1)];
-							fp3_color_index = palette_index[abs((k%2)-1)];
-						}
-                        else if(enc->color_number == 4 )
-                        {
-                        	fp0_color_index = palette_index[abs((k%2)*3-0)];
-							fp1_color_index = palette_index[abs((k%2)*3-1)];
-							fp2_color_index = palette_index[abs((k%2)*3-2)];
-							fp3_color_index = palette_index[abs((k%2)*3-3)];
-                        }
-                        else
-						{
-							fp0_color_index = palette_index[abs((k%2)*7-FP0_CORE_COLOR)];
-							fp1_color_index = palette_index[abs((k%2)*7-FP1_CORE_COLOR)];
-							fp2_color_index = palette_index[abs((k%2)*7-FP2_CORE_COLOR)];
-							fp3_color_index = palette_index[abs((k%2)*7-FP3_CORE_COLOR)];
-						}
+						fp0_color_index = (k%2) ? fp3_core_color_index[Nc] : fp0_core_color_index[Nc];
+						fp1_color_index = (k%2) ? fp2_core_color_index[Nc] : fp1_core_color_index[Nc];
+						fp2_color_index = (k%2) ? fp1_core_color_index[Nc] : fp2_core_color_index[Nc];
+						fp3_color_index = (k%2) ? fp0_core_color_index[Nc] : fp3_core_color_index[Nc];
+
 						//upper pattern
                         enc->symbols[index].matrix[(DISTANCE_TO_BORDER-(i+1))*enc->symbols[index].side_size.x+DISTANCE_TO_BORDER-j-1]=
-                                enc->symbols[index].matrix[(DISTANCE_TO_BORDER+(i-1))*enc->symbols[index].side_size.x+DISTANCE_TO_BORDER+j-1]=fp0_color_index; //enc->color_number > 2 ? palette_index[abs((k%2)*7-FP0_CORE_COLOR)] : palette_index[abs((k%2)*7-FP0_CORE_COLOR_BW)];//2+(k%2)*3;
+						enc->symbols[index].matrix[(DISTANCE_TO_BORDER+(i-1))*enc->symbols[index].side_size.x+DISTANCE_TO_BORDER+j-1]=fp0_color_index;
                         enc->symbols[index].data_map[(DISTANCE_TO_BORDER-(i+1))*enc->symbols[index].side_size.x+DISTANCE_TO_BORDER-j-1]=
-                                enc->symbols[index].data_map[(DISTANCE_TO_BORDER+(i-1))*enc->symbols[index].side_size.x+DISTANCE_TO_BORDER+j-1]=0;
+                        enc->symbols[index].data_map[(DISTANCE_TO_BORDER+(i-1))*enc->symbols[index].side_size.x+DISTANCE_TO_BORDER+j-1]=0;
+
                         enc->symbols[index].matrix[(DISTANCE_TO_BORDER-(i+1))*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)-j-1]=
-                                enc->symbols[index].matrix[(DISTANCE_TO_BORDER+(i-1))*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)+j-1]=fp1_color_index;//enc->color_number > 2 ? palette_index[abs((k%2)*7-FP1_CORE_COLOR)] : palette_index[abs((k%2)*7-FPX_CORE_COLOR_BW)];//4-(k%2);
+                        enc->symbols[index].matrix[(DISTANCE_TO_BORDER+(i-1))*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)+j-1]=fp1_color_index;
                         enc->symbols[index].data_map[(DISTANCE_TO_BORDER-(i+1))*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)-j-1]=
-                                enc->symbols[index].data_map[(DISTANCE_TO_BORDER+(i-1))*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)+j-1]=0;
+                        enc->symbols[index].data_map[(DISTANCE_TO_BORDER+(i-1))*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)+j-1]=0;
+
                         //lower pattern
                         enc->symbols[index].matrix[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER+i)*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)-j-1]=
-                                enc->symbols[index].matrix[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER-i)*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)+j-1]=fp2_color_index;//enc->color_number > 2 ? palette_index[abs((k%2)*7-FP2_CORE_COLOR)] : palette_index[abs((k%2)*7-FPX_CORE_COLOR_BW)];//1+(k%2)*5;
+                        enc->symbols[index].matrix[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER-i)*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)+j-1]=fp2_color_index;
                         enc->symbols[index].data_map[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER+i)*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)-j-1]=
-                                enc->symbols[index].data_map[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER-i)*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)+j-1]=0;
+                        enc->symbols[index].data_map[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER-i)*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)+j-1]=0;
+
                         enc->symbols[index].matrix[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER+i)*enc->symbols[index].side_size.x+(DISTANCE_TO_BORDER)-j-1]=
-                                enc->symbols[index].matrix[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER-i)*enc->symbols[index].side_size.x+(DISTANCE_TO_BORDER)+j-1]=fp3_color_index;//enc->color_number > 2 ? palette_index[abs((k%2)*7-FP3_CORE_COLOR)] : palette_index[abs((k%2)*7-FPX_CORE_COLOR_BW)];//6-(k%2)*5;
+                        enc->symbols[index].matrix[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER-i)*enc->symbols[index].side_size.x+(DISTANCE_TO_BORDER)+j-1]=fp3_color_index;
                         enc->symbols[index].data_map[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER+i)*enc->symbols[index].side_size.x+(DISTANCE_TO_BORDER)-j-1]=
-                                enc->symbols[index].data_map[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER-i)*enc->symbols[index].side_size.x+(DISTANCE_TO_BORDER)+j-1]=0;
+                        enc->symbols[index].data_map[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER-i)*enc->symbols[index].side_size.x+(DISTANCE_TO_BORDER)+j-1]=0;
                     }
                 }
             }
@@ -1845,45 +1300,31 @@ void createMatrix(jab_encode* enc, jab_int32 index, jab_data* ecc_encoded_data, 
                     if (i==k || j==k)
                     {
                     	jab_byte ap0_color_index, ap1_color_index, ap2_color_index, ap3_color_index;
-                        if(enc->color_number == 2)
-						{
-							ap0_color_index = palette_index[abs((k%2)-0)];
-							ap1_color_index = palette_index[abs((k%2)-0)];
-							ap2_color_index = palette_index[abs((k%2)-0)];
-							ap3_color_index = palette_index[abs((k%2)-0)];
-						}
-                        else if(enc->color_number == 4 )
-                        {
-                        	ap0_color_index = palette_index[abs((k%2)*3-0)];
-							ap1_color_index = palette_index[abs((k%2)*3-0)];
-							ap2_color_index = palette_index[abs((k%2)*3-0)];
-							ap3_color_index = palette_index[abs((k%2)*3-0)];
-                        }
-                        else
-						{
-							ap0_color_index = palette_index[abs((k%2)*7-AP0_CORE_COLOR)];
-							ap1_color_index = palette_index[abs((k%2)*7-AP1_CORE_COLOR)];
-							ap2_color_index = palette_index[abs((k%2)*7-AP2_CORE_COLOR)];
-							ap3_color_index = palette_index[abs((k%2)*7-AP3_CORE_COLOR)];
-						}
+                        ap0_color_index =
+						ap1_color_index =
+						ap2_color_index =
+						ap3_color_index = (k%2) ? apx_core_color_index[Nc] : apn_core_color_index[Nc];
                         //upper pattern
                         enc->symbols[index].matrix[(DISTANCE_TO_BORDER-(i+1))*enc->symbols[index].side_size.x+DISTANCE_TO_BORDER-j-1]=
-                                enc->symbols[index].matrix[(DISTANCE_TO_BORDER+(i-1))*enc->symbols[index].side_size.x+DISTANCE_TO_BORDER+j-1]=ap0_color_index;//abs((k%2)*7-AP0_CORE_COLOR);//5-(k%2)*3;
+                        enc->symbols[index].matrix[(DISTANCE_TO_BORDER+(i-1))*enc->symbols[index].side_size.x+DISTANCE_TO_BORDER+j-1]=ap0_color_index;
                         enc->symbols[index].data_map[(DISTANCE_TO_BORDER-(i+1))*enc->symbols[index].side_size.x+DISTANCE_TO_BORDER-j-1]=
-                                enc->symbols[index].data_map[(DISTANCE_TO_BORDER+(i-1))*enc->symbols[index].side_size.x+DISTANCE_TO_BORDER+j-1]=0;
+                        enc->symbols[index].data_map[(DISTANCE_TO_BORDER+(i-1))*enc->symbols[index].side_size.x+DISTANCE_TO_BORDER+j-1]=0;
+
                         enc->symbols[index].matrix[(DISTANCE_TO_BORDER-(i+1))*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)-j-1]=
-                                enc->symbols[index].matrix[(DISTANCE_TO_BORDER+(i-1))*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)+j-1]=ap1_color_index;//abs((k%2)*7-AP1_CORE_COLOR);//3+(k%2);
+                        enc->symbols[index].matrix[(DISTANCE_TO_BORDER+(i-1))*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)+j-1]=ap1_color_index;
                         enc->symbols[index].data_map[(DISTANCE_TO_BORDER-(i+1))*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)-j-1]=
-                                enc->symbols[index].data_map[(DISTANCE_TO_BORDER+(i-1))*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)+j-1]=0;
+                        enc->symbols[index].data_map[(DISTANCE_TO_BORDER+(i-1))*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)+j-1]=0;
+
                         //lower pattern
                         enc->symbols[index].matrix[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER+i)*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)-j-1]=
-                                enc->symbols[index].matrix[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER-i)*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)+j-1]=ap2_color_index;//abs((k%2)*7-AP2_CORE_COLOR);//5-(k%2)*3;
+                        enc->symbols[index].matrix[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER-i)*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)+j-1]=ap2_color_index;
                         enc->symbols[index].data_map[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER+i)*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)-j-1]=
-                                enc->symbols[index].data_map[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER-i)*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)+j-1]=0;
+						enc->symbols[index].data_map[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER-i)*enc->symbols[index].side_size.x+enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER-1)+j-1]=0;
+
                         enc->symbols[index].matrix[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER+i)*enc->symbols[index].side_size.x+(DISTANCE_TO_BORDER)-j-1]=
-                                enc->symbols[index].matrix[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER-i)*enc->symbols[index].side_size.x+(DISTANCE_TO_BORDER)+j-1]=ap3_color_index;//abs((k%2)*7-AP3_CORE_COLOR);//3+(k%2);
+                        enc->symbols[index].matrix[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER-i)*enc->symbols[index].side_size.x+(DISTANCE_TO_BORDER)+j-1]=ap3_color_index;
                         enc->symbols[index].data_map[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER+i)*enc->symbols[index].side_size.x+(DISTANCE_TO_BORDER)-j-1]=
-                                enc->symbols[index].data_map[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER-i)*enc->symbols[index].side_size.x+(DISTANCE_TO_BORDER)+j-1]=0;
+                        enc->symbols[index].data_map[(enc->symbols[index].side_size.y-DISTANCE_TO_BORDER-i)*enc->symbols[index].side_size.x+(DISTANCE_TO_BORDER)+j-1]=0;
                     }
                 }
             }
@@ -1891,191 +1332,100 @@ void createMatrix(jab_encode* enc, jab_int32 index, jab_data* ecc_encoded_data, 
     }
 
     //Metadata and color palette placement
-    jab_int32 nb_of_bits_per_mod=log(enc->color_number)/log(2);
-    jab_int32 color_number_metadata = enc->color_number > 8 ? 8 : enc->color_number;
-    jab_int32 nb_of_bits_per_metadata_mod=log(color_number_metadata)/log(2);
-    jab_int32 written_metadata_part=0,module_count=0;
-    jab_int32 index_color;
+    jab_int32 nb_of_bits_per_mod = log(enc->color_number) / log(2);
+    jab_int32 color_index;
+    jab_int32 module_count = 0;
     jab_int32 x;
     jab_int32 y;
-    if (index==0)
+
+    //get color index for color palette
+    jab_int32 palette_index_size = enc->color_number > 64 ? 64 : enc->color_number;
+	jab_byte palette_index[palette_index_size];
+	getColorPaletteIndex(palette_index, palette_index_size, enc->color_number);
+
+    if(index == 0)//place metadata and color palette in master symbol
     {
         x = MASTER_METADATA_X;
         y = MASTER_METADATA_Y;
-        for(jab_int32 i=0;i<enc->symbols[index].encoded_metadata->length;i++)
-        {
-            index_color=0;
-            if(i<6)
-            {
-                index_color=((jab_int32)enc->symbols[index].encoded_metadata->data[written_metadata_part])*(color_number_metadata-1);
-                written_metadata_part++;
-            }
-            else
-            {
-                for(jab_int32 j=0;j<nb_of_bits_per_metadata_mod;j++)
-                {
-                    if(written_metadata_part < enc->symbols[index].encoded_metadata->length)
-                        index_color+=((jab_int32)enc->symbols[index].encoded_metadata->data[written_metadata_part]) << (nb_of_bits_per_metadata_mod-1-j); //*pow(2,nb_of_bits_per_metadata_mod-1-j);
-                    else //write binary zero if metadata finished but space of module not used completely
-                        index_color+=0;
-                    written_metadata_part++;
-                    i++;
-                }
-                i--;
-            }
-            enc->symbols[index].matrix[y*enc->symbols[index].side_size.x+x]=palette_index[index_color];
-            enc->symbols[index].data_map[y*enc->symbols[index].side_size.x+x]=0;
-            module_count++;
-            getNextMetadataModuleInMaster(enc->symbols[index].side_size.y, enc->symbols[index].side_size.x, module_count, &x, &y);
-        }
-		//color palette
-		//write the first 16 colors
-		jab_int32 width=enc->symbols[index].side_size.x;
-		jab_int32 height=enc->symbols[index].side_size.y;
-		jab_int32 max_color=enc->color_number > 16 ? 16 : enc->color_number;
-		jab_int32 offset=0;
-		jab_int32 lopp_index=0;
-		for(jab_int32 i=0;i<max_color;i++)
+		int metadata_index = 0;
+        //metadata Part I
+        if(!isDefaultMode(enc))
 		{
-            if(i==8)
+			while(metadata_index < enc->symbols[index].metadata->length && metadata_index < 6)
 			{
-				offset=width-7;
-				lopp_index=0;
+				color_index = enc->symbols[index].metadata->data[metadata_index] == 0 ? apn_core_color_index[Nc] : apx_core_color_index[Nc];
+				metadata_index++;
+				enc->symbols[index].matrix  [y*enc->symbols[index].side_size.x + x] = color_index;
+				enc->symbols[index].data_map[y*enc->symbols[index].side_size.x + x] = 0;
+				module_count++;
+				getNextMetadataModuleInMaster(enc->symbols[index].side_size.y, enc->symbols[index].side_size.x, module_count, &x, &y);
 			}
-            //upper
-			enc->symbols[index].matrix[master_palette_position[lopp_index].x+offset+master_palette_position[lopp_index].y*width]=palette_index[i];
-			enc->symbols[index].data_map[master_palette_position[lopp_index].x+offset+master_palette_position[lopp_index].y*width]=0;
-            //lower
-			enc->symbols[index].matrix[width-1-master_palette_position[lopp_index].x-offset+(master_palette_position[lopp_index].y+height-7)*width]=palette_index[i];
-			enc->symbols[index].data_map[width-1-master_palette_position[lopp_index].x-offset+(master_palette_position[lopp_index].y+height-7)*width]=0;
-			lopp_index++;
 		}
-        if(enc->color_number > 16)
-        {
-            for(jab_int32 i=16; i<(enc->color_number > 64 ? 64 : enc->color_number)-1; i+=2)
-            {
-                enc->symbols[index].matrix[y*enc->symbols[index].side_size.x+x]=palette_index[i];
-                enc->symbols[index].data_map[y*enc->symbols[index].side_size.x+x]=0;
-                module_count++;
-                getNextMetadataModuleInMaster(enc->symbols[index].side_size.y, enc->symbols[index].side_size.x, module_count, &x, &y);
-                enc->symbols[index].matrix[y*enc->symbols[index].side_size.x+x]=palette_index[i+1];
-                enc->symbols[index].data_map[y*enc->symbols[index].side_size.x+x]=0;
-                module_count++;
-                getNextMetadataModuleInMaster(enc->symbols[index].side_size.y, enc->symbols[index].side_size.x, module_count, &x, &y);
-                enc->symbols[index].matrix[y*enc->symbols[index].side_size.x+x]=palette_index[i];
-                enc->symbols[index].data_map[y*enc->symbols[index].side_size.x+x]=0;
-                module_count++;
-                getNextMetadataModuleInMaster(enc->symbols[index].side_size.y, enc->symbols[index].side_size.x, module_count, &x, &y);
-                enc->symbols[index].matrix[y*enc->symbols[index].side_size.x+x]=palette_index[i+1];
-                enc->symbols[index].data_map[y*enc->symbols[index].side_size.x+x]=0;
-                module_count++;
-                getNextMetadataModuleInMaster(enc->symbols[index].side_size.y, enc->symbols[index].side_size.x, module_count, &x, &y);
-            }
-        }
+		//color palette
+		for(jab_int32 i=0; i<MIN(enc->color_number, 64); i+=2)
+		{
+			enc->symbols[index].matrix  [y*enc->symbols[index].side_size.x+x] = palette_index[i];
+			enc->symbols[index].data_map[y*enc->symbols[index].side_size.x+x] = 0;
+			module_count++;
+			getNextMetadataModuleInMaster(enc->symbols[index].side_size.y, enc->symbols[index].side_size.x, module_count, &x, &y);
+
+			enc->symbols[index].matrix  [y*enc->symbols[index].side_size.x+x] = palette_index[i+1];
+			enc->symbols[index].data_map[y*enc->symbols[index].side_size.x+x] = 0;
+			module_count++;
+			getNextMetadataModuleInMaster(enc->symbols[index].side_size.y, enc->symbols[index].side_size.x, module_count, &x, &y);
+
+			enc->symbols[index].matrix  [y*enc->symbols[index].side_size.x+x] = palette_index[i];
+			enc->symbols[index].data_map[y*enc->symbols[index].side_size.x+x] = 0;
+			module_count++;
+			getNextMetadataModuleInMaster(enc->symbols[index].side_size.y, enc->symbols[index].side_size.x, module_count, &x, &y);
+
+			enc->symbols[index].matrix  [y*enc->symbols[index].side_size.x+x] = palette_index[i+1];
+			enc->symbols[index].data_map[y*enc->symbols[index].side_size.x+x] = 0;
+			module_count++;
+			getNextMetadataModuleInMaster(enc->symbols[index].side_size.y, enc->symbols[index].side_size.x, module_count, &x, &y);
+		}
+		//metadata PartII and PartIII
+		if(!isDefaultMode(enc))
+		{
+			while(metadata_index < enc->symbols[index].metadata->length)
+			{
+				color_index = 0;
+				for(jab_int32 j=0; j<nb_of_bits_per_mod; j++)
+				{
+					if(metadata_index < enc->symbols[index].metadata->length)
+					{
+						color_index += ((jab_int32)enc->symbols[index].metadata->data[metadata_index]) << (nb_of_bits_per_mod-1-j);
+						metadata_index++;
+					}
+					else
+						break;
+				}
+				enc->symbols[index].matrix  [y*enc->symbols[index].side_size.x + x] = color_index;
+				enc->symbols[index].data_map[y*enc->symbols[index].side_size.x + x] = 0;
+				module_count++;
+				getNextMetadataModuleInMaster(enc->symbols[index].side_size.y, enc->symbols[index].side_size.x, module_count, &x, &y);
+			}
+		}
     }
-    else//Metadata slave symbol
+    else//place color palette in slave symbol
     {
-        x = SLAVE_METADATA_X;
-        y = SLAVE_METADATA_Y;
-        jab_int32 host_symbol = 0;
+    	//color palette
         jab_int32 width=enc->symbols[index].side_size.x;
         jab_int32 height=enc->symbols[index].side_size.y;
-        module_count=0;
-        for (jab_int32 i=0;i<4*enc->symbol_number;i++)
+        for (jab_int32 i=0; i<MIN(enc->color_number, 64); i+=2)
         {
-            if (enc->docked_symbol[i]==index)
-                host_symbol = i/4;
-        }
-        jab_int32 mod_x = 0;
-        jab_int32 mod_y = 0;
-        jab_int32 dx=jab_decode_order[enc->symbol_positions[index]].x-jab_decode_order[enc->symbol_positions[host_symbol]].x;
-        jab_int32 dy=jab_decode_order[enc->symbol_positions[index]].y-jab_decode_order[enc->symbol_positions[host_symbol]].y;
-
-        for(jab_int32 i=0;i<enc->symbols[index].encoded_metadata->length;i++)
-        {
-            index_color=0;
-            for(jab_int32 j=0;j<nb_of_bits_per_metadata_mod;j++)
-            {
-                if(written_metadata_part < enc->symbols[index].encoded_metadata->length)
-                    index_color+=((jab_int32)enc->symbols[index].encoded_metadata->data[written_metadata_part]) << (nb_of_bits_per_metadata_mod-1-j); //*pow(2,nb_of_bits_per_metadata_mod-1-j);
-                else //write binary zero if metadata finished but space of module not used completely
-                    index_color+=0;
-                written_metadata_part++;
-                i++;
-            }
-            i--;
-            if(dx==0 && dy>0) //top
-            {
-                mod_x=width-1-y;
-                mod_y=x;
-            }
-            else if (dx==0 && dy<0) //bottom
-            {
-                mod_x=y;
-                mod_y=height-1-x;
-            }
-            else if (dx>0 && dy==0) //left
-            {
-                mod_x=x;
-                mod_y=y;
-            }
-            else if (dx<0 && dy==0) //right
-            {
-                mod_x=width-1-x;
-                mod_y=height-1-y;
-            }
-            enc->symbols[index].matrix[mod_x+mod_y*width]=palette_index[index_color];
-            enc->symbols[index].data_map[mod_x+mod_y*width]=0;
-            module_count++;
-            getNextMetadataModuleInSlave(module_count, &x, &y);
-        }
-        //color palette
-        for (jab_int32 i=0;i<(enc->color_number > 64 ? 64 : enc->color_number)/2;i++)
-        {
-            if(dx==0 && dy>0 || dx==0 && dy<0) //top bottom
-            {
-                enc->symbols[index].matrix[width-1-slave_palette_position[i].y+slave_palette_position[i].x*width]=palette_index[i];//index_color;
-                enc->symbols[index].data_map[width-1-slave_palette_position[i].y+slave_palette_position[i].x*width]=0;
-                enc->symbols[index].matrix[slave_palette_position[i].y+(height-1-slave_palette_position[i].x)*width]=palette_index[i];//index_color;
-                enc->symbols[index].data_map[slave_palette_position[i].y+(height-1-slave_palette_position[i].x)*width]=0;
-                //left right
-                if (enc->color_number > 8)
-                {
-                    enc->symbols[index].matrix[slave_palette_position[i].x+slave_palette_position[i].y*width]=palette_index[i+(enc->color_number > 64 ? 64 : enc->color_number)/2];//index_color;
-                    enc->symbols[index].data_map[slave_palette_position[i].x+slave_palette_position[i].y*width]=0;
-                    enc->symbols[index].matrix[(width-1-slave_palette_position[i].x)+(height-1-slave_palette_position[i].y)*width]=palette_index[i+(enc->color_number > 64 ? 64 : enc->color_number)/2];//index_color;
-                    enc->symbols[index].data_map[(width-1-slave_palette_position[i].x)+(height-1-slave_palette_position[i].y)*width]=0;
-                }
-                else
-                {
-                    enc->symbols[index].matrix[width-1-slave_palette_position[i+enc->color_number/2].y+slave_palette_position[i+enc->color_number/2].x*width]=palette_index[i+enc->color_number/2];//index_color;
-                    enc->symbols[index].data_map[width-1-slave_palette_position[i+enc->color_number/2].y+slave_palette_position[i+enc->color_number/2].x*width]=0;
-                    enc->symbols[index].matrix[slave_palette_position[i+enc->color_number/2].y+(height-1-slave_palette_position[i+enc->color_number/2].x)*width]=palette_index[i+enc->color_number/2];//index_color;
-                    enc->symbols[index].data_map[slave_palette_position[i+enc->color_number/2].y+(height-1-slave_palette_position[i+enc->color_number/2].x)*width]=0;
-                }
-            }
-            else if (dx>0 && dy==0 || dx<0 && dy==0) //left right
-            {
-                enc->symbols[index].matrix[slave_palette_position[i].x+slave_palette_position[i].y*width]=palette_index[i];//index_color;
-                enc->symbols[index].data_map[slave_palette_position[i].x+slave_palette_position[i].y*width]=0;
-                enc->symbols[index].matrix[(width-1-slave_palette_position[i].x)+(height-1-slave_palette_position[i].y)*width]=palette_index[i];//index_color;
-                enc->symbols[index].data_map[(width-1-slave_palette_position[i].x)+(height-1-slave_palette_position[i].y)*width]=0;
-                //top bottom
-                if (enc->color_number > 8)
-                {
-                    enc->symbols[index].matrix[width-1-slave_palette_position[i].y+slave_palette_position[i].x*width]=palette_index[i+(enc->color_number > 64 ? 64 : enc->color_number)/2];//index_color;
-                    enc->symbols[index].data_map[width-1-slave_palette_position[i].y+slave_palette_position[i].x*width]=0;
-                    enc->symbols[index].matrix[slave_palette_position[i].y+(height-1-slave_palette_position[i].x)*width]=palette_index[i+(enc->color_number > 64 ? 64 : enc->color_number)/2];//index_color;
-                    enc->symbols[index].data_map[slave_palette_position[i].y+(height-1-slave_palette_position[i].x)*width]=0;
-                }
-                else
-                {
-                    enc->symbols[index].matrix[slave_palette_position[i+enc->color_number/2].x+slave_palette_position[i+enc->color_number/2].y*width]=palette_index[i+enc->color_number/2];//index_color;
-                    enc->symbols[index].data_map[slave_palette_position[i+enc->color_number/2].x+slave_palette_position[i+enc->color_number/2].y*width]=0;
-                    enc->symbols[index].matrix[(width-1-slave_palette_position[i+enc->color_number/2].x)+(height-1-slave_palette_position[i+enc->color_number/2].y)*width]=palette_index[i+enc->color_number/2];//index_color;
-                    enc->symbols[index].data_map[(width-1-slave_palette_position[i+enc->color_number/2].x)+(height-1-slave_palette_position[i+enc->color_number/2].y)*width]=0;
-                }
-            }
+        	//left
+			enc->symbols[index].matrix  [slave_palette_position[i/2].y*width + slave_palette_position[i/2].x] = palette_index[i];
+			enc->symbols[index].data_map[slave_palette_position[i/2].y*width + slave_palette_position[i/2].x] = 0;
+			//top
+			enc->symbols[index].matrix  [slave_palette_position[i/2].x*width + (width-1-slave_palette_position[i/2].y)] = palette_index[i+1];
+			enc->symbols[index].data_map[slave_palette_position[i/2].x*width + (width-1-slave_palette_position[i/2].y)] = 0;
+			//right
+			enc->symbols[index].matrix  [(height-1-slave_palette_position[i/2].y)*width + (width-1-slave_palette_position[i/2].x)] = palette_index[i];
+			enc->symbols[index].data_map[(height-1-slave_palette_position[i/2].y)*width + (width-1-slave_palette_position[i/2].x)] = 0;
+			//bottom
+			enc->symbols[index].matrix  [(height-1-slave_palette_position[i/2].x)*width + slave_palette_position[i/2].y] = palette_index[i+1];
+			enc->symbols[index].data_map[(height-1-slave_palette_position[i/2].x)*width + slave_palette_position[i/2].y] = 0;
         }
     }
 #if TEST_MODE
@@ -2090,14 +1440,14 @@ void createMatrix(jab_encode* enc, jab_int32 index, jab_data* ecc_encoded_data, 
         {
             if (enc->symbols[index].data_map[i]!=0 && written_mess_part<ecc_encoded_data->length)
             {
-                index_color=0;
+                color_index=0;
                 for(jab_int32 j=0;j<nb_of_bits_per_mod;j++)
                 {
                     if(written_mess_part<ecc_encoded_data->length)
-                        index_color+=((jab_int32)ecc_encoded_data->data[written_mess_part]) << (nb_of_bits_per_mod-1-j);//*pow(2,nb_of_bits_per_mod-1-j);
+                        color_index+=((jab_int32)ecc_encoded_data->data[written_mess_part]) << (nb_of_bits_per_mod-1-j);//*pow(2,nb_of_bits_per_mod-1-j);
                     else
                     {
-                        index_color+=padding << (nb_of_bits_per_mod-1-j);//*pow(2,nb_of_bits_per_mod-1-j);
+                        color_index+=padding << (nb_of_bits_per_mod-1-j);//*pow(2,nb_of_bits_per_mod-1-j);
                         if (padding==0)
                             padding=1;
                         else
@@ -2105,23 +1455,23 @@ void createMatrix(jab_encode* enc, jab_int32 index, jab_data* ecc_encoded_data, 
                     }
                     written_mess_part++;
                 }
-                enc->symbols[index].matrix[i]=(jab_char)index_color;//i % enc->color_number;
+                enc->symbols[index].matrix[i]=(jab_char)color_index;//i % enc->color_number;
 #if TEST_MODE
 				fwrite(&enc->symbols[index].matrix[i], 1, 1, fp);
 #endif // TEST_MODE
             }
             else if(enc->symbols[index].data_map[i]!=0) //write padding bits
             {
-                index_color=0;
+                color_index=0;
                 for(jab_int32 j=0;j<nb_of_bits_per_mod;j++)
                 {
-                    index_color+=padding << (nb_of_bits_per_mod-1-j);//*pow(2,nb_of_bits_per_mod-1-j);
+                    color_index+=padding << (nb_of_bits_per_mod-1-j);//*pow(2,nb_of_bits_per_mod-1-j);
                     if (padding==0)
                         padding=1;
                     else
                         padding=0;
                 }
-                enc->symbols[index].matrix[i]=(jab_char)index_color;//i % enc->color_number;
+                enc->symbols[index].matrix[i]=(jab_char)color_index;//i % enc->color_number;
 #if TEST_MODE
 				fwrite(&enc->symbols[index].matrix[i], 1, 1, fp);
 #endif // TEST_MODE
@@ -2131,133 +1481,26 @@ void createMatrix(jab_encode* enc, jab_int32 index, jab_data* ecc_encoded_data, 
 #if TEST_MODE
 	fclose(fp);
 #endif // TEST_MODE
+	return JAB_SUCCESS;
 }
 
 /**
- * @brief Determine symbol metadata length
+ * @brief Swap two symbols
  * @param enc the encode parameters
- * @param index the symbol index
+ * @param index1 the index number of the first symbol
+ * @param index2 the index number of the second symbol
 */
-void getMetadataLength(jab_encode* enc, jab_int32 index)
+void swap_symbols(jab_encode* enc, jab_int32 index1, jab_int32 index2)
 {
-    //calculate metadata length in modules
-    jab_int32 length=0;
-    jab_int32 lengthPart=0;
-    jab_int32 numberOfColorsInMetadata=enc->color_number;
-    jab_int32 longerSide=0;
-    if (numberOfColorsInMetadata>8)
-        numberOfColorsInMetadata=8;
-
-    if (index==0) //if master symbol
-    {
-        //part II in master symbol
-        length+=14; //part II in master -> 14 bit represented with max 8 color
-        //part III
-        //slaves choosed
-        lengthPart=enc->symbol_number>1 ? lengthPart+4 : lengthPart;
-        //user defined error correction level change length
-        longerSide= enc->symbol_versions[index].x > enc->symbol_versions[index].y ? enc->symbol_versions[index].x : enc->symbol_versions[index].y;
-        if (enc->ecc_levels[index]>-1)
-        {
-            if (longerSide<5)
-                lengthPart+=10;
-            else if (longerSide<9)
-                lengthPart+=12;
-            else if (longerSide<17)
-                lengthPart+=14;
-            else
-                lengthPart+=16;
-        }
-        //side version space dependend of symbol shape
-        //Rectangle symbol
-        if (enc->symbol_versions[index].x!=enc->symbol_versions[index].y)
-        {
-            if (longerSide<5)
-                lengthPart+=4;
-            else if (longerSide<9)
-                lengthPart+=6;
-            else if (longerSide<17)
-                lengthPart+=8;
-            else
-                lengthPart+=10;
-        }
-        else //Square symbol
-        {
-            if (longerSide<9)
-                lengthPart+=2;
-            else if (longerSide<17)
-                lengthPart+=3;
-            else
-                lengthPart+=4;
-        }
-        //consider ldpc length
-        if (lengthPart==2)
-            lengthPart+=3;
-        else
-            lengthPart*=2;
-        //metadata length in modules is dependend on number of colors
-        length+=lengthPart;
-        length+=6;//part I in master symbol -> always 6 moduls
-    }
-    else //slave symbol
-    {
-        //part I
-        length+=6;
-        //part II
-        lengthPart=0;
-        //host symbol search
-        jab_int32 host_symbol = 0;
-        for(jab_int32 i=0;i<4*enc->symbol_number;i++)
-        {
-            if (enc->docked_symbol[i]==index)
-                host_symbol = i/4;
-        }
-        //symbol shape and size vary compared to host symbol
-        if (enc->symbol_versions[index].x != enc->symbol_versions[host_symbol].x || enc->symbol_versions[index].y != enc->symbol_versions[host_symbol].y)
-            lengthPart+=10;
-        //Parameter S
-        jab_int32 numberOfDockedSymbols=0;
-        //number of docked symbols
-		for(jab_int32 i=0; i<4; i++)
-        {
-            if(enc->docked_symbol[4*index + i] > 0)
-                numberOfDockedSymbols++;
-        }
-        if (numberOfDockedSymbols!=0)
-            lengthPart+=6;
-
-        length+=lengthPart;
-
-        //part III in slave symbol
-        lengthPart=0;
-        //use other ecc level than host symbol
-        if (enc->ecc_levels[index] != enc->ecc_levels[host_symbol])
-        {
-            lengthPart+=10;
-            if(enc->symbol_versions[index].x>4 || enc->symbol_versions[index].y>4)
-                lengthPart+=2;
-            if(enc->symbol_versions[index].x>8 || enc->symbol_versions[index].y>8)
-                lengthPart+=2;
-            if(enc->symbol_versions[index].x>16 || enc->symbol_versions[index].y>16)
-                lengthPart+=2;
-        }
-        length+=lengthPart;
-    }
-    jab_int32 size_metadata;
-    if (index==0)
-        size_metadata=80;
-    else
-        size_metadata=54;
-    if(enc->symbols[index].encoded_metadata==NULL)
-    {
-        enc->symbols[index].encoded_metadata = (jab_data *)malloc(sizeof(jab_data) + size_metadata*sizeof(jab_char));
-        if(enc->symbols[index].encoded_metadata == NULL)
-        {
-            reportError("Memory allocation for metadata failed");
-            return;
-        }
-    }
-    enc->symbols[index].encoded_metadata->length=length;
+	swap_int(&enc->symbol_positions[index1],  &enc->symbol_positions[index2]);
+	swap_int(&enc->symbol_versions[index1].x, &enc->symbol_versions[index2].x);
+	swap_int(&enc->symbol_versions[index1].y, &enc->symbol_versions[index2].y);
+	swap_byte(&enc->symbol_ecc_levels[index1],&enc->symbol_ecc_levels[index2]);
+	//swap symbols
+	jab_symbol s;
+    s = enc->symbols[index1];
+    enc->symbols[index1] = enc->symbols[index2];
+    enc->symbols[index2] = s;
 }
 
 /**
@@ -2267,69 +1510,82 @@ void getMetadataLength(jab_encode* enc, jab_int32 index)
 */
 jab_boolean assignDockedSymbols(jab_encode* enc)
 {
-    //docked symbol search
-    jab_boolean* isDockedSymbol;
-    isDockedSymbol = (jab_boolean *)malloc(enc->symbol_number * sizeof(jab_boolean));
-    if(!isDockedSymbol)
+	//initialize host and slaves
+	for(jab_int32 i=0; i<enc->symbol_number; i++)
+	{
+		//initialize symbol host index
+		enc->symbols[i].host = -1;
+		//initialize symbol's slave index
+		for(jab_int32 j=0; j<4; j++)
+			enc->symbols[i].slaves[j] = 0;	//0:no slave
+	}
+	//assign docked symbols
+	jab_int32 assigned_slave_index = 1;
+    for(jab_int32 i=0; i<enc->symbol_number-1 && assigned_slave_index<enc->symbol_number; i++)
     {
-        reportError("Memory allocation for boolean array failed");
-        return 0;
-    }
-    memset(isDockedSymbol, 1, enc->symbol_number * sizeof(jab_boolean));
-    //start with master
-    isDockedSymbol[0]=0;
-    for(jab_int32 i=0;i<enc->symbol_number-1;i++)
-    {
-        for(jab_int32 k=i+1;k<enc->symbol_number;k++)
-        {
-			if(isDockedSymbol[k] == 1)
+    	for(jab_int32 j=0; j<4 && assigned_slave_index<enc->symbol_number; j++)
+		{
+			for(jab_int32 k=i+1; k<enc->symbol_number && assigned_slave_index<enc->symbol_number; k++)
 			{
-				jab_int32 hpos = enc->symbol_positions[i];
-				jab_int32 spos = enc->symbol_positions[k];
-				if(jab_decode_order[hpos].x == jab_decode_order[spos].x)
+				if(enc->symbols[k].host == -1)
 				{
-					if(jab_decode_order[hpos].y - 1 == jab_decode_order[spos].y)
+					jab_int32 hpos = enc->symbol_positions[i];
+					jab_int32 spos = enc->symbol_positions[k];
+					jab_boolean slave_found = JAB_FAILURE;
+					switch(j)
 					{
-						isDockedSymbol[k] = 0;
-						enc->docked_symbol[i*4 + 0] = k;
-						enc->docked_symbol[k*4 + 1] = -1;
+					case 0:	//top
+						if(jab_symbol_pos[hpos].x == jab_symbol_pos[spos].x && jab_symbol_pos[hpos].y - 1 == jab_symbol_pos[spos].y)
+						{
+							enc->symbols[i].slaves[0] = assigned_slave_index;
+							enc->symbols[k].slaves[1] = -1;	//-1:host position
+							slave_found = JAB_SUCCESS;
+						}
+						break;
+					case 1:	//bottom
+						if(jab_symbol_pos[hpos].x == jab_symbol_pos[spos].x && jab_symbol_pos[hpos].y + 1 == jab_symbol_pos[spos].y)
+						{
+							enc->symbols[i].slaves[1] = assigned_slave_index;
+							enc->symbols[k].slaves[0] = -1;
+							slave_found = JAB_SUCCESS;
+						}
+						break;
+					case 2:	//left
+						if(jab_symbol_pos[hpos].y == jab_symbol_pos[spos].y && jab_symbol_pos[hpos].x - 1 == jab_symbol_pos[spos].x)
+						{
+							enc->symbols[i].slaves[2] = assigned_slave_index;
+							enc->symbols[k].slaves[3] = -1;
+							slave_found = JAB_SUCCESS;
+						}
+						break;
+					case 3://right
+						if(jab_symbol_pos[hpos].y == jab_symbol_pos[spos].y && jab_symbol_pos[hpos].x + 1 == jab_symbol_pos[spos].x)
+						{
+							enc->symbols[i].slaves[3] = assigned_slave_index;
+							enc->symbols[k].slaves[2] = -1;
+							slave_found = JAB_SUCCESS;
+						}
+						break;
 					}
-					else if(jab_decode_order[hpos].y + 1 == jab_decode_order[spos].y)
+					if(slave_found)
 					{
-						isDockedSymbol[k] = 0;
-						enc->docked_symbol[i*4 + 1] = k;
-						enc->docked_symbol[k*4 + 0] = -1;
-					}
-				}
-				if(jab_decode_order[hpos].y == jab_decode_order[spos].y)
-				{
-					if(jab_decode_order[hpos].x - 1 == jab_decode_order[spos].x)
-					{
-						isDockedSymbol[k] = 0;
-						enc->docked_symbol[i*4 + 2] = k;
-						enc->docked_symbol[k*4 + 3] = -1;
-					}
-					else if(jab_decode_order[hpos].x + 1 == jab_decode_order[spos].x)
-					{
-						isDockedSymbol[k] = 0;
-						enc->docked_symbol[i*4 + 3] = k;
-						enc->docked_symbol[k*4 + 2] = -1;
+						swap_symbols(enc, k, assigned_slave_index);
+						enc->symbols[assigned_slave_index].host = i;
+						assigned_slave_index++;
 					}
 				}
 			}
-        }
+		}
     }
     //check if there is undocked symbol
-    for(jab_int32 i=0; i<enc->symbol_number; i++)
+    for(jab_int32 i=1; i<enc->symbol_number; i++)
     {
-		if(isDockedSymbol[i] == 1)
+		if(enc->symbols[i].host == -1)
 		{
 			JAB_REPORT_ERROR(("Slave symbol at position %d has no host", enc->symbol_positions[i]))
-			free(isDockedSymbol);
 			return JAB_FAILURE;
 		}
     }
-    free(isDockedSymbol);
     return JAB_SUCCESS;
 }
 
@@ -2367,15 +1623,15 @@ jab_code* getCodePara(jab_encode* enc)
     for(jab_int32 i=0; i<enc->symbol_number; i++)
     {
         //find the mininal x and y
-        if(jab_decode_order[enc->symbol_positions[i]].x < cp->min_x)
-            cp->min_x = jab_decode_order[enc->symbol_positions[i]].x;
-        if(jab_decode_order[enc->symbol_positions[i]].y < cp->min_y)
-            cp->min_y = jab_decode_order[enc->symbol_positions[i]].y;
+        if(jab_symbol_pos[enc->symbol_positions[i]].x < cp->min_x)
+            cp->min_x = jab_symbol_pos[enc->symbol_positions[i]].x;
+        if(jab_symbol_pos[enc->symbol_positions[i]].y < cp->min_y)
+            cp->min_y = jab_symbol_pos[enc->symbol_positions[i]].y;
         //find the maximal x and y
-        if(jab_decode_order[enc->symbol_positions[i]].x > max_x)
-            max_x = jab_decode_order[enc->symbol_positions[i]].x;
-        if(jab_decode_order[enc->symbol_positions[i]].y > max_y)
-            max_y = jab_decode_order[enc->symbol_positions[i]].y;
+        if(jab_symbol_pos[enc->symbol_positions[i]].x > max_x)
+            max_x = jab_symbol_pos[enc->symbol_positions[i]].x;
+        if(jab_symbol_pos[enc->symbol_positions[i]].y > max_y)
+            max_y = jab_symbol_pos[enc->symbol_positions[i]].y;
     }
 
     //calculate the code size
@@ -2403,7 +1659,7 @@ jab_code* getCodePara(jab_encode* enc)
         flag = 0;
         for(jab_int32 i=0; i<enc->symbol_number; i++)
         {
-            if(jab_decode_order[enc->symbol_positions[i]].x == x)
+            if(jab_symbol_pos[enc->symbol_positions[i]].x == x)
             {
                 cp->col_width[x - cp->min_x] = enc->symbols[i].side_size.x;
                 cp->code_size.x += cp->col_width[x - cp->min_x];
@@ -2417,7 +1673,7 @@ jab_code* getCodePara(jab_encode* enc)
         flag = 0;
         for(jab_int32 i=0; i<enc->symbol_number; i++)
         {
-            if(jab_decode_order[enc->symbol_positions[i]].y == y)
+            if(jab_symbol_pos[enc->symbol_positions[i]].y == y)
             {
                 cp->row_height[y - cp->min_y] = enc->symbols[i].side_size.y;
                 cp->code_size.y += cp->row_height[y - cp->min_y];
@@ -2433,8 +1689,9 @@ jab_code* getCodePara(jab_encode* enc)
  * @brief Create bitmap for the code
  * @param enc the encode parameters
  * @param cp the code parameters
+ * @return JAB_SUCCESS | JAB_FAILURE
 */
-void createBitmap(jab_encode* enc, jab_code* cp)
+jab_boolean createBitmap(jab_encode* enc, jab_code* cp)
 {
     //create bitmap
     jab_int32 width = cp->dimension * cp->code_size.x;
@@ -2445,7 +1702,7 @@ void createBitmap(jab_encode* enc, jab_code* cp)
     if(enc->bitmap == NULL)
     {
         reportError("Memory allocation for bitmap failed");
-        return;
+        return JAB_FAILURE;
     }
     enc->bitmap->width = width;
     enc->bitmap->height= height;
@@ -2458,8 +1715,8 @@ void createBitmap(jab_encode* enc, jab_code* cp)
     {
         //calculate the starting coordinates of the symbol matrix
         jab_int32 startx = 0, starty = 0;
-        jab_int32 col = jab_decode_order[enc->symbol_positions[k]].x - cp->min_x;
-        jab_int32 row = jab_decode_order[enc->symbol_positions[k]].y - cp->min_y;
+        jab_int32 col = jab_symbol_pos[enc->symbol_positions[k]].x - cp->min_x;
+        jab_int32 row = jab_symbol_pos[enc->symbol_positions[k]].y - cp->min_y;
         for(jab_int32 c=0; c<col; c++)
             startx += cp->col_width[c];
         for(jab_int32 r=0; r<row; r++)
@@ -2487,6 +1744,7 @@ void createBitmap(jab_encode* enc, jab_code* cp)
             }
         }
     }
+    return JAB_SUCCESS;
 }
 
 
@@ -2501,24 +1759,24 @@ jab_boolean checkDockedSymbolSize(jab_encode* enc)
 	{
 		for(jab_int32 j=0; j<4; j++)
 		{
-			jab_int32 slave_index = enc->docked_symbol[i*4 + j];
+			jab_int32 slave_index = enc->symbols[i].slaves[j];
 			if(slave_index > 0)
 			{
-					jab_int32 hpos = enc->symbol_positions[i];
-					jab_int32 spos = enc->symbol_positions[slave_index];
-					jab_int32 x_diff = jab_decode_order[hpos].x - jab_decode_order[spos].x;
-					jab_int32 y_diff = jab_decode_order[hpos].y - jab_decode_order[spos].y;
+				jab_int32 hpos = enc->symbol_positions[i];
+				jab_int32 spos = enc->symbol_positions[slave_index];
+				jab_int32 x_diff = jab_symbol_pos[hpos].x - jab_symbol_pos[spos].x;
+				jab_int32 y_diff = jab_symbol_pos[hpos].y - jab_symbol_pos[spos].y;
 
-					if(x_diff == 0 && enc->symbol_versions[i].x != enc->symbol_versions[slave_index].x)
-					{
-						JAB_REPORT_ERROR(("Slave symbol at position %d has different side version in X direction as its host symbol at position %d", spos, hpos))
-						return JAB_FAILURE;
-					}
-					if(y_diff == 0 && enc->symbol_versions[i].y != enc->symbol_versions[slave_index].y)
-					{
-						JAB_REPORT_ERROR(("Slave symbol at position %d has different side version in Y direction as its host symbol at position %d", spos, hpos))
-						return JAB_FAILURE;
-					}
+				if(x_diff == 0 && enc->symbol_versions[i].x != enc->symbol_versions[slave_index].x)
+				{
+					JAB_REPORT_ERROR(("Slave symbol at position %d has different side version in X direction as its host symbol at position %d", spos, hpos))
+					return JAB_FAILURE;
+				}
+				if(y_diff == 0 && enc->symbol_versions[i].y != enc->symbol_versions[slave_index].y)
+				{
+					JAB_REPORT_ERROR(("Slave symbol at position %d has different side version in Y direction as its host symbol at position %d", spos, hpos))
+					return JAB_FAILURE;
+				}
 			}
 		}
 	}
@@ -2526,40 +1784,322 @@ jab_boolean checkDockedSymbolSize(jab_encode* enc)
 }
 
 /**
- * @brief Generate JABCode
+ * @brief Set the minimal master symbol version
  * @param enc the encode parameters
- * @param data the input data
+ * @param encoded_data the encoded message
+ * @return JAB_SUCCESS | JAB_FAILURE
+ */
+jab_boolean setMasterSymbolVersion(jab_encode *enc, jab_data* encoded_data)
+{
+    //calculate required number of data modules depending on data_length
+    jab_int32 net_data_length = encoded_data->length;
+    jab_int32 payload_length = net_data_length + 5;  //plus S and flag bit
+    if(enc->symbol_ecc_levels[0] == 0) enc->symbol_ecc_levels[0] = DEFAULT_ECC_LEVEL;
+    enc->symbols[0].wcwr[0] = ecclevel2wcwr[enc->symbol_ecc_levels[0]][0];
+	enc->symbols[0].wcwr[1] = ecclevel2wcwr[enc->symbol_ecc_levels[0]][1];
+
+	//determine the minimum square symbol to fit data
+	jab_int32 capacity, net_capacity;
+	jab_boolean found_flag = JAB_FAILURE;
+	for (jab_int32 i=1; i<=32; i++)
+	{
+		enc->symbol_versions[0].x = i;
+		enc->symbol_versions[0].y = i;
+		capacity = getSymbolCapacity(enc, 0);
+		net_capacity = (capacity/enc->symbols[0].wcwr[1])*enc->symbols[0].wcwr[1] - (capacity/enc->symbols[0].wcwr[1])*enc->symbols[0].wcwr[0];
+		if(net_capacity >= payload_length)
+		{
+			found_flag = JAB_SUCCESS;
+			break;
+		}
+	}
+	if(!found_flag)
+	{
+		jab_int32 level = -1;
+		for (jab_int32 j=(jab_int32)enc->symbol_ecc_levels[0]-1; j>0; j--)
+		{
+			net_capacity = (capacity/ecclevel2wcwr[j][1])*ecclevel2wcwr[j][1] - (capacity/ecclevel2wcwr[j][1])*ecclevel2wcwr[j][0];
+			if(net_capacity >= payload_length)
+				level = j;
+		}
+		if(level > 0)
+		{
+			JAB_REPORT_ERROR(("Message does not fit into one symbol with the given ECC level. Please use an ECC level lower than %d with '--ecc-level %d'", level, level))
+			return JAB_FAILURE;
+		}
+		else
+		{
+			reportError("Message does not fit into one symbol. Use more symbols.");
+			return JAB_FAILURE;
+		}
+	}
+	//update symbol side size
+    enc->symbols[0].side_size.x = VERSION2SIZE(enc->symbol_versions[0].x);
+	enc->symbols[0].side_size.y = VERSION2SIZE(enc->symbol_versions[0].y);
+
+    return JAB_SUCCESS;
+}
+
+/**
+ * @brief Add variable E to slave symbol metadata the data payload for each symbol
+ * @param slave the slave symbol
  * @return JAB_SUCCESS | JAB_FAILURE
 */
-jab_boolean generateJABCode(jab_encode* enc, jab_data* data)
+jab_boolean addE2SlaveMetadata(jab_symbol* slave)
 {
-    //Check data
-    if(data == NULL)
-    {
-        reportError("No input data specified!");
-        return JAB_FAILURE;
-    }
-    if(data->length == 0)
-    {
-        reportError("No input data specified!");
-        return JAB_FAILURE;
-    }
-    //sort symbol versions and ecc levels depending on symbol positions in ascending order
-    for(jab_int32 i=0; i<enc->symbol_number-1; i++)
-    {
-        for(jab_int32 j=i; j>=0; j--)
-        {
-            if(enc->symbol_positions[j] > enc->symbol_positions[j+1])
-            {
-                swap_int(&enc->symbol_positions[j], &enc->symbol_positions[j+1]);
-                swap_int(&enc->symbol_versions[j].x, &enc->symbol_versions[j+1].x);
-                swap_int(&enc->symbol_versions[j].y, &enc->symbol_versions[j+1].y);
-                swap_byte(&enc->ecc_levels[j], &enc->ecc_levels[j+1]);
-            }
-        }
-    }
+	//copy old metadata to new metadata
+	jab_int32 old_metadata_length = slave->metadata->length;
+	jab_int32 new_metadata_length = old_metadata_length + 6;
+	jab_data* old_metadata = slave->metadata;
+	slave->metadata = (jab_data *)malloc(sizeof(jab_data) + new_metadata_length*sizeof(jab_char));
+	if(slave->metadata == NULL)
+	{
+		reportError("Memory allocation for metadata in slave symbol failed");
+		return JAB_FAILURE;
+	}
+	slave->metadata->length = new_metadata_length;
+	memcpy(slave->metadata->data, old_metadata->data, old_metadata_length);
+	free(old_metadata);
 
+	//update SE = 1
+	slave->metadata->data[1] = 1;
+	//set variable E
+	jab_int32 E1 = slave->wcwr[0] - 3;
+	jab_int32 E2 = slave->wcwr[1] - 4;
+	convert_dec_to_bin(E1, slave->metadata->data, old_metadata_length, 3);
+	convert_dec_to_bin(E2, slave->metadata->data, old_metadata_length+3, 3);
+	return JAB_SUCCESS;
+}
 
+/**
+ * @brief Update slave metadata E in its host data stream
+ * @param enc the encode parameters
+ * @param host_index the host symbol index
+ * @param slave_index the slave symbol index
+*/
+void updateSlaveMetadataE(jab_encode* enc, jab_int32 host_index, jab_int32 slave_index)
+{
+	jab_symbol* host = &enc->symbols[host_index];
+	jab_symbol* slave= &enc->symbols[slave_index];
+
+	jab_int32 offset = host->data->length - 1;
+	//find the start flag of metadata
+	while(host->data->data[offset] == 0)
+	{
+		offset--;
+	}
+	//skip the flag bit
+	offset--;
+	//skip host metadata S
+	if(host_index == 0)
+		offset -= 4;
+	else
+		offset -= 3;
+	//skip other slave symbol's metadata
+	for(jab_int32 i=0; i<4; i++)
+	{
+		if(host->slaves[i] == slave_index)
+			break;
+		else if(host->slaves[i] <= 0)
+			continue;
+		else
+			offset -= enc->symbols[host->slaves[i]].metadata->length;
+	}
+	//skip SS, SE and possibly V
+    if(slave->metadata->data[0] == 1)
+		offset -= 7;
+	else
+		offset -= 2;
+	//update E
+	jab_char E[6];
+	jab_int32 E1 = slave->wcwr[0] - 3;
+	jab_int32 E2 = slave->wcwr[1] - 4;
+	convert_dec_to_bin(E1, E, 0, 3);
+	convert_dec_to_bin(E2, E, 3, 3);
+	for(jab_int32 i=0; i<6; i++)
+	{
+		host->data->data[offset--] = E[i];
+	}
+}
+
+/**
+ * @brief Set the data payload for each symbol
+ * @param enc the encode parameters
+ * @param encoded_data the encoded message
+ * @return JAB_SUCCESS | JAB_FAILURE
+*/
+jab_boolean fitDataIntoSymbols(jab_encode* enc, jab_data* encoded_data)
+{
+	//calculate the net capacity of each symbol and the total net capacity
+	jab_int32 capacity[enc->symbol_number];
+	jab_int32 net_capacity[enc->symbol_number];
+	jab_int32 total_net_capacity = 0;
+	for(jab_int32 i=0; i<enc->symbol_number; i++)
+	{
+		capacity[i] = getSymbolCapacity(enc, i);
+		enc->symbols[i].wcwr[0] = ecclevel2wcwr[enc->symbol_ecc_levels[i]][0];
+		enc->symbols[i].wcwr[1] = ecclevel2wcwr[enc->symbol_ecc_levels[i]][1];
+		net_capacity[i] = (capacity[i]/enc->symbols[i].wcwr[1])*enc->symbols[i].wcwr[1] - (capacity[i]/enc->symbols[i].wcwr[1])*enc->symbols[i].wcwr[0];
+		total_net_capacity += net_capacity[i];
+	}
+	//assign data into each symbol
+	jab_int32 assigned_data_length = 0;
+	for(jab_int32 i=0; i<enc->symbol_number; i++)
+	{
+		//divide data proportionally
+		jab_int32 s_data_length;
+		if(i == enc->symbol_number - 1)
+		{
+			s_data_length = encoded_data->length - assigned_data_length;
+		}
+		else
+		{
+			jab_float prop = (jab_float)net_capacity[i] / (jab_float)total_net_capacity;
+			s_data_length = (jab_int32)(prop * encoded_data->length);
+		}
+		jab_int32 s_payload_length = s_data_length;
+
+		//add flag bit
+		s_payload_length++;
+		//add host metadata S length (master metadata Part IV or slave metadata Part III)
+		if(i == 0)	s_payload_length += 4;
+		else		s_payload_length += 3;
+		//add slave metadata length
+		for(jab_int32 j=0; j<4; j++)
+		{
+			if(enc->symbols[i].slaves[j] > 0)
+			{
+				s_payload_length += enc->symbols[enc->symbols[i].slaves[j]].metadata->length;
+			}
+		}
+
+		//check if the full payload exceeds net capacity
+		if(s_payload_length > net_capacity[i])
+		{
+			reportError("Message does not fit into the specified code. Use higher symbol version.");
+			return JAB_FAILURE;
+		}
+
+		//add metadata E for slave symbols if free capacity available
+		jab_int32 j = 0;
+		while(net_capacity[i] - s_payload_length >= 6 && j < 4)
+		{
+			if(enc->symbols[i].slaves[j] > 0)
+			{
+				if(enc->symbols[enc->symbols[i].slaves[j]].metadata->data[1] == 0) //check SE
+				{
+					if(!addE2SlaveMetadata(&enc->symbols[enc->symbols[i].slaves[j]]))
+						return JAB_FAILURE;
+					s_payload_length += 6;	//add E length
+				}
+			}
+			j++;
+		}
+
+		//get optimal code rate
+		jab_int32 pn_length = s_payload_length;
+		if(i == 0)
+		{
+			if(!isDefaultMode(enc))
+			{
+				getOptimalECC(capacity[i], s_payload_length, enc->symbols[i].wcwr);
+				pn_length = (capacity[i]/enc->symbols[i].wcwr[1])*enc->symbols[i].wcwr[1] - (capacity[i]/enc->symbols[i].wcwr[1])*enc->symbols[i].wcwr[0];
+			}
+			else
+				pn_length = net_capacity[i];
+		}
+		else
+		{
+			if(enc->symbols[i].metadata->data[1] == 1)	//SE = 1
+			{
+				getOptimalECC(capacity[i], pn_length, enc->symbols[i].wcwr);
+				pn_length = (capacity[i]/enc->symbols[i].wcwr[1])*enc->symbols[i].wcwr[1] - (capacity[i]/enc->symbols[i].wcwr[1])*enc->symbols[i].wcwr[0];
+				updateSlaveMetadataE(enc, enc->symbols[i].host, i);
+			}
+			else
+				pn_length = net_capacity[i];
+		}
+
+		//start to set full payload
+        enc->symbols[i].data = (jab_data *)calloc(1, sizeof(jab_data) + pn_length*sizeof(jab_char));
+        if(enc->symbols[i].data == NULL)
+		{
+			reportError("Memory allocation for data payload in symbol failed");
+			return JAB_FAILURE;
+		}
+		enc->symbols[i].data->length = pn_length;
+		//set data
+		memcpy(enc->symbols[i].data->data, &encoded_data->data[assigned_data_length], s_data_length);
+		assigned_data_length += s_data_length;
+		//set flag bit
+		jab_int32 set_pos = s_payload_length - 1;
+		enc->symbols[i].data->data[set_pos--] = 1;
+		//set host metadata S
+		for(jab_int32 k=0; k<4; k++)
+		{
+			if(enc->symbols[i].slaves[k] > 0)
+			{
+				enc->symbols[i].data->data[set_pos--] = 1;
+			}
+			else if(enc->symbols[i].slaves[k] == 0)
+			{
+				enc->symbols[i].data->data[set_pos--] = 0;
+			}
+		}
+		//set slave metadata
+		for(jab_int32 k=0; k<4; k++)
+		{
+			if(enc->symbols[i].slaves[k] > 0)
+			{
+				for(jab_int32 m=0; m<enc->symbols[enc->symbols[i].slaves[k]].metadata->length; m++)
+				{
+					enc->symbols[i].data->data[set_pos--] = enc->symbols[enc->symbols[i].slaves[k]].metadata->data[m];
+				}
+			}
+		}
+	}
+	return JAB_SUCCESS;
+}
+
+/**
+ * @brief Initialize symbols
+ * @param enc the encode parameters
+ * @return JAB_SUCCESS | JAB_FAILURE
+*/
+jab_boolean InitSymbols(jab_encode* enc)
+{
+	//check all information for multi-symbol code are valid
+	if(enc->symbol_number > 1)
+	{
+		for(jab_int32 i=0; i<enc->symbol_number; i++)
+		{
+			if(enc->symbol_versions[i].x < 1 || enc->symbol_versions[i].x > 32 || enc->symbol_versions[i].y < 1 || enc->symbol_versions[i].y > 32)
+			{
+				JAB_REPORT_ERROR(("Incorrect symbol version for symbol %d", i))
+				return JAB_FAILURE;
+			}
+			if(enc->symbol_positions[i] < 0 || enc->symbol_positions[i] > MAX_SYMBOL_NUMBER)
+			{
+				JAB_REPORT_ERROR(("Incorrect symbol position for symbol %d", i))
+				return JAB_FAILURE;
+			}
+		}
+	}
+	//move the master symbol to the first
+    if(enc->symbol_number > 1 && enc->symbol_positions[0] != 0)
+	{
+		for(jab_int32 i=0; i<enc->symbol_number; i++)
+		{
+			if(enc->symbol_positions[i] == 0)
+			{
+				swap_int (&enc->symbol_positions[i], 	&enc->symbol_positions[0]);
+				swap_int (&enc->symbol_versions[i].x, 	&enc->symbol_versions[0].x);
+				swap_int (&enc->symbol_versions[i].y, 	&enc->symbol_versions[0].y);
+				swap_byte(&enc->symbol_ecc_levels[i], 	&enc->symbol_ecc_levels[0]);
+				break;
+			}
+		}
+	}
     //if no master symbol exists in multi-symbol code
     if(enc->symbol_number > 1 && enc->symbol_positions[0] != 0)
     {
@@ -2570,184 +2110,239 @@ jab_boolean generateJABCode(jab_encode* enc, jab_data* data)
     if(enc->symbol_number == 1 && enc->symbol_positions[0] != 0)
         enc->symbol_positions[0] = 0;
     //check if a symbol position is used twice
-    if(enc->symbol_number > 1)
-    {
-        for(jab_int32 i=0; i<enc->symbol_number-1; i++)
-        {
-            if(enc->symbol_positions[i] == enc->symbol_positions[i+1])
-            {
-                reportError("Duplicate symbol position");
-                return JAB_FAILURE;
-            }
-        }
-    }
-    //assign docked symbols to their hosts
+	for(jab_int32 i=0; i<enc->symbol_number-1; i++)
+	{
+		for(jab_int32 j=i+1; j<enc->symbol_number; j++)
+		{
+			if(enc->symbol_positions[i] == enc->symbol_positions[j])
+			{
+				reportError("Duplicate symbol position");
+				return JAB_FAILURE;
+			}
+		}
+	}
+	//assign docked symbols to their hosts
     if(!assignDockedSymbols(enc))
 		return JAB_FAILURE;
     //check if the docked symbol size matches the docked side of its host
     if(!checkDockedSymbolSize(enc))
 		return JAB_FAILURE;
-
-    //get the optimal encoded length and encoding seqence
-    jab_int32 encoded_length;
-    jab_int32* encode_seq = analyzeInputData(data, &encoded_length);
-    //used for ecc parameters
-    jab_int32* coderate_params=(jab_int32 *)malloc(sizeof(jab_int32)*(enc->symbol_number * 2));
-    if(coderate_params == NULL){
-        reportError("Memory allocation for coderate parameters failed");
-        free(encode_seq);
-        return JAB_FAILURE;
-    }
-    jab_int32* from_to=(jab_int32 *)malloc(sizeof(jab_int32)*(enc->symbol_number * 2));
-    if(from_to == NULL){
-        reportError("Memory allocation for from_to array failed");
-        free(coderate_params);
-        free(encode_seq);
-        return JAB_FAILURE;
-    }
-    //if symbol_versions and ecc_levels not specified for master symbol
-    if(enc->symbol_number==1)
-    {
-        if (determineMissingParams(enc,&encoded_length,coderate_params)==1)
-        {
-            reportError("Calcualtion of missing parameters failed");
-            free(coderate_params);
-            free(encode_seq);
-            free(from_to);
-            return JAB_FAILURE;
-        }
-        from_to[0]=0;
-        from_to[1]=encoded_length;
-    }
-    else//check if message fits into specified code, if yes -> devide message and determine all params for ecc
-    {
-        //if ecc_level not specified for each symbol or all equal, spread data and determine best wc and wr to get most stable data
-        if(divideMessage(enc,&encoded_length,coderate_params,from_to)==1)
-        {
-            reportError("JabCode parameter failure, please use --help");
-            free(coderate_params);
-            free(encode_seq);
-            free(from_to);
-            return JAB_FAILURE;
-        }
-    }
-    //encode data using optimal encoding modes
-    jab_data* encoded_data = encodeData(data,encoded_length,encode_seq);
-    if(encoded_data == NULL)
-    {
-        free(coderate_params);
-        free(encode_seq);
-        free(from_to);
-        return JAB_FAILURE;
-    }
-
-    //determine side size for each symbol
+	//set symbol index and symbol side size
     for(jab_int32 i=0; i<enc->symbol_number; i++)
     {
-        //set symbol index
-        enc->symbols[i].index = i;
+    	//set symbol index
+		enc->symbols[i].index = i;
         //set symbol side size
         enc->symbols[i].side_size.x = VERSION2SIZE(enc->symbol_versions[i].x);
         enc->symbols[i].side_size.y = VERSION2SIZE(enc->symbol_versions[i].y);
     }
+    return JAB_SUCCESS;
+}
 
-	//Interleave color palette in case of more than 8 colors
-	jab_int32 palette_index_size = enc->color_number > 64 ? 64 : enc->color_number;
-	jab_byte palette_index[palette_index_size];
-	for(jab_int32 i=0; i<palette_index_size; i++)
-		palette_index[i] = i;
-	if(enc->color_number > 8)
+/**
+ * @brief Set metadata for slave symbols
+ * @param enc the encode parameters
+ * @return JAB_SUCCESS | JAB_FAILURE
+*/
+jab_boolean setSlaveMetadata(jab_encode* enc)
+{
+	//set slave metadata variables
+	for(jab_int32 i=1; i<enc->symbol_number; i++)
 	{
-		interleaveColorPalette(palette_index, palette_index_size, enc->color_number);
+		jab_int32 SS, SE, V, E1=0, E2=0;
+		jab_int32 metadata_length = 2; //Part I length
+		//SS and V
+		if(enc->symbol_versions[i].x != enc->symbol_versions[enc->symbols[i].host].x)
+		{
+		  	SS = 1;
+			V = enc->symbol_versions[i].x - 1;
+			metadata_length += 5;
+		}
+		else if(enc->symbol_versions[i].y != enc->symbol_versions[enc->symbols[i].host].y)
+		{
+			SS = 1;
+			V = enc->symbol_versions[i].y - 1;
+			metadata_length += 5;
+		}
+		else
+		{
+			SS = 0;
+		}
+		//SE and E
+		if(enc->symbol_ecc_levels[i] == 0 || enc->symbol_ecc_levels[i] == enc->symbol_ecc_levels[enc->symbols[i].host])
+		{
+			SE = 0;
+		}
+		else
+		{
+			SE = 1;
+			E1 = ecclevel2wcwr[enc->symbol_ecc_levels[i]][0] - 3;
+			E2 = ecclevel2wcwr[enc->symbol_ecc_levels[i]][1] - 4;
+			metadata_length += 6;
+		}
+		//write slave metadata
+		enc->symbols[i].metadata = (jab_data *)malloc(sizeof(jab_data) + metadata_length*sizeof(jab_char));
+		if(enc->symbols[i].metadata == NULL)
+		{
+			reportError("Memory allocation for metadata in slave symbol failed");
+			return JAB_FAILURE;
+		}
+		enc->symbols[i].metadata->length = metadata_length;
+		//Part I
+		enc->symbols[i].metadata->data[0] = SS;
+		enc->symbols[i].metadata->data[1] = SE;
+		//Part II
+		if(SS == 1)
+		{
+			convert_dec_to_bin(V, enc->symbols[i].metadata->data, 2, 5);
+		}
+		if(SE == 1)
+		{
+			jab_int32 start_pos = (SS == 1) ? 7 : 2;
+			convert_dec_to_bin(E1, enc->symbols[i].metadata->data, start_pos, 3);
+			convert_dec_to_bin(E2, enc->symbols[i].metadata->data, start_pos+3, 3);
+		}
+	}
+	return JAB_SUCCESS;
+}
+
+/**
+ * @brief Generate JABCode
+ * @param enc the encode parameters
+ * @param data the input data
+ * @return 0:success | 1: out of memory | 2:no input data | 3:incorrect symbol version or position | 4: input data too long
+*/
+jab_int32 generateJABCode(jab_encode* enc, jab_data* data)
+{
+    //Check data
+    if(data == NULL)
+    {
+        reportError("No input data specified!");
+        return 2;
+    }
+    if(data->length == 0)
+    {
+        reportError("No input data specified!");
+        return 2;
+    }
+
+    //initialize symbols and set metadata in symbols
+    if(!InitSymbols(enc))
+		return 3;
+
+    //get the optimal encoded length and encoding sequence
+    jab_int32 encoded_length;
+    jab_int32* encode_seq = analyzeInputData(data, &encoded_length);
+    if(encode_seq == NULL)
+	{
+		reportError("Analyzing input data failed");
+		return 1;
+    }
+	//encode data using optimal encoding modes
+    jab_data* encoded_data = encodeData(data, encoded_length, encode_seq);
+    free(encode_seq);
+    if(encoded_data == NULL)
+    {
+        return 1;
+    }
+
+    //set master symbol version if not given
+    if(enc->symbol_number == 1 && (enc->symbol_versions[0].x == 0 || enc->symbol_versions[0].y == 0))
+    {
+        if(!setMasterSymbolVersion(enc, encoded_data))
+        {
+        	free(encoded_data);
+            return 4;
+        }
+    }
+	//set metadata for slave symbols
+	if(!setSlaveMetadata(enc))
+	{
+		free(encoded_data);
+		return 1;
+	}
+	//assign encoded data into symbols
+	if(!fitDataIntoSymbols(enc, encoded_data))
+	{
+		free(encoded_data);
+		return 4;
+	}
+	free(encoded_data);
+	//set master metadata
+	if(!isDefaultMode(enc))
+	{
+		if(!encodeMasterMetadata(enc))
+		{
+			JAB_REPORT_ERROR(("Encoding master symbol metadata failed"))
+            return 1;
+		}
 	}
 
     //encode each symbol in turn
     for(jab_int32 i=0; i<enc->symbol_number; i++)
     {
         //error correction for data
-        jab_data* ecc_encoded_data = encodeLDPC(encoded_data,coderate_params,from_to,i);
-#if TEST_MODE
-		FILE* fp = fopen("enc_bit_data.bin", "wb");
-		fwrite(ecc_encoded_data->data, ecc_encoded_data->length, 1, fp);
-		fclose(fp);
-#endif // TEST_MODE
-
+        jab_data* ecc_encoded_data = encodeLDPC(enc->symbols[i].data, enc->symbols[i].wcwr);
         if(ecc_encoded_data == NULL)
         {
             JAB_REPORT_ERROR(("LDPC encoding for the data in symbol %d failed", i))
-            free(coderate_params);
-            free(encode_seq);
-            free(from_to);
-            free(encoded_data);
-            return JAB_FAILURE;
+            return 1;
         }
-
         //interleave
-        //jab_vector2d side_version={enc->symbol_versions[i].x, enc->symbol_versions[i].y};
         interleaveData(ecc_encoded_data);
-        //encode Metadata
-        if(!encodeMetadata(enc, i, coderate_params, 1))
-        {
-			JAB_REPORT_ERROR(("Encoding metadata for symbol %d failed", i))
-			free(coderate_params);
-            free(encode_seq);
-            free(from_to);
-            free(encoded_data);
-			return JAB_FAILURE;
-        }
         //create Matrix
-        createMatrix(enc, i, ecc_encoded_data, palette_index);
+        jab_boolean cm_flag = createMatrix(enc, i, ecc_encoded_data);
         free(ecc_encoded_data);
+        if(!cm_flag)
+        {
+			JAB_REPORT_ERROR(("Creating matrix for symbol %d failed", i))
+			return 1;
+		}
     }
 
     //mask all symbols in the code
     jab_code* cp = getCodePara(enc);
     if(!cp)
     {
-		free(coderate_params);
-		free(encode_seq);
-		free(from_to);
-		free(encoded_data);
-		return JAB_FAILURE;
+		return 1;
     }
-    jab_int32 mask_reference = maskCode(enc, cp, palette_index);
-    if(mask_reference == NUMBER_OF_MASK_PATTERNS)
-    {
-        if(cp->row_height) free(cp->row_height);
-		if(cp->col_width)  free(cp->col_width);
-		free(cp);
-		free(coderate_params);
-		free(encode_seq);
-		free(from_to);
-		free(encoded_data);
-        return JAB_FAILURE;
+    if(isDefaultMode(enc))	//default mode
+	{
+		maskSymbols(enc, DEFAULT_MASKING_REFERENCE, 0, 0);
 	}
-    //encode metadata for master symbol with mask
-    if(!encodeMetadata(enc, 0, coderate_params, mask_reference))
-    {
-        if(cp->row_height) free(cp->row_height);
-		if(cp->col_width)  free(cp->col_width);
-		free(cp);
-		free(coderate_params);
-		free(encode_seq);
-		free(from_to);
-		free(encoded_data);
-		return JAB_FAILURE;
-    }
-    //place metadata modules in master symbol
-    placeMetadata(enc, palette_index);
-    //create the code bitmap
-    createBitmap(enc, cp);
+	else
+	{
+		jab_int32 mask_reference = maskCode(enc, cp);
+		if(mask_reference < 0)
+		{
+			free(cp->row_height);
+			free(cp->col_width);
+			free(cp);
+			return 1;
+		}
+#if TEST_MODE
+		JAB_REPORT_INFO(("mask reference: %d", mask_reference))
+#endif
+		if(mask_reference != DEFAULT_MASKING_REFERENCE)
+		{
+			//re-encode PartII of master symbol metadata
+			updateMasterMetadataPartII(enc, mask_reference);
+			//update the masking reference in master symbol metadata
+			placeMasterMetadataPartII(enc);
+		}
+	}
 
-    //clean memory
-    if(cp->row_height) free(cp->row_height);
-    if(cp->col_width)  free(cp->col_width);
+    //create the code bitmap
+    jab_boolean cb_flag = createBitmap(enc, cp);
+    free(cp->row_height);
+    free(cp->col_width);
     free(cp);
-    free(coderate_params);
-    free(encode_seq);
-    free(from_to);
-    free(encoded_data);
-    return JAB_SUCCESS;
+    if(!cb_flag)
+	{
+		JAB_REPORT_ERROR(("Creating the code bitmap failed"))
+		return 1;
+	}
+    return 0;
 }
 
 /**

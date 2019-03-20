@@ -11,29 +11,18 @@
  * @brief Decoder header
  */
 
-#ifndef _DECODER_H
-#define _DECODER_H
+#ifndef JABCODE_DECODER_H
+#define JABCODE_DECODER_H
+
+#define DECODE_METADATA_FAILED -1
+#define FATAL_ERROR -2	//e.g. out of memory
 
 #define MASTER_METADATA_X	6
 #define MASTER_METADATA_Y	1
-#define SLAVE_METADATA_X	0
-#define SLAVE_METADATA_Y	1
 
 #define MASTER_METADATA_PART1_LENGTH 6		//master metadata part 1 encoded length
-#define MASTER_METADATA_PART2_LENGTH 14		//master metadata part 2 encoded length
-#define MASTER_METADATA_PART3_MAX_LENGTH 60	//master metadata part 3 maximal encoded length
-
-#define SLAVE_METADATA_PART1_LENGTH 6		//slave metadata part 1 encoded length
-#define SLAVE_METADATA_PART2_MAX_LENGTH 16	//slave metadata part 2 maximal encoded length
-#define SLAVE_METADATA_PART3_MAX_LENGTH 32	//slave metadata part 3 maximal encoded length
-
-/**
- * @brief The positions of the first eight color palette modules in master symbol
-*/
-static const jab_vector2d master_palette_position[8] =
-		{	{4, 1}, {4, 2}, {5, 1}, {5, 2},
-			{2, 4}, {2, 5}, {1, 4}, {1, 5}
-		};
+#define MASTER_METADATA_PART2_LENGTH 12		//master metadata part 2 encoded length
+#define MASTER_METADATA_PART3_MAX_LENGTH 32	//master metadata part 3 maximal encoded length
 
 /**
  * @brief The positions of the first 32 color palette modules in slave symbol
@@ -74,11 +63,11 @@ typedef enum {
 
 extern jab_int32 decodeMaster(jab_bitmap* matrix, jab_decoded_symbol* symbol);
 extern jab_int32 decodeSlave(jab_bitmap* matrix, jab_decoded_symbol* symbol);
-extern jab_boolean decodeSlaveMetadata(jab_bitmap* matrix, jab_decoded_symbol* host_symbol, jab_decoded_symbol* slave_symbol);
 extern jab_data* decodeData(jab_data* bits);
 extern void deinterleaveData(jab_data* data, jab_float* p);
 extern void getNextMetadataModuleInMaster(jab_int32 matrix_height, jab_int32 matrix_width, jab_int32 next_module_count, jab_int32* x, jab_int32* y);
-extern void getNextMetadataModuleInSlave(jab_int32 next_module_count, jab_int32* x, jab_int32* y);
 extern void demaskSymbol(jab_data* data, jab_byte* data_map, jab_vector2d symbol_size, jab_int32 mask_type, jab_int32 color_number);
+extern jab_int32 readColorPaletteInMaster(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map, jab_int32* module_count, jab_int32* x, jab_int32* y);
+extern jab_int32 readColorPaletteInSlave(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map);
 
 #endif

@@ -124,9 +124,9 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ac5f16f5c91857c55d240bcc6f8db530e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structjab__data.html">jab_data</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ldpc_8h.html#ac5f16f5c91857c55d240bcc6f8db530e">encodeLDPC</a> (<a class="el" href="structjab__data.html">jab_data</a> *data, jab_int32 *coderate_params, jab_int32 *from_to, jab_int32 index)</td></tr>
-<tr class="memdesc:ac5f16f5c91857c55d240bcc6f8db530e"><td class="mdescLeft">&#160;</td><td class="mdescRight">LDPC encoding.  <a href="#ac5f16f5c91857c55d240bcc6f8db530e">More...</a><br/></td></tr>
-<tr class="separator:ac5f16f5c91857c55d240bcc6f8db530e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6bae5bfe26f6c65da5051b54afabad94"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structjab__data.html">jab_data</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ldpc_8h.html#a6bae5bfe26f6c65da5051b54afabad94">encodeLDPC</a> (<a class="el" href="structjab__data.html">jab_data</a> *data, jab_int32 *coderate_params)</td></tr>
+<tr class="memdesc:a6bae5bfe26f6c65da5051b54afabad94"><td class="mdescLeft">&#160;</td><td class="mdescRight">LDPC encoding.  <a href="#a6bae5bfe26f6c65da5051b54afabad94">More...</a><br/></td></tr>
+<tr class="separator:a6bae5bfe26f6c65da5051b54afabad94"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2b4a2ba0002e1d79f409c5fc8a5f874a"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ldpc_8h.html#a2b4a2ba0002e1d79f409c5fc8a5f874a">decodeLDPChd</a> (jab_byte *data, jab_int32 length, jab_int32 wc, jab_int32 wr)</td></tr>
 <tr class="memdesc:a2b4a2ba0002e1d79f409c5fc8a5f874a"><td class="mdescLeft">&#160;</td><td class="mdescRight">LDPC decoding to perform hard decision.  <a href="#a2b4a2ba0002e1d79f409c5fc8a5f874a">More...</a><br/></td></tr>
 <tr class="separator:a2b4a2ba0002e1d79f409c5fc8a5f874a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -247,7 +247,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ac5f16f5c91857c55d240bcc6f8db530e"></a>
+<a class="anchor" id="a6bae5bfe26f6c65da5051b54afabad94"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -261,19 +261,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">jab_int32 *&#160;</td>
-          <td class="paramname"><em>coderate_params</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">jab_int32 *&#160;</td>
-          <td class="paramname"><em>from_to</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">jab_int32&#160;</td>
-          <td class="paramname"><em>index</em>&#160;</td>
+          <td class="paramname"><em>coderate_params</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -288,8 +276,6 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">data</td><td>the data to be encoded </td></tr>
     <tr><td class="paramname">coderate_params</td><td>the two code rate parameter wc and wr indicating how many '1' in a column (Wc) and how many '1' in a row of the parity check matrix </td></tr>
-    <tr><td class="paramname">from_to</td><td>the start and stop index of data to encode parts of the massage for several symbols </td></tr>
-    <tr><td class="paramname">index</td><td>the symbol count </td></tr>
   </table>
   </dd>
 </dl>
@@ -303,7 +289,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="ldpc_8h.html">ldpc.h</a></li>
-    <li class="footer">Generated on Wed Nov 23 2016 18:20:16 for jabcode by
+    <li class="footer">Generated on Wed Mar 20 2019 09:38:23 for jabcode by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.6 </li>
   </ul>

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['encoded_5fmetadata',['encoded_metadata',['../structjab__symbol.html#a9f7d2c42d45bc5bad66d400fa8a82e39',1,'jab_symbol']]]
+  ['palette',['palette',['../structjab__encode.html#a1c0774c99fd1f7b08dbc5e5ad3d3acc2',1,'jab_encode']]]
 ];

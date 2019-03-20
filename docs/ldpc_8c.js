@@ -8,6 +8,6 @@ var ldpc_8c =
     [ "decodeMessage", "ldpc_8c.html#ac4f29c20fe6814731a345a204a6db42c", null ],
     [ "decodeMessageBP", "ldpc_8c.html#a94233a4a0ecf1b12542ce4ec5ca63083", null ],
     [ "decodeMessageILL", "ldpc_8c.html#a567666ff16eff47f11a2b35b25ddf627", null ],
-    [ "encodeLDPC", "ldpc_8c.html#ac5f16f5c91857c55d240bcc6f8db530e", null ],
+    [ "encodeLDPC", "ldpc_8c.html#a6bae5bfe26f6c65da5051b54afabad94", null ],
     [ "GaussJordan", "ldpc_8c.html#a6ebeae6e4a5064ae12586fb5c657a78c", null ]
 ];

@@ -18,6 +18,9 @@ jab_int32 		symbol_versions_number = 0;
 jab_int32* 		symbol_ecc_levels = 0;
 jab_int32 		symbol_ecc_levels_number = 0;
 
+/**
+ * @brief Print usage of JABCode writer
+*/
 void printUsage()
 {
 	printf("\n");
@@ -28,13 +31,13 @@ void printUsage()
 	printf("--input\t\t\tInput data (message to be encoded).\n");
 	printf("--input-file\t\tInput data file.\n");
     printf("--output\t\tOutput png file.\n");
-    printf("--color-number\t\tNumber of colors (2, 4, 8, 16, 32, 64, 128, 256,\n\t\t\t"
+    printf("--color-number\t\tNumber of colors (4, 8, 16, 32, 64, 128, 256,\n\t\t\t"
 							 "default: 8).\n");
-	printf("--module-size\t\tModule size in pixel (default: 10 pixels).\n");
+	printf("--module-size\t\tModule size in pixel (default: 12 pixels).\n");
     printf("--symbol-width\t\tMaster symbol width in pixel.\n");
     printf("--symbol-height\t\tMaster symbol height in pixel.\n");
 	printf("--symbol-number\t\tNumber of symbols (1 - 61, default: 1).\n");
-    printf("--ecc-level\t\tError correction levels (0 - 10, default: 8%%). If\n\t\t\t"
+    printf("--ecc-level\t\tError correction levels (1 - 10, default: 3(6%%)). If\n\t\t\t"
 						  "different for each symbol, starting from master and\n\t\t\t"
 						  "then slave symbols (ecc0 ecc1 ecc2 ...). For master\n\t\t\t"
 						  "symbol, level 0 means using the default level, for\n\t\t\t"
@@ -54,6 +57,10 @@ void printUsage()
     printf("\n");
 }
 
+/**
+ * @brief Parse command line parameters
+ * @return 1: success | 0: failure
+*/
 jab_boolean parseCommandLineParameters(jab_int32 para_number, jab_char* para[])
 {
 	//first scan
@@ -380,14 +387,21 @@ jab_boolean parseCommandLineParameters(jab_int32 para_number, jab_char* para[])
     return 1;
 }
 
+/**
+ * @brief Free allocated buffers
+*/
 void cleanMemory()
 {
-	if(data) free(data);
-	if(symbol_positions) free(symbol_positions);
-	if(symbol_versions)  free(symbol_versions);
-	if(symbol_ecc_levels)free(symbol_ecc_levels);
+	free(data);
+	free(symbol_positions);
+	free(symbol_versions);
+	free(symbol_ecc_levels);
 }
 
+/**
+ * @brief JABCode writer main function
+ * @return 0: success | 1: failure
+*/
 int main(int argc, char *argv[])
 {
     if(argc < 2 || (0 == strcmp(argv[1],"--help")))
@@ -423,7 +437,7 @@ int main(int argc, char *argv[])
 	for(jab_int32 loop=0; loop<symbol_number; loop++)
 	{
 		if(symbol_ecc_levels)
-			enc->ecc_levels[loop] = symbol_ecc_levels[loop];
+			enc->symbol_ecc_levels[loop] = symbol_ecc_levels[loop];
 		if(symbol_versions)
 			enc->symbol_versions[loop] = symbol_versions[loop];
 		if(symbol_positions)
@@ -431,7 +445,7 @@ int main(int argc, char *argv[])
 	}
 
 	//generate JABCode
-	if(!generateJABCode(enc, data))
+	if(generateJABCode(enc, data) != 0)
 	{
 		reportError("Creating jab code failed");
 		destroyEncode(enc);

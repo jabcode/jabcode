@@ -126,21 +126,27 @@ Functions</h2></td></tr>
 <tr class="memitem:a0fc9de309adfffb475ebe91aa595f20c"><td class="memItemLeft" align="right" valign="top">jab_boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#a0fc9de309adfffb475ebe91aa595f20c">checkModuleSize</a> (jab_float size_r, jab_float size_g, jab_float size_b)</td></tr>
 <tr class="memdesc:a0fc9de309adfffb475ebe91aa595f20c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the input module sizes are the same.  <a href="#a0fc9de309adfffb475ebe91aa595f20c">More...</a><br/></td></tr>
 <tr class="separator:a0fc9de309adfffb475ebe91aa595f20c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab49d04164afe3df979a47b74adbce9b4"><td class="memItemLeft" align="right" valign="top">jab_boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#ab49d04164afe3df979a47b74adbce9b4">seekPattern</a> (jab_byte *row, jab_int32 channel, jab_int32 *startx, jab_int32 *endx, jab_float *centerx, jab_float *module_size, jab_int32 *skip)</td></tr>
-<tr class="memdesc:ab49d04164afe3df979a47b74adbce9b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find a candidate scanline of finder pattern.  <a href="#ab49d04164afe3df979a47b74adbce9b4">More...</a><br/></td></tr>
-<tr class="separator:ab49d04164afe3df979a47b74adbce9b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4d6e3144821facd613d383d15f99d709"><td class="memItemLeft" align="right" valign="top">jab_float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#a4d6e3144821facd613d383d15f99d709">crossCheckPatternDiagonal</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *image, jab_int32 type, jab_float module_size_max, <a class="el" href="structjab__point.html">jab_point</a> center, jab_int32 *dir)</td></tr>
-<tr class="memdesc:a4d6e3144821facd613d383d15f99d709"><td class="mdescLeft">&#160;</td><td class="mdescRight">Crosscheck the finder pattern candidate in diagonal direction.  <a href="#a4d6e3144821facd613d383d15f99d709">More...</a><br/></td></tr>
-<tr class="separator:a4d6e3144821facd613d383d15f99d709"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7c2dd75927759fe50cf9b275b638b9e4"><td class="memItemLeft" align="right" valign="top">jab_float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#a7c2dd75927759fe50cf9b275b638b9e4">crossCheckPatternVertical</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *image, <a class="el" href="structjab__point.html">jab_point</a> center, jab_int32 module_size_max, jab_float *module_size)</td></tr>
-<tr class="memdesc:a7c2dd75927759fe50cf9b275b638b9e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Crosscheck the finder pattern candidate in vertical direction.  <a href="#a7c2dd75927759fe50cf9b275b638b9e4">More...</a><br/></td></tr>
-<tr class="separator:a7c2dd75927759fe50cf9b275b638b9e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a958429eafeab47c3391419a6f0921a20"><td class="memItemLeft" align="right" valign="top">jab_boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#a958429eafeab47c3391419a6f0921a20">seekPattern</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *ch, jab_int32 row, jab_int32 col, jab_int32 *start, jab_int32 *end, jab_float *center, jab_float *module_size, jab_int32 *skip)</td></tr>
+<tr class="memdesc:a958429eafeab47c3391419a6f0921a20"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find a candidate scanline of finder pattern.  <a href="#a958429eafeab47c3391419a6f0921a20">More...</a><br/></td></tr>
+<tr class="separator:a958429eafeab47c3391419a6f0921a20"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c6e26778492fd0652215e38ac31a8f0"><td class="memItemLeft" align="right" valign="top">jab_boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#a2c6e26778492fd0652215e38ac31a8f0">seekPatternHorizontal</a> (jab_byte *row, jab_int32 *startx, jab_int32 *endx, jab_float *centerx, jab_float *module_size, jab_int32 *skip)</td></tr>
+<tr class="memdesc:a2c6e26778492fd0652215e38ac31a8f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find a candidate horizontal scanline of finder pattern.  <a href="#a2c6e26778492fd0652215e38ac31a8f0">More...</a><br/></td></tr>
+<tr class="separator:a2c6e26778492fd0652215e38ac31a8f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d91536118b850b2c554e12fb8e9cb72"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#a1d91536118b850b2c554e12fb8e9cb72">crossCheckPatternDiagonal</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *image, jab_int32 type, jab_float module_size_max, jab_float *centerx, jab_float *centery, jab_float *module_size, jab_int32 *dir, jab_boolean both_dir)</td></tr>
+<tr class="memdesc:a1d91536118b850b2c554e12fb8e9cb72"><td class="mdescLeft">&#160;</td><td class="mdescRight">Crosscheck the finder pattern candidate in diagonal direction.  <a href="#a1d91536118b850b2c554e12fb8e9cb72">More...</a><br/></td></tr>
+<tr class="separator:a1d91536118b850b2c554e12fb8e9cb72"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a698300c880d2dc8ed3520de601243731"><td class="memItemLeft" align="right" valign="top">jab_boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#a698300c880d2dc8ed3520de601243731">crossCheckPatternVertical</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *image, jab_int32 module_size_max, jab_float centerx, jab_float *centery, jab_float *module_size)</td></tr>
+<tr class="memdesc:a698300c880d2dc8ed3520de601243731"><td class="mdescLeft">&#160;</td><td class="mdescRight">Crosscheck the finder pattern candidate in vertical direction.  <a href="#a698300c880d2dc8ed3520de601243731">More...</a><br/></td></tr>
+<tr class="separator:a698300c880d2dc8ed3520de601243731"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adc6a9e27a1df906a82ac4ac88ff0d92a"><td class="memItemLeft" align="right" valign="top">jab_boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#adc6a9e27a1df906a82ac4ac88ff0d92a">crossCheckPatternHorizontal</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *image, jab_float module_size_max, jab_float *centerx, jab_float centery, jab_float *module_size)</td></tr>
 <tr class="memdesc:adc6a9e27a1df906a82ac4ac88ff0d92a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Crosscheck the finder pattern candidate in horizontal direction.  <a href="#adc6a9e27a1df906a82ac4ac88ff0d92a">More...</a><br/></td></tr>
 <tr class="separator:adc6a9e27a1df906a82ac4ac88ff0d92a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a92e9d2da4582ef97fc05c877ce3562ce"><td class="memItemLeft" align="right" valign="top">jab_boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#a92e9d2da4582ef97fc05c877ce3562ce">crossCheckPattern</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *ch[], <a class="el" href="structjab__finder__pattern.html">jab_finder_pattern</a> *fp)</td></tr>
-<tr class="memdesc:a92e9d2da4582ef97fc05c877ce3562ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Crosscheck the finder pattern candidate.  <a href="#a92e9d2da4582ef97fc05c877ce3562ce">More...</a><br/></td></tr>
-<tr class="separator:a92e9d2da4582ef97fc05c877ce3562ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a3fcc048349b4a1121457585056cfeb"><td class="memItemLeft" align="right" valign="top">jab_boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#a0a3fcc048349b4a1121457585056cfeb">crossCheckPatternCh</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *ch, jab_int32 type, jab_int32 h_v, jab_float module_size_max, jab_float *module_size, jab_float *centerx, jab_float *centery, jab_int32 *dir, jab_int32 *dcc)</td></tr>
+<tr class="memdesc:a0a3fcc048349b4a1121457585056cfeb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Crosscheck the finder pattern candidate in one channel.  <a href="#a0a3fcc048349b4a1121457585056cfeb">More...</a><br/></td></tr>
+<tr class="separator:a0a3fcc048349b4a1121457585056cfeb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e20d1c90335aa9c8837277037eb64b9"><td class="memItemLeft" align="right" valign="top">jab_boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#a6e20d1c90335aa9c8837277037eb64b9">crossCheckPattern</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *ch[], <a class="el" href="structjab__finder__pattern.html">jab_finder_pattern</a> *fp, jab_int32 h_v)</td></tr>
+<tr class="memdesc:a6e20d1c90335aa9c8837277037eb64b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Crosscheck the finder pattern candidate.  <a href="#a6e20d1c90335aa9c8837277037eb64b9">More...</a><br/></td></tr>
+<tr class="separator:a6e20d1c90335aa9c8837277037eb64b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe8a62d0dc9c82c202d30038e3b96357"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#afe8a62d0dc9c82c202d30038e3b96357">saveAlignmentPattern</a> (<a class="el" href="structjab__alignment__pattern.html">jab_alignment_pattern</a> *ap, <a class="el" href="structjab__alignment__pattern.html">jab_alignment_pattern</a> *aps, jab_int32 *counter)</td></tr>
 <tr class="memdesc:afe8a62d0dc9c82c202d30038e3b96357"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save a found alignment pattern into the alignment pattern list.  <a href="#afe8a62d0dc9c82c202d30038e3b96357">More...</a><br/></td></tr>
 <tr class="separator:afe8a62d0dc9c82c202d30038e3b96357"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -159,15 +165,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
 <tr class="memitem:a0290bccbb165e2e307a0d5c05e5659f4"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#a0290bccbb165e2e307a0d5c05e5659f4">selectBestPatterns</a> (<a class="el" href="structjab__finder__pattern.html">jab_finder_pattern</a> *fps, jab_int32 fp_count, jab_int32 *fp_type_count)</td></tr>
 <tr class="memdesc:a0290bccbb165e2e307a0d5c05e5659f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Select the best finder patterns out of the list.  <a href="#a0290bccbb165e2e307a0d5c05e5659f4">More...</a><br/></td></tr>
 <tr class="separator:a0290bccbb165e2e307a0d5c05e5659f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a56d4952a035210393b152f929722e4c3"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#a56d4952a035210393b152f929722e4c3">selectBestTwoColorPatterns</a> (<a class="el" href="structjab__finder__pattern.html">jab_finder_pattern</a> *fps, jab_int32 fp_count, jab_int32 *fp_type_count)</td></tr>
-<tr class="memdesc:a56d4952a035210393b152f929722e4c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Select the best finder patterns out of the list in two-color mode.  <a href="#a56d4952a035210393b152f929722e4c3">More...</a><br/></td></tr>
-<tr class="separator:a56d4952a035210393b152f929722e4c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab5c963b34fc039e9218154fbc0bf861"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#aab5c963b34fc039e9218154fbc0bf861">scanPatternVertical</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *ch[], jab_int32 min_module_size, <a class="el" href="structjab__finder__pattern.html">jab_finder_pattern</a> *fps, jab_int32 *fp_type_count, jab_int32 *total_finder_patterns)</td></tr>
+<tr class="memdesc:aab5c963b34fc039e9218154fbc0bf861"><td class="mdescLeft">&#160;</td><td class="mdescRight">Scan the image vertically.  <a href="#aab5c963b34fc039e9218154fbc0bf861">More...</a><br/></td></tr>
+<tr class="separator:aab5c963b34fc039e9218154fbc0bf861"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aad3cd82adb838e01cf6ea765a1a05e0f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structjab__finder__pattern.html">jab_finder_pattern</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#aad3cd82adb838e01cf6ea765a1a05e0f">findMasterSymbol</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *ch[], jab_detect_mode mode)</td></tr>
 <tr class="memdesc:aad3cd82adb838e01cf6ea765a1a05e0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the master symbol in the image.  <a href="#aad3cd82adb838e01cf6ea765a1a05e0f">More...</a><br/></td></tr>
 <tr class="separator:aad3cd82adb838e01cf6ea765a1a05e0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8294f469c1ca0b9c8175bc129638e18d"><td class="memItemLeft" align="right" valign="top">jab_boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#a8294f469c1ca0b9c8175bc129638e18d">getSlaveSymbolSideSize</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *bitmap, <a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *host_symbol, <a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *slave_symbol, <a class="el" href="structjab__point.html">jab_point</a> p0, <a class="el" href="structjab__point.html">jab_point</a> p1, <a class="el" href="structjab__point.html">jab_point</a> p2, <a class="el" href="structjab__point.html">jab_point</a> p3, <a class="el" href="structjab__vector2d.html">jab_vector2d</a> side_size)</td></tr>
-<tr class="memdesc:a8294f469c1ca0b9c8175bc129638e18d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the side size of slave symbol by decoding its metadata.  <a href="#a8294f469c1ca0b9c8175bc129638e18d">More...</a><br/></td></tr>
-<tr class="separator:a8294f469c1ca0b9c8175bc129638e18d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7b3fce70702eddaed160a6585d3541f0"><td class="memItemLeft" align="right" valign="top">jab_float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#a7b3fce70702eddaed160a6585d3541f0">crossCheckPatternDiagonalAP</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *image, jab_int32 ap_type, jab_int32 module_size_max, <a class="el" href="structjab__point.html">jab_point</a> center, jab_int32 *dir)</td></tr>
 <tr class="memdesc:a7b3fce70702eddaed160a6585d3541f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Crosscheck the alignment pattern candidate in diagonal direction.  <a href="#a7b3fce70702eddaed160a6585d3541f0">More...</a><br/></td></tr>
 <tr class="separator:a7b3fce70702eddaed160a6585d3541f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -207,9 +210,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
 <tr class="memitem:a6b3af4a8e1da475d91f47b17108df389"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#a6b3af4a8e1da475d91f47b17108df389">preprocessImage</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *bitmap)</td></tr>
 <tr class="memdesc:a6b3af4a8e1da475d91f47b17108df389"><td class="mdescLeft">&#160;</td><td class="mdescRight">Preprocess the image.  <a href="#a6b3af4a8e1da475d91f47b17108df389">More...</a><br/></td></tr>
 <tr class="separator:a6b3af4a8e1da475d91f47b17108df389"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab0650e3d29ae827b8d8007267ef9965f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structjab__data.html">jab_data</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#ab0650e3d29ae827b8d8007267ef9965f">decodeJABCode</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *bitmap, jab_int32 mode)</td></tr>
-<tr class="memdesc:ab0650e3d29ae827b8d8007267ef9965f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode a JAB Code.  <a href="#ab0650e3d29ae827b8d8007267ef9965f">More...</a><br/></td></tr>
-<tr class="separator:ab0650e3d29ae827b8d8007267ef9965f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a77b2a37d91e53a2aafd71e6ad7c2de6e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structjab__data.html">jab_data</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#a77b2a37d91e53a2aafd71e6ad7c2de6e">decodeJABCodeEx</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *bitmap, jab_int32 mode, jab_int32 *status, <a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *symbols, jab_int32 max_symbol_number)</td></tr>
+<tr class="memdesc:a77b2a37d91e53a2aafd71e6ad7c2de6e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Extended function to decode a JAB Code.  <a href="#a77b2a37d91e53a2aafd71e6ad7c2de6e">More...</a><br/></td></tr>
+<tr class="separator:a77b2a37d91e53a2aafd71e6ad7c2de6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af518774338c7a98e1014ed767c66ca05"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structjab__data.html">jab_data</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8c.html#af518774338c7a98e1014ed767c66ca05">decodeJABCode</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *bitmap, jab_int32 mode, jab_int32 *status)</td></tr>
+<tr class="memdesc:af518774338c7a98e1014ed767c66ca05"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode a JAB Code.  <a href="#af518774338c7a98e1014ed767c66ca05">More...</a><br/></td></tr>
+<tr class="separator:af518774338c7a98e1014ed767c66ca05"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>JABCode detector. </p>
@@ -339,7 +345,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
 
 </div>
 </div>
-<a class="anchor" id="a92e9d2da4582ef97fc05c877ce3562ce"></a>
+<a class="anchor" id="a6e20d1c90335aa9c8837277037eb64b9"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -353,7 +359,13 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="structjab__finder__pattern.html">jab_finder_pattern</a> *&#160;</td>
-          <td class="paramname"><em>fp</em>&#160;</td>
+          <td class="paramname"><em>fp</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32&#160;</td>
+          <td class="paramname"><em>h_v</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -368,6 +380,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
   <table class="params">
     <tr><td class="paramname">ch</td><td>the binarized color channels of the image </td></tr>
     <tr><td class="paramname">fp</td><td>the finder pattern </td></tr>
+    <tr><td class="paramname">h_v</td><td>the direction of the candidate scanline, 0:horizontal 1:vertical </td></tr>
   </table>
   </dd>
 </dl>
@@ -474,12 +487,97 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
 
 </div>
 </div>
-<a class="anchor" id="a4d6e3144821facd613d383d15f99d709"></a>
+<a class="anchor" id="a0a3fcc048349b4a1121457585056cfeb"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">jab_float crossCheckPatternDiagonal </td>
+          <td class="memname">jab_boolean crossCheckPatternCh </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td>
+          <td class="paramname"><em>ch</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32&#160;</td>
+          <td class="paramname"><em>type</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32&#160;</td>
+          <td class="paramname"><em>h_v</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_float&#160;</td>
+          <td class="paramname"><em>module_size_max</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_float *&#160;</td>
+          <td class="paramname"><em>module_size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_float *&#160;</td>
+          <td class="paramname"><em>centerx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_float *&#160;</td>
+          <td class="paramname"><em>centery</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32 *&#160;</td>
+          <td class="paramname"><em>dir</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32 *&#160;</td>
+          <td class="paramname"><em>dcc</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Crosscheck the finder pattern candidate in one channel. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ch</td><td>the binarized color channel </td></tr>
+    <tr><td class="paramname">type</td><td>the finder pattern type </td></tr>
+    <tr><td class="paramname">h_v</td><td>the direction of the candidate scanline, 0:horizontal 1:vertical </td></tr>
+    <tr><td class="paramname">module_size_max</td><td>the maximal allowed module size </td></tr>
+    <tr><td class="paramname">module_size</td><td>the module size in all directions </td></tr>
+    <tr><td class="paramname">centerx</td><td>the x coordinate of the finder pattern center </td></tr>
+    <tr><td class="paramname">centery</td><td>the y coordinate of the finder pattern center </td></tr>
+    <tr><td class="paramname">dir</td><td>the finder pattern direction </td></tr>
+    <tr><td class="paramname">dcc</td><td>the diagonal crosscheck result </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JAB_SUCCESS | JAB_FAILURE </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a1d91536118b850b2c554e12fb8e9cb72"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">jab_int32 crossCheckPatternDiagonal </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td>
           <td class="paramname"><em>image</em>, </td>
@@ -499,14 +597,32 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="structjab__point.html">jab_point</a>&#160;</td>
-          <td class="paramname"><em>center</em>, </td>
+          <td class="paramtype">jab_float *&#160;</td>
+          <td class="paramname"><em>centerx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_float *&#160;</td>
+          <td class="paramname"><em>centery</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_float *&#160;</td>
+          <td class="paramname"><em>module_size</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">jab_int32 *&#160;</td>
-          <td class="paramname"><em>dir</em>&#160;</td>
+          <td class="paramname"><em>dir</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_boolean&#160;</td>
+          <td class="paramname"><em>both_dir</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -522,12 +638,15 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
     <tr><td class="paramname">image</td><td>the image bitmap </td></tr>
     <tr><td class="paramname">type</td><td>the finder pattern type </td></tr>
     <tr><td class="paramname">module_size_max</td><td>the maximal allowed module size </td></tr>
-    <tr><td class="paramname">center</td><td>the finder pattern center </td></tr>
+    <tr><td class="paramname">centerx</td><td>the x coordinate of the finder pattern center </td></tr>
+    <tr><td class="paramname">centery</td><td>the y coordinate of the finder pattern center </td></tr>
+    <tr><td class="paramname">module_size</td><td>the module size in diagonal direction </td></tr>
     <tr><td class="paramname">dir</td><td>the finder pattern direction </td></tr>
+    <tr><td class="paramname">both_dir</td><td>scan both diagonal scanlines </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the y coordinate of the diagonal scanline center | -1 if failed </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the number of confirmed diagonal scanlines </dd></dl>
 
 </div>
 </div>
@@ -723,12 +842,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
 
 </div>
 </div>
-<a class="anchor" id="a7c2dd75927759fe50cf9b275b638b9e4"></a>
+<a class="anchor" id="a698300c880d2dc8ed3520de601243731"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">jab_float crossCheckPatternVertical </td>
+          <td class="memname">jab_boolean crossCheckPatternVertical </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td>
           <td class="paramname"><em>image</em>, </td>
@@ -736,14 +855,20 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="structjab__point.html">jab_point</a>&#160;</td>
-          <td class="paramname"><em>center</em>, </td>
+          <td class="paramtype">jab_int32&#160;</td>
+          <td class="paramname"><em>module_size_max</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">jab_int32&#160;</td>
-          <td class="paramname"><em>module_size_max</em>, </td>
+          <td class="paramtype">jab_float&#160;</td>
+          <td class="paramname"><em>centerx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_float *&#160;</td>
+          <td class="paramname"><em>centery</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -763,13 +888,14 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">image</td><td>the image bitmap </td></tr>
-    <tr><td class="paramname">center</td><td>the finder pattern center </td></tr>
     <tr><td class="paramname">module_size_max</td><td>the maximal allowed module size </td></tr>
+    <tr><td class="paramname">centerx</td><td>the x coordinate of the finder pattern center </td></tr>
+    <tr><td class="paramname">centery</td><td>the y coordinate of the finder pattern center </td></tr>
     <tr><td class="paramname">module_size</td><td>the module size in vertical direction </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the y coordinate of the vertical scanline center | -1 if failed </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>JAB_SUCCESS | JAB_FAILURE </dd></dl>
 
 </div>
 </div>
@@ -880,7 +1006,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
 
 </div>
 </div>
-<a class="anchor" id="ab0650e3d29ae827b8d8007267ef9965f"></a>
+<a class="anchor" id="af518774338c7a98e1014ed767c66ca05"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -894,7 +1020,13 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">jab_int32&#160;</td>
-          <td class="paramname"><em>mode</em>&#160;</td>
+          <td class="paramname"><em>mode</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32 *&#160;</td>
+          <td class="paramname"><em>status</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -909,6 +1041,64 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
   <table class="params">
     <tr><td class="paramname">bitmap</td><td>the image bitmap </td></tr>
     <tr><td class="paramname">mode</td><td>the decoding mode(NORMAL_DECODE: only output completely decoded data when all symbols are correctly decoded COMPATIBLE_DECODE: also output partly decoded data even if some symbols are not correctly decoded </td></tr>
+    <tr><td class="paramname">status</td><td>the decoding status code (0: not detectable, 1: not decodable, 2: partly decoded with COMPATIBLE_DECODE mode, 3: fully decoded) </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the decoded data | NULL if failed </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a77b2a37d91e53a2aafd71e6ad7c2de6e"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structjab__data.html">jab_data</a>* decodeJABCodeEx </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td>
+          <td class="paramname"><em>bitmap</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32&#160;</td>
+          <td class="paramname"><em>mode</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32 *&#160;</td>
+          <td class="paramname"><em>status</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *&#160;</td>
+          <td class="paramname"><em>symbols</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32&#160;</td>
+          <td class="paramname"><em>max_symbol_number</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Extended function to decode a JAB Code. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bitmap</td><td>the image bitmap </td></tr>
+    <tr><td class="paramname">mode</td><td>the decoding mode(NORMAL_DECODE: only output completely decoded data when all symbols are correctly decoded COMPATIBLE_DECODE: also output partly decoded data even if some symbols are not correctly decoded </td></tr>
+    <tr><td class="paramname">status</td><td>the decoding status code (0: not detectable, 1: not decodable, 2: partly decoded with COMPATIBLE_DECODE mode, 3: fully decoded) </td></tr>
+    <tr><td class="paramname">symbols</td><td>the decoded symbols </td></tr>
+    <tr><td class="paramname">max_symbol_number</td><td>the maximal possible number of symbols to be decoded </td></tr>
   </table>
   </dd>
 </dl>
@@ -1237,84 +1427,6 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
 
 </div>
 </div>
-<a class="anchor" id="a8294f469c1ca0b9c8175bc129638e18d"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">jab_boolean getSlaveSymbolSideSize </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td>
-          <td class="paramname"><em>bitmap</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *&#160;</td>
-          <td class="paramname"><em>host_symbol</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *&#160;</td>
-          <td class="paramname"><em>slave_symbol</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="structjab__point.html">jab_point</a>&#160;</td>
-          <td class="paramname"><em>p0</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="structjab__point.html">jab_point</a>&#160;</td>
-          <td class="paramname"><em>p1</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="structjab__point.html">jab_point</a>&#160;</td>
-          <td class="paramname"><em>p2</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="structjab__point.html">jab_point</a>&#160;</td>
-          <td class="paramname"><em>p3</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="structjab__vector2d.html">jab_vector2d</a>&#160;</td>
-          <td class="paramname"><em>side_size</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Get the side size of slave symbol by decoding its metadata. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">bitmap</td><td>the image bitmap </td></tr>
-    <tr><td class="paramname">host_symbol</td><td>the host symbol </td></tr>
-    <tr><td class="paramname">slave_symbol</td><td>the slave symbol </td></tr>
-    <tr><td class="paramname">p0</td><td>the coordinate of the 1st finder/alignment pattern </td></tr>
-    <tr><td class="paramname">p1</td><td>the coordinate of the 2nd finder/alignment pattern </td></tr>
-    <tr><td class="paramname">p2</td><td>the coordinate of the 3rd finder/alignment pattern </td></tr>
-    <tr><td class="paramname">p3</td><td>the coordinate of the 4th finder/alignment pattern </td></tr>
-    <tr><td class="paramname">side_size</td><td>the size of the area across the host and slave symbols </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>JAB_SUCCESS | JAB_FAILURE </dd></dl>
-
-</div>
-</div>
 <a class="anchor" id="a6b3af4a8e1da475d91f47b17108df389"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1530,21 +1642,149 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
 
 </div>
 </div>
-<a class="anchor" id="ab49d04164afe3df979a47b74adbce9b4"></a>
+<a class="anchor" id="aab5c963b34fc039e9218154fbc0bf861"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void scanPatternVertical </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td>
+          <td class="paramname"><em>ch</em>[], </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32&#160;</td>
+          <td class="paramname"><em>min_module_size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structjab__finder__pattern.html">jab_finder_pattern</a> *&#160;</td>
+          <td class="paramname"><em>fps</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32 *&#160;</td>
+          <td class="paramname"><em>fp_type_count</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32 *&#160;</td>
+          <td class="paramname"><em>total_finder_patterns</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Scan the image vertically. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ch</td><td>the binarized color channels of the image </td></tr>
+    <tr><td class="paramname">min_module_size</td><td>the minimal module size </td></tr>
+    <tr><td class="paramname">fps</td><td>the found finder patterns </td></tr>
+    <tr><td class="paramname">fp_type_count</td><td>the number of found finder patterns for each type </td></tr>
+    <tr><td class="paramname">total_finder_patterns</td><td>the number of totally found finder patterns </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a958429eafeab47c3391419a6f0921a20"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">jab_boolean seekPattern </td>
           <td>(</td>
-          <td class="paramtype">jab_byte *&#160;</td>
+          <td class="paramtype"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td>
+          <td class="paramname"><em>ch</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32&#160;</td>
           <td class="paramname"><em>row</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">jab_int32&#160;</td>
-          <td class="paramname"><em>channel</em>, </td>
+          <td class="paramname"><em>col</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32 *&#160;</td>
+          <td class="paramname"><em>start</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32 *&#160;</td>
+          <td class="paramname"><em>end</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_float *&#160;</td>
+          <td class="paramname"><em>center</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_float *&#160;</td>
+          <td class="paramname"><em>module_size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32 *&#160;</td>
+          <td class="paramname"><em>skip</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Find a candidate scanline of finder pattern. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ch</td><td>the image channel </td></tr>
+    <tr><td class="paramname">row</td><td>the row to be scanned </td></tr>
+    <tr><td class="paramname">col</td><td>the column to be scanned </td></tr>
+    <tr><td class="paramname">start</td><td>the start position </td></tr>
+    <tr><td class="paramname">end</td><td>the end position </td></tr>
+    <tr><td class="paramname">center</td><td>the center of the candidate scanline </td></tr>
+    <tr><td class="paramname">module_size</td><td>the module size </td></tr>
+    <tr><td class="paramname">skip</td><td>the number of pixels to be skipped in the next scan </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JAB_SUCCESS | JAB_FAILURE </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a2c6e26778492fd0652215e38ac31a8f0"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">jab_boolean seekPatternHorizontal </td>
+          <td>(</td>
+          <td class="paramtype">jab_byte *&#160;</td>
+          <td class="paramname"><em>row</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1584,16 +1824,15 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
       </table>
 </div><div class="memdoc">
 
-<p>Find a candidate scanline of finder pattern. </p>
+<p>Find a candidate horizontal scanline of finder pattern. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">row</td><td>the bitmap row </td></tr>
-    <tr><td class="paramname">channel</td><td>the color channel </td></tr>
     <tr><td class="paramname">startx</td><td>the start position </td></tr>
     <tr><td class="paramname">endx</td><td>the end position </td></tr>
     <tr><td class="paramname">centerx</td><td>the center of the candidate scanline </td></tr>
     <tr><td class="paramname">module_size</td><td>the module size </td></tr>
-    <tr><td class="paramname">skip</td><td>the length of pixels to be skipped in the next scan </td></tr>
+    <tr><td class="paramname">skip</td><td>the number of pixels to be skipped in the next scan </td></tr>
   </table>
   </dd>
 </dl>
@@ -1644,56 +1883,13 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>drawFoundFinderPatter
 
 </div>
 </div>
-<a class="anchor" id="a56d4952a035210393b152f929722e4c3"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">jab_int32 selectBestTwoColorPatterns </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structjab__finder__pattern.html">jab_finder_pattern</a> *&#160;</td>
-          <td class="paramname"><em>fps</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">jab_int32&#160;</td>
-          <td class="paramname"><em>fp_count</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">jab_int32 *&#160;</td>
-          <td class="paramname"><em>fp_type_count</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Select the best finder patterns out of the list in two-color mode. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">fps</td><td>the finder pattern list </td></tr>
-    <tr><td class="paramname">fp_count</td><td>the number of finder patterns in the list </td></tr>
-    <tr><td class="paramname">fp_type_count</td><td>the number of each finder pattern type </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>the number of missing finder pattern types </dd></dl>
-
-</div>
-</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="detector_8c.html">detector.c</a></li>
-    <li class="footer">Generated on Wed Nov 23 2016 18:20:16 for jabcode by
+    <li class="footer">Generated on Wed Mar 20 2019 09:38:23 for jabcode by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.6 </li>
   </ul>

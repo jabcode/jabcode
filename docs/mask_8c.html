@@ -110,11 +110,13 @@ $(document).ready(function(){initNavTree('mask_8c.html','');});
 
 <p>Data module masking.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;stdlib.h&gt;</code><br/>
+<div class="textblock"><code>#include &lt;stdio.h&gt;</code><br/>
+<code>#include &lt;stdlib.h&gt;</code><br/>
 <code>#include &lt;string.h&gt;</code><br/>
 <code>#include &lt;math.h&gt;</code><br/>
 <code>#include &quot;<a class="el" href="jabcode_8h_source.html">jabcode.h</a>&quot;</code><br/>
 <code>#include &quot;<a class="el" href="encoder_8h_source.html">encoder.h</a>&quot;</code><br/>
+<code>#include &quot;<a class="el" href="detector_8h_source.html">detector.h</a>&quot;</code><br/>
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
@@ -130,24 +132,24 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a85d668fbe3ea91c59b5eafa2e1926674"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mask_8c.html#a85d668fbe3ea91c59b5eafa2e1926674">applyRule1</a> (jab_int32 *matrix, jab_int32 width, jab_int32 height, jab_int32 color_number, jab_byte *palette_index)</td></tr>
-<tr class="memdesc:a85d668fbe3ea91c59b5eafa2e1926674"><td class="mdescLeft">&#160;</td><td class="mdescRight">Apply mask penalty rule 1.  <a href="#a85d668fbe3ea91c59b5eafa2e1926674">More...</a><br/></td></tr>
-<tr class="separator:a85d668fbe3ea91c59b5eafa2e1926674"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac895130e7f66b138f9ca5038effcad3f"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mask_8c.html#ac895130e7f66b138f9ca5038effcad3f">applyRule1</a> (jab_int32 *matrix, jab_int32 width, jab_int32 height, jab_int32 color_number)</td></tr>
+<tr class="memdesc:ac895130e7f66b138f9ca5038effcad3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Apply mask penalty rule 1.  <a href="#ac895130e7f66b138f9ca5038effcad3f">More...</a><br/></td></tr>
+<tr class="separator:ac895130e7f66b138f9ca5038effcad3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab7939f78c988ccca701332bca904bdcd"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mask_8c.html#ab7939f78c988ccca701332bca904bdcd">applyRule2</a> (jab_int32 *matrix, jab_int32 width, jab_int32 height)</td></tr>
 <tr class="memdesc:ab7939f78c988ccca701332bca904bdcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Apply mask penalty rule 2.  <a href="#ab7939f78c988ccca701332bca904bdcd">More...</a><br/></td></tr>
 <tr class="separator:ab7939f78c988ccca701332bca904bdcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c66a98cc50dfcd48d53c7346e7587af"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mask_8c.html#a5c66a98cc50dfcd48d53c7346e7587af">applyRule3</a> (jab_int32 *matrix, jab_int32 width, jab_int32 height)</td></tr>
 <tr class="memdesc:a5c66a98cc50dfcd48d53c7346e7587af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Apply mask penalty rule 3.  <a href="#a5c66a98cc50dfcd48d53c7346e7587af">More...</a><br/></td></tr>
 <tr class="separator:a5c66a98cc50dfcd48d53c7346e7587af"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6617a87606667afb8c30eb07ec335ee5"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mask_8c.html#a6617a87606667afb8c30eb07ec335ee5">evaluateMask</a> (jab_int32 *matrix, jab_int32 width, jab_int32 height, jab_int32 color_number, jab_byte *palette_index)</td></tr>
-<tr class="memdesc:a6617a87606667afb8c30eb07ec335ee5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate masking results.  <a href="#a6617a87606667afb8c30eb07ec335ee5">More...</a><br/></td></tr>
-<tr class="separator:a6617a87606667afb8c30eb07ec335ee5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af349caae7a94886c7ddde97c6c4da7e3"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mask_8c.html#af349caae7a94886c7ddde97c6c4da7e3">evaluateMask</a> (jab_int32 *matrix, jab_int32 width, jab_int32 height, jab_int32 color_number)</td></tr>
+<tr class="memdesc:af349caae7a94886c7ddde97c6c4da7e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate masking results.  <a href="#af349caae7a94886c7ddde97c6c4da7e3">More...</a><br/></td></tr>
+<tr class="separator:af349caae7a94886c7ddde97c6c4da7e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab5f641aa7ae503c30fdca2b1a108d0ab"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mask_8c.html#ab5f641aa7ae503c30fdca2b1a108d0ab">maskSymbols</a> (<a class="el" href="structjab__encode.html">jab_encode</a> *enc, jab_int32 mask_type, jab_int32 *masked, <a class="el" href="structjab__code.html">jab_code</a> *cp)</td></tr>
 <tr class="memdesc:ab5f641aa7ae503c30fdca2b1a108d0ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mask the data modules in symbols.  <a href="#ab5f641aa7ae503c30fdca2b1a108d0ab">More...</a><br/></td></tr>
 <tr class="separator:ab5f641aa7ae503c30fdca2b1a108d0ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a10afa32ece74acc704efebeedd2f76e6"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mask_8c.html#a10afa32ece74acc704efebeedd2f76e6">maskCode</a> (<a class="el" href="structjab__encode.html">jab_encode</a> *enc, <a class="el" href="structjab__code.html">jab_code</a> *cp, jab_byte *palette_index)</td></tr>
-<tr class="memdesc:a10afa32ece74acc704efebeedd2f76e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mask modules.  <a href="#a10afa32ece74acc704efebeedd2f76e6">More...</a><br/></td></tr>
-<tr class="separator:a10afa32ece74acc704efebeedd2f76e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a266feda838ccf5d9844585dbb7fa2953"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mask_8c.html#a266feda838ccf5d9844585dbb7fa2953">maskCode</a> (<a class="el" href="structjab__encode.html">jab_encode</a> *enc, <a class="el" href="structjab__code.html">jab_code</a> *cp)</td></tr>
+<tr class="memdesc:a266feda838ccf5d9844585dbb7fa2953"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mask modules.  <a href="#a266feda838ccf5d9844585dbb7fa2953">More...</a><br/></td></tr>
+<tr class="separator:a266feda838ccf5d9844585dbb7fa2953"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9050a56e2a718710e24a6abd258a29b0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mask_8c.html#a9050a56e2a718710e24a6abd258a29b0">demaskSymbol</a> (<a class="el" href="structjab__data.html">jab_data</a> *data, jab_byte *data_map, <a class="el" href="structjab__vector2d.html">jab_vector2d</a> symbol_size, jab_int32 mask_type, jab_int32 color_number)</td></tr>
 <tr class="memdesc:a9050a56e2a718710e24a6abd258a29b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Demask modules.  <a href="#a9050a56e2a718710e24a6abd258a29b0">More...</a><br/></td></tr>
 <tr class="separator:a9050a56e2a718710e24a6abd258a29b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -158,7 +160,7 @@ Functions</h2></td></tr>
 <p>Copyright 2016 by Fraunhofer SIT. All rights reserved. See LICENSE file for full terms of use and distribution.</p>
 <p>Contact: Huajian Liu <a href="#" onclick="location.href='mai'+'lto:'+'liu'+'@s'+'it.'+'fr'+'aun'+'ho'+'fer'+'.d'+'e'; return false;">liu@s<span style="display: none;">.nosp@m.</span>it.f<span style="display: none;">.nosp@m.</span>raunh<span style="display: none;">.nosp@m.</span>ofer<span style="display: none;">.nosp@m.</span>.de</a> Waldemar Berchtold <a href="#" onclick="location.href='mai'+'lto:'+'wal'+'de'+'mar'+'.b'+'erc'+'ht'+'old'+'@s'+'it.'+'fr'+'aun'+'ho'+'fer'+'.d'+'e'; return false;">walde<span style="display: none;">.nosp@m.</span>mar.<span style="display: none;">.nosp@m.</span>berch<span style="display: none;">.nosp@m.</span>told<span style="display: none;">.nosp@m.</span>@sit.<span style="display: none;">.nosp@m.</span>frau<span style="display: none;">.nosp@m.</span>nhofe<span style="display: none;">.nosp@m.</span>r.de</a> </p>
 </div><h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="a85d668fbe3ea91c59b5eafa2e1926674"></a>
+<a class="anchor" id="ac895130e7f66b138f9ca5038effcad3f"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -184,13 +186,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">jab_int32&#160;</td>
-          <td class="paramname"><em>color_number</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">jab_byte *&#160;</td>
-          <td class="paramname"><em>palette_index</em>&#160;</td>
+          <td class="paramname"><em>color_number</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -207,7 +203,6 @@ Functions</h2></td></tr>
     <tr><td class="paramname">width</td><td>the symbol matrix width </td></tr>
     <tr><td class="paramname">height</td><td>the symbol matrix height </td></tr>
     <tr><td class="paramname">color_number</td><td>the number of module colors </td></tr>
-    <tr><td class="paramname">palette_index</td><td>the color indexes in the interleaved palette </td></tr>
   </table>
   </dd>
 </dl>
@@ -357,7 +352,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a6617a87606667afb8c30eb07ec335ee5"></a>
+<a class="anchor" id="af349caae7a94886c7ddde97c6c4da7e3"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -383,13 +378,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">jab_int32&#160;</td>
-          <td class="paramname"><em>color_number</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">jab_byte *&#160;</td>
-          <td class="paramname"><em>palette_index</em>&#160;</td>
+          <td class="paramname"><em>color_number</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -406,7 +395,6 @@ Functions</h2></td></tr>
     <tr><td class="paramname">width</td><td>the symbol matrix width </td></tr>
     <tr><td class="paramname">height</td><td>the symbol matrix height </td></tr>
     <tr><td class="paramname">color_number</td><td>the number of module colors </td></tr>
-    <tr><td class="paramname">palette_index</td><td>the color indexes in the interleaved palette </td></tr>
   </table>
   </dd>
 </dl>
@@ -414,7 +402,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a10afa32ece74acc704efebeedd2f76e6"></a>
+<a class="anchor" id="a266feda838ccf5d9844585dbb7fa2953"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -428,13 +416,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="structjab__code.html">jab_code</a> *&#160;</td>
-          <td class="paramname"><em>cp</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">jab_byte *&#160;</td>
-          <td class="paramname"><em>palette_index</em>&#160;</td>
+          <td class="paramname"><em>cp</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -449,11 +431,10 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">enc</td><td>the encode parameters </td></tr>
     <tr><td class="paramname">cp</td><td>the code parameters </td></tr>
-    <tr><td class="paramname">palette_index</td><td>the color indexes in the interleaved palette </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the mask pattern reference | NUMBER_OF_MASK_PATTERNS if fails </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the mask pattern reference | -1 if fails </dd></dl>
 
 </div>
 </div>
@@ -512,7 +493,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="mask_8c.html">mask.c</a></li>
-    <li class="footer">Generated on Wed Nov 23 2016 18:20:16 for jabcode by
+    <li class="footer">Generated on Wed Mar 20 2019 09:38:23 for jabcode by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.6 </li>
   </ul>

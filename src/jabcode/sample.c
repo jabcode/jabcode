@@ -26,11 +26,92 @@
  * @param bitmap the image bitmap
  * @param pt the transformation matrix
  * @param side_size the symbol size in module
- * @param symbol_type the symbol type
+ * @return the sampled symbol matrix
+*/
+jab_bitmap* sampleSymbol(jab_bitmap* bitmap, jab_perspective_transform* pt, jab_vector2d side_size)
+{
+	jab_int32 mtx_bytes_per_pixel = bitmap->bits_per_pixel / 8;
+	jab_int32 mtx_bytes_per_row = side_size.x * mtx_bytes_per_pixel;
+	jab_bitmap* matrix = (jab_bitmap*)malloc(sizeof(jab_bitmap) + side_size.x*side_size.y*mtx_bytes_per_pixel*sizeof(jab_byte));
+	if(matrix == NULL)
+	{
+		reportError("Memory allocation for symbol bitmap matrix failed");
+		return NULL;
+	}
+	matrix->channel_count = bitmap->channel_count;
+	matrix->bits_per_channel = bitmap->bits_per_channel;
+	matrix->bits_per_pixel = matrix->bits_per_channel * matrix->channel_count;
+	matrix->width = side_size.x;
+	matrix->height= side_size.y;
+
+	jab_int32 bmp_bytes_per_pixel = bitmap->bits_per_pixel / 8;
+	jab_int32 bmp_bytes_per_row = bitmap->width * bmp_bytes_per_pixel;
+
+	jab_point points[side_size.x];
+    for(jab_int32 i=0; i<side_size.y; i++)
+    {
+		for(jab_int32 j=0; j<side_size.x; j++)
+		{
+			points[j].x = (jab_float)j + 0.5f;
+			points[j].y = (jab_float)i + 0.5f;
+		}
+		warpPoints(pt, points, side_size.x);
+		for(jab_int32 j=0; j<side_size.x; j++)
+		{
+			jab_int32 mapped_x = (jab_int32)points[j].x;
+			jab_int32 mapped_y = (jab_int32)points[j].y;
+			if(mapped_x < 0 || mapped_x > bitmap->width-1)
+			{
+				if(mapped_x == -1) mapped_x = 0;
+				else if(mapped_x ==  bitmap->width) mapped_x = bitmap->width - 1;
+				else return NULL;
+			}
+			if(mapped_y < 0 || mapped_y > bitmap->height-1)
+			{
+				if(mapped_y == -1) mapped_y = 0;
+				else if(mapped_y ==  bitmap->height) mapped_y = bitmap->height - 1;
+				else return NULL;
+			}
+			for(jab_int32 c=0; c<matrix->channel_count; c++)
+			{
+				//get the average of pixel values in 3x3 neighborhood as the sampled value
+				jab_float sum = 0;
+				for(jab_int32 dx=-1; dx<=1; dx++)
+				{
+					for(jab_int32 dy=-1; dy<=1; dy++)
+					{
+						jab_int32 px = mapped_x + dx;
+						jab_int32 py = mapped_y + dy;
+						if(px < 0 || px > bitmap->width - 1)  px = mapped_x;
+						if(py < 0 || py > bitmap->height - 1) py = mapped_y;
+						sum += bitmap->pixel[py*bmp_bytes_per_row + px*bmp_bytes_per_pixel + c];
+					}
+				}
+				jab_byte ave = (jab_byte)(sum / 9.0f + 0.5f);
+				matrix->pixel[i*mtx_bytes_per_row + j*mtx_bytes_per_pixel + c] = ave;
+				//matrix->pixel[i*mtx_bytes_per_row + j*mtx_bytes_per_pixel + c] = bitmap->pixel[mapped_y*bmp_bytes_per_row + mapped_x*bmp_bytes_per_pixel + c];
+#if TEST_MODE
+				test_mode_bitmap->pixel[mapped_y*bmp_bytes_per_row + mapped_x*bmp_bytes_per_pixel + c] = 255;
+#endif
+			}
+		}
+    }
+#if TEST_MODE
+    saveImage(test_mode_bitmap, "sample_pos.png");
+#endif
+	return matrix;
+}
+
+/**
+ * @brief Sample a symbol
+ * @param bitmap the image bitmap
+ * @param pt the transformation matrix
+ * @param side_size the symbol size in module
+ * @param symbol_type the symbol type (0,2,3,4,5: metadata for Nc will be sampled as black/white)
  * @param ch the binarized color channels of the bitmap
  * @return the sampled symbol matrix
 */
-jab_bitmap* sampleSymbol(jab_bitmap* bitmap, jab_perspective_transform* pt, jab_vector2d side_size, jab_int32 symbol_type, jab_bitmap* ch[])
+jab_bitmap* sampleSymbolwithNc(jab_bitmap* bitmap, jab_perspective_transform* pt, jab_vector2d side_size, jab_int32 symbol_type, jab_bitmap* ch[])
 {
 	jab_int32 mtx_bytes_per_pixel = bitmap->bits_per_pixel / 8;
 	jab_int32 mtx_bytes_per_row = side_size.x * mtx_bytes_per_pixel;

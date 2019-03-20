@@ -29,10 +29,9 @@
  * @param width the symbol matrix width
  * @param height the symbol matrix height
  * @param color_number the number of module colors
- * @param palette_index the color indexes in the interleaved palette
  * @return the penalty score
 */
-jab_int32 applyRule1(jab_int32* matrix, jab_int32 width, jab_int32 height, jab_int32 color_number, jab_byte* palette_index)
+jab_int32 applyRule1(jab_int32* matrix, jab_int32 width, jab_int32 height, jab_int32 color_number)
 {
 	jab_byte fp0_c1, fp0_c2;
 	jab_byte fp1_c1, fp1_c2;
@@ -54,10 +53,10 @@ jab_int32 applyRule1(jab_int32* matrix, jab_int32 width, jab_int32 height, jab_i
 	}
 	else
 	{
-		fp0_c1 = palette_index[FP0_CORE_COLOR];	fp0_c2 = palette_index[7 - FP0_CORE_COLOR];
-		fp1_c1 = palette_index[FP1_CORE_COLOR];	fp1_c2 = palette_index[7 - FP1_CORE_COLOR];
-		fp2_c1 = palette_index[FP2_CORE_COLOR];	fp2_c2 = palette_index[7 - FP2_CORE_COLOR];
-		fp3_c1 = palette_index[FP3_CORE_COLOR];	fp3_c2 = palette_index[7 - FP3_CORE_COLOR];
+		fp0_c1 = FP0_CORE_COLOR;	fp0_c2 = 7 - FP0_CORE_COLOR;
+		fp1_c1 = FP1_CORE_COLOR;	fp1_c2 = 7 - FP1_CORE_COLOR;
+		fp2_c1 = FP2_CORE_COLOR;	fp2_c2 = 7 - FP2_CORE_COLOR;
+		fp3_c1 = FP3_CORE_COLOR;	fp3_c2 = 7 - FP3_CORE_COLOR;
 	}
 
 	jab_int32 score = 0;
@@ -273,12 +272,11 @@ jab_int32 applyRule3(jab_int32* matrix, jab_int32 width, jab_int32 height)
  * @param width the symbol matrix width
  * @param height the symbol matrix height
  * @param color_number the number of module colors
- * @param palette_index the color indexes in the interleaved palette
  * @return the penalty score
 */
-jab_int32 evaluateMask(jab_int32* matrix, jab_int32 width, jab_int32 height, jab_int32 color_number, jab_byte* palette_index)
+jab_int32 evaluateMask(jab_int32* matrix, jab_int32 width, jab_int32 height, jab_int32 color_number)
 {
-	return applyRule1(matrix, width, height, color_number, palette_index) + applyRule2(matrix, width, height) + applyRule3(matrix, width, height);
+	return applyRule1(matrix, width, height, color_number) + applyRule2(matrix, width, height) + applyRule3(matrix, width, height);
 }
 
 /**
@@ -296,8 +294,8 @@ void maskSymbols(jab_encode* enc, jab_int32 mask_type, jab_int32* masked, jab_co
 		if(masked && cp)
 		{
 			//calculate the starting coordinates of the symbol matrix
-			jab_int32 col = jab_decode_order[enc->symbol_positions[k]].x - cp->min_x;
-			jab_int32 row = jab_decode_order[enc->symbol_positions[k]].y - cp->min_y;
+			jab_int32 col = jab_symbol_pos[enc->symbol_positions[k]].x - cp->min_x;
+			jab_int32 row = jab_symbol_pos[enc->symbol_positions[k]].y - cp->min_y;
 			for(jab_int32 c=0; c<col; c++)
 				startx += cp->col_width[c];
 			for(jab_int32 r=0; r<row; r++)
@@ -360,10 +358,9 @@ void maskSymbols(jab_encode* enc, jab_int32 mask_type, jab_int32* masked, jab_co
  * @brief Mask modules
  * @param enc the encode parameters
  * @param cp the code parameters
- * @param palette_index the color indexes in the interleaved palette
- * @return the mask pattern reference | NUMBER_OF_MASK_PATTERNS if fails
+ * @return the mask pattern reference | -1 if fails
 */
-jab_int32 maskCode(jab_encode* enc, jab_code* cp, jab_byte* palette_index)
+jab_int32 maskCode(jab_encode* enc, jab_code* cp)
 {
 	jab_int32 mask_type = 0;
 	jab_int32 min_penalty_score = 10000;
@@ -373,7 +370,7 @@ jab_int32 maskCode(jab_encode* enc, jab_code* cp, jab_byte* palette_index)
     if(masked == NULL)
     {
         reportError("Memory allocation for masked code failed");
-        return NUMBER_OF_MASK_PATTERNS;
+        return -1;
     }
 	memset(masked, -1, cp->code_size.x * cp->code_size.y * sizeof(jab_int32)); //set all bytes in masked as 0xFF
 
@@ -383,10 +380,10 @@ jab_int32 maskCode(jab_encode* enc, jab_code* cp, jab_byte* palette_index)
 		jab_int32 penalty_score = 0;
 		maskSymbols(enc, t, masked, cp);
 		//calculate the penalty score
-		penalty_score = evaluateMask(masked, cp->code_size.x, cp->code_size.y, enc->color_number, palette_index);
+		penalty_score = evaluateMask(masked, cp->code_size.x, cp->code_size.y, enc->color_number);
 #if TEST_MODE
-		JAB_REPORT_INFO(("Penalty score: %d", penalty_score))
-#endif // TEST_MODE
+		//JAB_REPORT_INFO(("Penalty score: %d", penalty_score))
+#endif
 		if(penalty_score < min_penalty_score)
 		{
             mask_type = t;

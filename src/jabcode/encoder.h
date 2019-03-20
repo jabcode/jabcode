@@ -11,8 +11,8 @@
  * @brief Encoder header
  */
 
-#ifndef _ENCODER_H
-#define _ENCODER_H
+#ifndef JABCODE_ENCODER_H
+#define JABCODE_ENCODER_H
 
 /**
  * @brief Default color palette in RGB format
@@ -28,14 +28,42 @@ static const jab_byte jab_default_palette[] = {0, 	0, 		0, 		//0: black
 											   };
 
 /**
+ * @brief Finder pattern core color index in default palette
+*/
+#define	FP0_CORE_COLOR	1
+#define	FP1_CORE_COLOR	2
+#define	FP2_CORE_COLOR	5
+#define	FP3_CORE_COLOR	6
+
+/**
+ * @brief Alignment pattern core color index in default palette
+*/
+#define	AP0_CORE_COLOR	0
+#define	AP1_CORE_COLOR	0
+#define	AP2_CORE_COLOR	0
+#define	AP3_CORE_COLOR	0
+#define APX_CORE_COLOR	7
+
+/**
+ * @brief Finder pattern core color index for all color modes
+*/
+static const jab_byte fp0_core_color_index[] = {0, 0, FP0_CORE_COLOR, 1, 1, 3, 3, 3};
+static const jab_byte fp1_core_color_index[] = {0, 1, FP1_CORE_COLOR, 2, 6, 12, 12, 28};
+static const jab_byte fp2_core_color_index[] = {0, 2, FP2_CORE_COLOR, 13, 25, 51, 115, 227};
+static const jab_byte fp3_core_color_index[] = {0, 3, FP3_CORE_COLOR, 14, 30, 60, 124, 252};
+/**
+ * @brief Alignment pattern core color index for all color modes
+*/
+static const jab_byte apn_core_color_index[] = {0, 4, AP0_CORE_COLOR, 0, 0, 0, 0, 0};
+static const jab_byte apx_core_color_index[] = {0, 5, APX_CORE_COLOR, 15, 31, 63, 127, 255};
+
+/**
  * @brief Finder pattern types
 */
 #define FP0		0
 #define FP1		1
 #define FP2		2
 #define FP3		3
-#define FP0_BW 	4
-#define FPX_BW 	5
 
 /**
  * @brief Alignment pattern types
@@ -45,26 +73,6 @@ static const jab_byte jab_default_palette[] = {0, 	0, 		0, 		//0: black
 #define AP2	2
 #define AP3	3
 #define APX	4
-
-/**
- * @brief Finder pattern core color index
-*/
-#define	FP0_CORE_COLOR	1
-#define	FP1_CORE_COLOR	2
-#define	FP2_CORE_COLOR	5
-#define	FP3_CORE_COLOR	6
-
-#define FP0_CORE_COLOR_BW 0
-#define FPX_CORE_COLOR_BW 7
-
-/**
- * @brief Alignment pattern core color index
-*/
-#define	AP0_CORE_COLOR	0
-#define	AP1_CORE_COLOR	0
-#define	AP2_CORE_COLOR	0
-#define	AP3_CORE_COLOR	0
-#define APX_CORE_COLOR	7
 
 /**
  * @brief Code parameters
@@ -83,7 +91,7 @@ typedef struct {
 /**
  * @brief Decoding order of cascaded symbols
 */
-static const jab_vector2d jab_decode_order[MAX_SYMBOL_NUMBER] =
+static const jab_vector2d jab_symbol_pos[MAX_SYMBOL_NUMBER] =
 		{ 	{ 0, 0},
 			{ 0,-1}, { 0, 1}, {-1, 0}, { 1, 0}, { 0,-2}, {-1,-1}, { 1,-1}, { 0, 2}, {-1, 1}, { 1, 1},
 			{-2, 0}, { 2, 0}, { 0,-3}, {-1,-2}, { 1,-2}, {-2,-1}, { 2,-1}, { 0, 3}, {-1, 2}, { 1, 2},
@@ -181,8 +189,8 @@ static const jab_int32 character_size[7]={5,5,4,4,5,6,8};
 */
 //first latch followed by shift to and the last two are ECI and FNC1
 static const jab_int32 mode_switch[7][16]=
-        {{-1,28,29,-1,-1,30,-1,-1,-1,-1,27,125,-1,124,126,127},		//from upper case mode to all other modes; -1 indicates not possible mode switch
-         {126,-1,29,-1,-1,30,-1,28,-1,127,27,125,-1,124,-1,-1},		//lower case mode
+        {{-1,28,29,-1,-1,30,-1,-1,-1,-1,27,125,-1,124,126,-1},		//from upper case mode to all other modes; -1 indicates not possible mode switch
+         {126,-1,29,-1,-1,30,-1,28,-1,127,27,125,-1,124,-1,127},	//lower case mode
          {14,63,-1,-1,-1,478,-1,62,-1,-1,13,61,-1,60,-1,-1},		//numeric mode
          {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},			//punctuation mode
          {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},			//mixed mode
@@ -193,18 +201,17 @@ static const jab_int32 mode_switch[7][16]=
 /**
  * @brief code rate of each ecc level
 */
-static const jab_float convert_ecc2coderate[11] = {0.43f, 0.63f, 0.57f, 0.55f, 0.50f, 0.43f, 0.34f, 0.25f, 0.20f, 0.17f, 0.14f};
+static const jab_float ecclevel2coderate[11] = {0.55f, 0.63f, 0.57f, 0.55f, 0.50f, 0.43f, 0.34f, 0.25f, 0.20f, 0.17f, 0.14f};
+
+/**
+ * @brief wc and wr
+*/
+static const jab_int32 ecclevel2wcwr[11][2] = {{4, 9}, {3, 8}, {3, 7}, {4, 9}, {3, 6}, {4, 7}, {4, 6}, {3, 4}, {4, 5}, {5, 6}, {6, 7}};
 
 
-extern jab_int32* analyzeInputData(jab_data* input, jab_int32* encoded_length);
-extern jab_data* encodeData(jab_data* data, jab_int32 encoded_length, jab_int32* encode_seq);
-extern void createMatrix(jab_encode* enc, jab_int32 index, jab_data* ecc_encoded_data, jab_byte* palette_index);
-extern void getMetadataLength(jab_encode* enc, jab_int32 index);
-extern void placeMetadata(jab_encode* enc, jab_byte* palette_index);
-extern jab_code* getCodePara(jab_encode* enc);
-extern void createBitmap(jab_encode* enc, jab_code* cp);
 extern void interleaveData(jab_data* data);
-extern jab_int32 maskCode(jab_encode* enc, jab_code* cp, jab_byte* palette_index);
-extern void genColorPalette(jab_int32 color_number, jab_byte* palette);
+extern jab_int32 maskCode(jab_encode* enc, jab_code* cp);
+extern void maskSymbols(jab_encode* enc, jab_int32 mask_type, jab_int32* masked, jab_code* cp);
+extern void getNextMetadataModuleInMaster(jab_int32 matrix_height, jab_int32 matrix_width, jab_int32 next_module_count, jab_int32* x, jab_int32* y);
 
 #endif

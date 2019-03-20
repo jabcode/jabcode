@@ -1,11 +1,8 @@
 var detector_8h =
 [
-    [ "jab_point", "structjab__point.html", "structjab__point" ],
     [ "jab_finder_pattern", "structjab__finder__pattern.html", "structjab__finder__pattern" ],
     [ "jab_alignment_pattern", "structjab__alignment__pattern.html", "structjab__alignment__pattern" ],
     [ "jab_perspective_transform", "structjab__perspective__transform.html", "structjab__perspective__transform" ],
-    [ "jab_metadata", "structjab__metadata.html", "structjab__metadata" ],
-    [ "jab_decoded_symbol", "structjab__decoded__symbol.html", "structjab__decoded__symbol" ],
     [ "CROSS_AREA_WIDTH", "detector_8h.html#a37c161892980f9685d97129721771055", null ],
     [ "DIST", "detector_8h.html#adc18a5511279b56772d61c78a8e35779", null ],
     [ "MAX_FINDER_PATTERNS", "detector_8h.html#a6f98453c352a754b6b3e462e0ef018a5", null ],
@@ -25,7 +22,8 @@ var detector_8h =
     [ "getPerspectiveTransform", "detector_8h.html#a316e58cb6a2b80e0c2a309850fde051d", null ],
     [ "perspectiveTransform", "detector_8h.html#a44c04e96aa50d88100c99a9125283d25", null ],
     [ "sampleCrossArea", "detector_8h.html#a74dfd2384abd2574a16bfde7fc0c2dc9", null ],
-    [ "sampleSymbol", "detector_8h.html#a1deb5487f3b7991fcb6e3dcbbb0e9a2a", null ],
+    [ "sampleSymbol", "detector_8h.html#a6586265f273ba12a50e527914dffcbfe", null ],
+    [ "sampleSymbolwithNc", "detector_8h.html#a540d63013fbb4a8a247b780b08dd00be", null ],
     [ "warpPoints", "detector_8h.html#a2693aa030475b528827bb178db11fbcd", null ],
     [ "test_mode_bitmap", "detector_8h.html#a835a60c65da2b589499c8bf331b1889b", null ]
 ];

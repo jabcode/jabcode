@@ -3,6 +3,9 @@
 #include <string.h>
 #include "jabcode.h"
 
+/**
+ * @brief Print usage of JABCode reader
+*/
 void printUsage()
 {
 	printf("\n");
@@ -15,12 +18,16 @@ void printUsage()
 	printf("\n");
 }
 
+/**
+ * @brief JABCode reader main function
+ * @return 0: success | 255: not detectable | other non-zero: decoding failed
+*/
 int main(int argc, char *argv[])
 {
 	if(argc < 2 || (0 == strcmp(argv[1],"--help")))
 	{
 		printUsage();
-		return 1;
+		return 255;
 	}
 
 	jab_boolean output_as_file = 0;
@@ -31,7 +38,7 @@ int main(int argc, char *argv[])
 		else
 		{
 			printf("Unknown parameter: %s\n", argv[2]);
-			return 1;
+			return 255;
 		}
 	}
 
@@ -39,15 +46,26 @@ int main(int argc, char *argv[])
 	jab_bitmap* bitmap;
 	bitmap = readImage(argv[1]);
 	if(bitmap == NULL)
-		return 1;
+		return 255;
 
 	//find and decode JABCode in the image
-	jab_data* decoded_data = decodeJABCode(bitmap, NORMAL_DECODE);
+	jab_int32 decode_status;
+	jab_decoded_symbol symbols[MAX_SYMBOL_NUMBER];
+	jab_data* decoded_data = decodeJABCodeEx(bitmap, NORMAL_DECODE, &decode_status, symbols, MAX_SYMBOL_NUMBER);
 	if(decoded_data == NULL)
 	{
-		if(bitmap) free(bitmap);
-		reportError("Decoding jabcode failed");
-		return 1;
+		free(bitmap);
+		reportError("Decoding JABCode failed");
+		if(decode_status > 0)
+			return (jab_int32)(symbols[0].module_size + 0.5f);
+		else
+			return 255;
+	}
+
+	//output warning if the code is only partly decoded with COMPATIBLE_DECODE mode
+	if(decode_status == 2)
+	{
+		JAB_REPORT_INFO(("The code is only partly decoded. Some slave symbols have not been decoded and are ignored."))
 	}
 
 	//output result
@@ -56,8 +74,8 @@ int main(int argc, char *argv[])
 		FILE* output_file = fopen(argv[3], "wb");
 		if(output_file == NULL)
 		{
-			reportError("Can not open output file");
-			return 1;
+			reportError("Can not open the output file");
+			return 255;
 		}
 		fwrite(decoded_data->data, decoded_data->length, 1, output_file);
 		fclose(output_file);
@@ -69,7 +87,7 @@ int main(int argc, char *argv[])
 		printf("\n");
 	}
 
-	if(bitmap) free(bitmap);
-	if(decoded_data) free(decoded_data);
+	free(bitmap);
+	free(decoded_data);
     return 0;
 }

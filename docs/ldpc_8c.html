@@ -132,9 +132,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a3964ac8681670f18f625bab60e8124e3"><td class="memItemLeft" align="right" valign="top">jab_int32 *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ldpc_8c.html#a3964ac8681670f18f625bab60e8124e3">createGeneratorMatrix</a> (jab_int32 *matrixA, jab_int32 capacity, jab_int32 Pn)</td></tr>
 <tr class="memdesc:a3964ac8681670f18f625bab60e8124e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the generator matrix to encode messages.  <a href="#a3964ac8681670f18f625bab60e8124e3">More...</a><br/></td></tr>
 <tr class="separator:a3964ac8681670f18f625bab60e8124e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac5f16f5c91857c55d240bcc6f8db530e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structjab__data.html">jab_data</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ldpc_8c.html#ac5f16f5c91857c55d240bcc6f8db530e">encodeLDPC</a> (<a class="el" href="structjab__data.html">jab_data</a> *data, jab_int32 *coderate_params, jab_int32 *from_to, jab_int32 index)</td></tr>
-<tr class="memdesc:ac5f16f5c91857c55d240bcc6f8db530e"><td class="mdescLeft">&#160;</td><td class="mdescRight">LDPC encoding.  <a href="#ac5f16f5c91857c55d240bcc6f8db530e">More...</a><br/></td></tr>
-<tr class="separator:ac5f16f5c91857c55d240bcc6f8db530e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6bae5bfe26f6c65da5051b54afabad94"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structjab__data.html">jab_data</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ldpc_8c.html#a6bae5bfe26f6c65da5051b54afabad94">encodeLDPC</a> (<a class="el" href="structjab__data.html">jab_data</a> *data, jab_int32 *coderate_params)</td></tr>
+<tr class="memdesc:a6bae5bfe26f6c65da5051b54afabad94"><td class="mdescLeft">&#160;</td><td class="mdescRight">LDPC encoding.  <a href="#a6bae5bfe26f6c65da5051b54afabad94">More...</a><br/></td></tr>
+<tr class="separator:a6bae5bfe26f6c65da5051b54afabad94"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac4f29c20fe6814731a345a204a6db42c"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ldpc_8c.html#ac4f29c20fe6814731a345a204a6db42c">decodeMessage</a> (jab_byte *data, jab_int32 *matrix, jab_int32 length, jab_int32 height, jab_int32 max_iter, jab_boolean *is_correct, jab_int32 start_pos)</td></tr>
 <tr class="memdesc:ac4f29c20fe6814731a345a204a6db42c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Iterative hard decision error correction decoder.  <a href="#ac4f29c20fe6814731a345a204a6db42c">More...</a><br/></td></tr>
 <tr class="separator:ac4f29c20fe6814731a345a204a6db42c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -627,7 +627,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ac5f16f5c91857c55d240bcc6f8db530e"></a>
+<a class="anchor" id="a6bae5bfe26f6c65da5051b54afabad94"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -641,19 +641,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">jab_int32 *&#160;</td>
-          <td class="paramname"><em>coderate_params</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">jab_int32 *&#160;</td>
-          <td class="paramname"><em>from_to</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">jab_int32&#160;</td>
-          <td class="paramname"><em>index</em>&#160;</td>
+          <td class="paramname"><em>coderate_params</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -668,8 +656,6 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">data</td><td>the data to be encoded </td></tr>
     <tr><td class="paramname">coderate_params</td><td>the two code rate parameter wc and wr indicating how many '1' in a column (Wc) and how many '1' in a row of the parity check matrix </td></tr>
-    <tr><td class="paramname">from_to</td><td>the start and stop index of data to encode parts of the massage for several symbols </td></tr>
-    <tr><td class="paramname">index</td><td>the symbol count </td></tr>
   </table>
   </dd>
 </dl>
@@ -747,7 +733,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="ldpc_8c.html">ldpc.c</a></li>
-    <li class="footer">Generated on Wed Nov 23 2016 18:20:16 for jabcode by
+    <li class="footer">Generated on Wed Mar 20 2019 09:38:23 for jabcode by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.6 </li>
   </ul>

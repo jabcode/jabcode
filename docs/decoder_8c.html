@@ -121,15 +121,18 @@ $(document).ready(function(){initNavTree('decoder_8c.html','');});
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ae79bcad4fcd0a7fa783e60ed8d9a06c7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="decoder_8c.html#ae79bcad4fcd0a7fa783e60ed8d9a06c7">deinterleavePalette</a> (jab_byte *palette, jab_int32 palette_size, jab_int32 available_color_number)</td></tr>
-<tr class="memdesc:ae79bcad4fcd0a7fa783e60ed8d9a06c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Deinterleave color palette.  <a href="#ae79bcad4fcd0a7fa783e60ed8d9a06c7">More...</a><br/></td></tr>
-<tr class="separator:ae79bcad4fcd0a7fa783e60ed8d9a06c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a43bcafb2f01cdd0136747e0bb5eba84d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="decoder_8c.html#a43bcafb2f01cdd0136747e0bb5eba84d">copyAndInterpolateSubblockFrom16To32</a> (jab_byte *palette, jab_int32 dst_offset, jab_int32 src_offset)</td></tr>
 <tr class="memdesc:a43bcafb2f01cdd0136747e0bb5eba84d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy 16-color sub-blocks of 64-color palette into 32-color blocks of 256-color palette and interpolate into 32 colors.  <a href="#a43bcafb2f01cdd0136747e0bb5eba84d">More...</a><br/></td></tr>
 <tr class="separator:a43bcafb2f01cdd0136747e0bb5eba84d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a98b7c2b8160330f7c7aacffb3c0d1c00"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="decoder_8c.html#a98b7c2b8160330f7c7aacffb3c0d1c00">interpolatePalette</a> (jab_byte *palette, jab_int32 color_number)</td></tr>
 <tr class="memdesc:a98b7c2b8160330f7c7aacffb3c0d1c00"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interpolate 64-color palette into 128-/256-color palette.  <a href="#a98b7c2b8160330f7c7aacffb3c0d1c00">More...</a><br/></td></tr>
 <tr class="separator:a98b7c2b8160330f7c7aacffb3c0d1c00"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb68b61dc813e719103deeabb019f81c"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="decoder_8c.html#afb68b61dc813e719103deeabb019f81c">readColorPaletteInMaster</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *matrix, <a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *symbol, jab_byte *data_map, jab_int32 *module_count, jab_int32 *x, jab_int32 *y)</td></tr>
+<tr class="memdesc:afb68b61dc813e719103deeabb019f81c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the color palettes in master symbol.  <a href="#afb68b61dc813e719103deeabb019f81c">More...</a><br/></td></tr>
+<tr class="separator:afb68b61dc813e719103deeabb019f81c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a5388d194d0e536124b666c7cdca1ba"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="decoder_8c.html#a3a5388d194d0e536124b666c7cdca1ba">readColorPaletteInSlave</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *matrix, <a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *symbol, jab_byte *data_map)</td></tr>
+<tr class="memdesc:a3a5388d194d0e536124b666c7cdca1ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the color palettes in master symbol.  <a href="#a3a5388d194d0e536124b666c7cdca1ba">More...</a><br/></td></tr>
+<tr class="separator:a3a5388d194d0e536124b666c7cdca1ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aec95c62fb2c62343f3b7f48400c5914b"><td class="memItemLeft" align="right" valign="top">jab_byte&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="decoder_8c.html#aec95c62fb2c62343f3b7f48400c5914b">decodeModuleHD</a> (jab_byte *palette, jab_int32 color_number, jab_byte r, jab_byte g, jab_byte b)</td></tr>
 <tr class="memdesc:aec95c62fb2c62343f3b7f48400c5914b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode a module using hard decision.  <a href="#aec95c62fb2c62343f3b7f48400c5914b">More...</a><br/></td></tr>
 <tr class="separator:aec95c62fb2c62343f3b7f48400c5914b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -142,12 +145,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a62edb43fc31903ebea79bf4c39ed2edd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="decoder_8c.html#a62edb43fc31903ebea79bf4c39ed2edd">getNextMetadataModuleInMaster</a> (jab_int32 matrix_height, jab_int32 matrix_width, jab_int32 next_module_count, jab_int32 *x, jab_int32 *y)</td></tr>
 <tr class="memdesc:a62edb43fc31903ebea79bf4c39ed2edd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the coordinate of the next metadata module in master symbol.  <a href="#a62edb43fc31903ebea79bf4c39ed2edd">More...</a><br/></td></tr>
 <tr class="separator:a62edb43fc31903ebea79bf4c39ed2edd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a32a8c4089fccbc2ea088f6379620d6ac"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="decoder_8c.html#a32a8c4089fccbc2ea088f6379620d6ac">getNextMetadataModuleInSlave</a> (jab_int32 next_module_count, jab_int32 *x, jab_int32 *y)</td></tr>
-<tr class="memdesc:a32a8c4089fccbc2ea088f6379620d6ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the coordinate of the next metadata module in slave symbol.  <a href="#a32a8c4089fccbc2ea088f6379620d6ac">More...</a><br/></td></tr>
-<tr class="separator:a32a8c4089fccbc2ea088f6379620d6ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0f095ed995c717c451a80ebabb5569cc"><td class="memItemLeft" align="right" valign="top">jab_boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="decoder_8c.html#a0f095ed995c717c451a80ebabb5569cc">decodeSlaveMetadata</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *matrix, <a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *host_symbol, <a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *slave_symbol)</td></tr>
-<tr class="memdesc:a0f095ed995c717c451a80ebabb5569cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode slave symbol metadata.  <a href="#a0f095ed995c717c451a80ebabb5569cc">More...</a><br/></td></tr>
-<tr class="separator:a0f095ed995c717c451a80ebabb5569cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2feb00f3bc4fc42e6558c0fb93154a13"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="decoder_8c.html#a2feb00f3bc4fc42e6558c0fb93154a13">decodeSlaveMetadata</a> (<a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *host_symbol, jab_int32 docked_position, <a class="el" href="structjab__data.html">jab_data</a> *data, jab_int32 offset)</td></tr>
+<tr class="memdesc:a2feb00f3bc4fc42e6558c0fb93154a13"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode slave symbol metadata.  <a href="#a2feb00f3bc4fc42e6558c0fb93154a13">More...</a><br/></td></tr>
+<tr class="separator:a2feb00f3bc4fc42e6558c0fb93154a13"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3cb9964c13ea1a4e0027beb0234be4d0"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="decoder_8c.html#a3cb9964c13ea1a4e0027beb0234be4d0">decodeMasterMetadata</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *matrix, <a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *symbol, jab_byte *data_map)</td></tr>
 <tr class="memdesc:a3cb9964c13ea1a4e0027beb0234be4d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode master symbol metadata.  <a href="#a3cb9964c13ea1a4e0027beb0234be4d0">More...</a><br/></td></tr>
 <tr class="separator:a3cb9964c13ea1a4e0027beb0234be4d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -160,6 +160,12 @@ Functions</h2></td></tr>
 <tr class="memitem:ae1325e55c93814eb57941d2a0ea93852"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="decoder_8c.html#ae1325e55c93814eb57941d2a0ea93852">fillDataMap</a> (jab_byte *data_map, jab_int32 width, jab_int32 height, jab_int32 type)</td></tr>
 <tr class="memdesc:ae1325e55c93814eb57941d2a0ea93852"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mark the positions of finder patterns and alignment patterns in the data map.  <a href="#ae1325e55c93814eb57941d2a0ea93852">More...</a><br/></td></tr>
 <tr class="separator:ae1325e55c93814eb57941d2a0ea93852"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6fda0e1362b309d515103e1b4890a19"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="decoder_8c.html#ac6fda0e1362b309d515103e1b4890a19">loadDefaultMasterMetadata</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *matrix, <a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *symbol, jab_byte *data_map)</td></tr>
+<tr class="memdesc:ac6fda0e1362b309d515103e1b4890a19"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load default metadata values and color palettes for master symbol.  <a href="#ac6fda0e1362b309d515103e1b4890a19">More...</a><br/></td></tr>
+<tr class="separator:ac6fda0e1362b309d515103e1b4890a19"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ba7c50378796518e136e8560ee268c5"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="decoder_8c.html#a2ba7c50378796518e136e8560ee268c5">decodeSymbol</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *matrix, <a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *symbol, jab_byte *data_map, jab_int32 type)</td></tr>
+<tr class="memdesc:a2ba7c50378796518e136e8560ee268c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode symbol.  <a href="#a2ba7c50378796518e136e8560ee268c5">More...</a><br/></td></tr>
+<tr class="separator:a2ba7c50378796518e136e8560ee268c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a71ad13d78b380cfb686640cb440eab0b"><td class="memItemLeft" align="right" valign="top">jab_int32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="decoder_8c.html#a71ad13d78b380cfb686640cb440eab0b">decodeMaster</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *matrix, <a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *symbol)</td></tr>
 <tr class="memdesc:a71ad13d78b380cfb686640cb440eab0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode master symbol.  <a href="#a71ad13d78b380cfb686640cb440eab0b">More...</a><br/></td></tr>
 <tr class="separator:a71ad13d78b380cfb686640cb440eab0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -278,7 +284,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>1: success | 0: decoding data failure | -1: decoding metadata failure | -2: fatal failure (out of memory) </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>JAB_SUCCESS | JAB_FAILURE | FATAL_ERROR </dd></dl>
 
 </div>
 </div>
@@ -321,7 +327,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>1: success | 0: symbol version failure | -1: decoding metadata failure | -2: fatal error (out of memory) </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>JAB_SUCCESS | JAB_FAILURE | DECODE_METADATA_FAILED | FATAL_ERROR </dd></dl>
 
 </div>
 </div>
@@ -478,31 +484,37 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>1: success | 0: decoding data failure | -1: decoding metadata failure | -2: fatal failure (out of memory) </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>JAB_SUCCESS | JAB_FAILURE | FATAL_ERROR </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="a0f095ed995c717c451a80ebabb5569cc"></a>
+<a class="anchor" id="a2feb00f3bc4fc42e6558c0fb93154a13"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">jab_boolean decodeSlaveMetadata </td>
+          <td class="memname">jab_int32 decodeSlaveMetadata </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td>
-          <td class="paramname"><em>matrix</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype"><a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *&#160;</td>
           <td class="paramname"><em>host_symbol</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *&#160;</td>
-          <td class="paramname"><em>slave_symbol</em>&#160;</td>
+          <td class="paramtype">jab_int32&#160;</td>
+          <td class="paramname"><em>docked_position</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structjab__data.html">jab_data</a> *&#160;</td>
+          <td class="paramname"><em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32&#160;</td>
+          <td class="paramname"><em>offset</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -515,37 +527,44 @@ Functions</h2></td></tr>
 <p>Decode slave symbol metadata. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">matrix</td><td>the symbol matrix </td></tr>
     <tr><td class="paramname">host_symbol</td><td>the host symbol </td></tr>
-    <tr><td class="paramname">slave_symbol</td><td>the slave_symbol </td></tr>
+    <tr><td class="paramname">docked_position</td><td>the docked position </td></tr>
+    <tr><td class="paramname">data</td><td>the data stream of the host symbol </td></tr>
+    <tr><td class="paramname">offset</td><td>the metadata start offset in the data stream </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>JAB_SUCCESS | JAB_FAILURE </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the read metadata bit length | DECODE_METADATA_FAILED </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="ae79bcad4fcd0a7fa783e60ed8d9a06c7"></a>
+<a class="anchor" id="a2ba7c50378796518e136e8560ee268c5"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void deinterleavePalette </td>
+          <td class="memname">jab_int32 decodeSymbol </td>
           <td>(</td>
+          <td class="paramtype"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td>
+          <td class="paramname"><em>matrix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *&#160;</td>
+          <td class="paramname"><em>symbol</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">jab_byte *&#160;</td>
-          <td class="paramname"><em>palette</em>, </td>
+          <td class="paramname"><em>data_map</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">jab_int32&#160;</td>
-          <td class="paramname"><em>palette_size</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">jab_int32&#160;</td>
-          <td class="paramname"><em>available_color_number</em>&#160;</td>
+          <td class="paramname"><em>type</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -555,15 +574,17 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Deinterleave color palette. </p>
+<p>Decode symbol. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">palette</td><td>the color palette </td></tr>
-    <tr><td class="paramname">palette_size</td><td>the color palette size </td></tr>
-    <tr><td class="paramname">available_color_number</td><td>the number of available colors </td></tr>
+    <tr><td class="paramname">matrix</td><td>the symbol matrix </td></tr>
+    <tr><td class="paramname">symbol</td><td>the symbol to be decoded </td></tr>
+    <tr><td class="paramname">data_map</td><td>the data module positions </td></tr>
+    <tr><td class="paramname">type</td><td>the symbol type, 0: master, 1: slave </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>JAB_SUCCESS | JAB_FAILURE | DECODE_METADATA_FAILED | FATAL_ERROR </dd></dl>
 
 </div>
 </div>
@@ -672,48 +693,6 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a32a8c4089fccbc2ea088f6379620d6ac"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void getNextMetadataModuleInSlave </td>
-          <td>(</td>
-          <td class="paramtype">jab_int32&#160;</td>
-          <td class="paramname"><em>next_module_count</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">jab_int32 *&#160;</td>
-          <td class="paramname"><em>x</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">jab_int32 *&#160;</td>
-          <td class="paramname"><em>y</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Get the coordinate of the next metadata module in slave symbol. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">next_module_count</td><td>the index number of the next module </td></tr>
-    <tr><td class="paramname">x</td><td>the x coordinate of the current and the next module </td></tr>
-    <tr><td class="paramname">y</td><td>the y coordinate of the current and the next module </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <a class="anchor" id="ad527eca4cc7d156db44b6a3568155031"></a>
 <div class="memitem">
 <div class="memproto">
@@ -799,6 +778,49 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ac6fda0e1362b309d515103e1b4890a19"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">jab_int32 loadDefaultMasterMetadata </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td>
+          <td class="paramname"><em>matrix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *&#160;</td>
+          <td class="paramname"><em>symbol</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_byte *&#160;</td>
+          <td class="paramname"><em>data_map</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Load default metadata values and color palettes for master symbol. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">matrix</td><td>the symbol matrix </td></tr>
+    <tr><td class="paramname">symbol</td><td>the master symbol </td></tr>
+    <tr><td class="paramname">data_map</td><td>the data module positions </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JAB_SUCCESS | FATAL_ERROR </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ab1f2035c40cf4aa3b6311c51040abd2f"></a>
 <div class="memitem">
 <div class="memproto">
@@ -832,6 +854,113 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>the converted data | NULL if failed </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="afb68b61dc813e719103deeabb019f81c"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">jab_int32 readColorPaletteInMaster </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td>
+          <td class="paramname"><em>matrix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *&#160;</td>
+          <td class="paramname"><em>symbol</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_byte *&#160;</td>
+          <td class="paramname"><em>data_map</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32 *&#160;</td>
+          <td class="paramname"><em>module_count</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32 *&#160;</td>
+          <td class="paramname"><em>x</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_int32 *&#160;</td>
+          <td class="paramname"><em>y</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read the color palettes in master symbol. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">matrix</td><td>the symbol matrix </td></tr>
+    <tr><td class="paramname">symbol</td><td>the master symbol </td></tr>
+    <tr><td class="paramname">data_map</td><td>the data module positions </td></tr>
+    <tr><td class="paramname">module_count</td><td>the start module index </td></tr>
+    <tr><td class="paramname">x</td><td>the x coordinate of the start module </td></tr>
+    <tr><td class="paramname">y</td><td>the y coordinate of the start module </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JAB_SUCCESS | FATAL_ERROR </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a3a5388d194d0e536124b666c7cdca1ba"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">jab_int32 readColorPaletteInSlave </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td>
+          <td class="paramname"><em>matrix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a> *&#160;</td>
+          <td class="paramname"><em>symbol</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">jab_byte *&#160;</td>
+          <td class="paramname"><em>data_map</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read the color palettes in master symbol. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">matrix</td><td>the symbol matrix </td></tr>
+    <tr><td class="paramname">symbol</td><td>the slave symbol </td></tr>
+    <tr><td class="paramname">data_map</td><td>the data module positions </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JAB_SUCCESS | FATAL_ERROR </dd></dl>
 
 </div>
 </div>
@@ -941,7 +1070,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="decoder_8c.html">decoder.c</a></li>
-    <li class="footer">Generated on Wed Nov 23 2016 18:20:16 for jabcode by
+    <li class="footer">Generated on Wed Mar 20 2019 09:38:23 for jabcode by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.6 </li>
   </ul>

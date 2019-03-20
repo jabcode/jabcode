@@ -118,9 +118,6 @@ $(document).ready(function(){initNavTree('detector_8h.html','');});
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structjab__point.html">jab_point</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">2-dimensional float vector  <a href="structjab__point.html#details">More...</a><br/></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structjab__finder__pattern.html">jab_finder_pattern</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finder pattern.  <a href="structjab__finder__pattern.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -129,12 +126,6 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structjab__perspective__transform.html">jab_perspective_transform</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perspective transform.  <a href="structjab__perspective__transform.html#details">More...</a><br/></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structjab__metadata.html">jab_metadata</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decoded metadata.  <a href="structjab__metadata.html#details">More...</a><br/></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structjab__decoded__symbol.html">jab_decoded_symbol</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decoded symbol.  <a href="structjab__decoded__symbol.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
@@ -192,9 +183,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a2693aa030475b528827bb178db11fbcd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8h.html#a2693aa030475b528827bb178db11fbcd">warpPoints</a> (<a class="el" href="structjab__perspective__transform.html">jab_perspective_transform</a> *pt, <a class="el" href="structjab__point.html">jab_point</a> *points, jab_int32 length)</td></tr>
 <tr class="memdesc:a2693aa030475b528827bb178db11fbcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Warp points from source image to destination image in place.  <a href="#a2693aa030475b528827bb178db11fbcd">More...</a><br/></td></tr>
 <tr class="separator:a2693aa030475b528827bb178db11fbcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1deb5487f3b7991fcb6e3dcbbb0e9a2a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8h.html#a1deb5487f3b7991fcb6e3dcbbb0e9a2a">sampleSymbol</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *bitmap, <a class="el" href="structjab__perspective__transform.html">jab_perspective_transform</a> *pt, <a class="el" href="structjab__vector2d.html">jab_vector2d</a> side_size, jab_int32 symbol_type, <a class="el" href="structjab__bitmap.html">jab_bitmap</a> *ch[])</td></tr>
-<tr class="memdesc:a1deb5487f3b7991fcb6e3dcbbb0e9a2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sample a symbol.  <a href="#a1deb5487f3b7991fcb6e3dcbbb0e9a2a">More...</a><br/></td></tr>
-<tr class="separator:a1deb5487f3b7991fcb6e3dcbbb0e9a2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6586265f273ba12a50e527914dffcbfe"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8h.html#a6586265f273ba12a50e527914dffcbfe">sampleSymbol</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *bitmap, <a class="el" href="structjab__perspective__transform.html">jab_perspective_transform</a> *pt, <a class="el" href="structjab__vector2d.html">jab_vector2d</a> side_size)</td></tr>
+<tr class="memdesc:a6586265f273ba12a50e527914dffcbfe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sample a symbol.  <a href="#a6586265f273ba12a50e527914dffcbfe">More...</a><br/></td></tr>
+<tr class="separator:a6586265f273ba12a50e527914dffcbfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a540d63013fbb4a8a247b780b08dd00be"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8h.html#a540d63013fbb4a8a247b780b08dd00be">sampleSymbolwithNc</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *bitmap, <a class="el" href="structjab__perspective__transform.html">jab_perspective_transform</a> *pt, <a class="el" href="structjab__vector2d.html">jab_vector2d</a> side_size, jab_int32 symbol_type, <a class="el" href="structjab__bitmap.html">jab_bitmap</a> *ch[])</td></tr>
+<tr class="memdesc:a540d63013fbb4a8a247b780b08dd00be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sample a symbol.  <a href="#a540d63013fbb4a8a247b780b08dd00be">More...</a><br/></td></tr>
+<tr class="separator:a540d63013fbb4a8a247b780b08dd00be"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a74dfd2384abd2574a16bfde7fc0c2dc9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detector_8h.html#a74dfd2384abd2574a16bfde7fc0c2dc9">sampleCrossArea</a> (<a class="el" href="structjab__bitmap.html">jab_bitmap</a> *bitmap, <a class="el" href="structjab__perspective__transform.html">jab_perspective_transform</a> *pt)</td></tr>
 <tr class="memdesc:a74dfd2384abd2574a16bfde7fc0c2dc9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sample a cross area between the host and slave symbols.  <a href="#a74dfd2384abd2574a16bfde7fc0c2dc9">More...</a><br/></td></tr>
 <tr class="separator:a74dfd2384abd2574a16bfde7fc0c2dc9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -553,12 +547,55 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a1deb5487f3b7991fcb6e3dcbbb0e9a2a"></a>
+<a class="anchor" id="a6586265f273ba12a50e527914dffcbfe"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="structjab__bitmap.html">jab_bitmap</a>* sampleSymbol </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td>
+          <td class="paramname"><em>bitmap</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structjab__perspective__transform.html">jab_perspective_transform</a> *&#160;</td>
+          <td class="paramname"><em>pt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structjab__vector2d.html">jab_vector2d</a>&#160;</td>
+          <td class="paramname"><em>side_size</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sample a symbol. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bitmap</td><td>the image bitmap </td></tr>
+    <tr><td class="paramname">pt</td><td>the transformation matrix </td></tr>
+    <tr><td class="paramname">side_size</td><td>the symbol size in module </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the sampled symbol matrix </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a540d63013fbb4a8a247b780b08dd00be"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structjab__bitmap.html">jab_bitmap</a>* sampleSymbolwithNc </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structjab__bitmap.html">jab_bitmap</a> *&#160;</td>
           <td class="paramname"><em>bitmap</em>, </td>
@@ -601,7 +638,7 @@ Variables</h2></td></tr>
     <tr><td class="paramname">bitmap</td><td>the image bitmap </td></tr>
     <tr><td class="paramname">pt</td><td>the transformation matrix </td></tr>
     <tr><td class="paramname">side_size</td><td>the symbol size in module </td></tr>
-    <tr><td class="paramname">symbol_type</td><td>the symbol type </td></tr>
+    <tr><td class="paramname">symbol_type</td><td>the symbol type (0,2,3,4,5: metadata for Nc will be sampled as black/white) </td></tr>
     <tr><td class="paramname">ch</td><td>the binarized color channels of the bitmap </td></tr>
   </table>
   </dd>
@@ -658,7 +695,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="detector_8h.html">detector.h</a></li>
-    <li class="footer">Generated on Wed Nov 23 2016 18:20:16 for jabcode by
+    <li class="footer">Generated on Wed Mar 20 2019 09:38:23 for jabcode by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.6 </li>
   </ul>

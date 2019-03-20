@@ -374,17 +374,15 @@ jab_int32 *createGeneratorMatrix(jab_int32* matrixA, jab_int32 capacity, jab_int
  * @brief LDPC encoding
  * @param data the data to be encoded
  * @param coderate_params the two code rate parameter wc and wr indicating how many '1' in a column (Wc) and how many '1' in a row of the parity check matrix
- * @param from_to the start and stop index of data to encode parts of the massage for several symbols
- * @param index the symbol count
  * @return the encoded data | NULL if failed
 */
-jab_data *encodeLDPC(jab_data* data, jab_int32* coderate_params, jab_int32* from_to, jab_int32 index)
+jab_data *encodeLDPC(jab_data* data, jab_int32* coderate_params)
 {
     jab_int32 matrix_rank=0;
     jab_int32 wc, wr, Pg, Pn;       //number of '1' in column //number of '1' in row //gross message length //number of parity check symbols //calculate required parameters
-    wc=coderate_params[2*index];
-    wr=coderate_params[2*index+1];
-    Pn=from_to[2*index+1]-from_to[2*index];
+    wc=coderate_params[0];
+    wr=coderate_params[1];
+    Pn=data->length;
     if(wr > 0)
     {
         Pg=ceil((Pn*wr)/(jab_float)(wr-wc));
@@ -469,7 +467,7 @@ jab_data *encodeLDPC(jab_data* data, jab_int32* coderate_params, jab_int32* from
             temp=0;
             loop=0;
             jab_int32 offset_index=offset*i;
-            for (jab_int32 j=from_to[2*index]+iter*Pn_sub_block; j < from_to[2*index]+(iter+1)*Pn_sub_block;j++)
+            for (jab_int32 j=iter*Pn_sub_block; j < (iter+1)*Pn_sub_block; j++)
             {
                 temp ^= (((G[offset_index + loop/32] >> (31-loop%32)) & 1) & ((data->data[j] >> 0) & 1)) << 0;
                 loop++;
@@ -480,7 +478,7 @@ jab_data *encodeLDPC(jab_data* data, jab_int32* coderate_params, jab_int32* from
     free(G);
     if(encoding_iterations != nb_sub_blocks)
     {
-        jab_int32 start=from_to[2*index]+encoding_iterations*Pn_sub_block;
+        jab_int32 start=encoding_iterations*Pn_sub_block;
         jab_int32 last_index=encoding_iterations*Pg_sub_block;
         matrix_rank=0;
         Pg_sub_block=Pg - encoding_iterations * Pg_sub_block;
@@ -511,7 +509,7 @@ jab_data *encodeLDPC(jab_data* data, jab_int32* coderate_params, jab_int32* from
             temp=0;
             loop=0;
             jab_int32 offset_index=offset*i;
-            for (jab_int32 j=start; j < from_to[2*index+1];j++)
+            for (jab_int32 j=start; j < data->length; j++)
             {
                 temp ^= (((G[offset_index + loop/32] >> (31-loop%32)) & 1) & ((data->data[j] >> 0) & 1)) << 0;
                 loop++;
@@ -658,8 +656,8 @@ jab_int32 decodeLDPChd(jab_byte* data, jab_int32 length, jab_int32 wc, jab_int32
     jab_int32 Pn, Pg, decoded_data_len = 0;
     if(wr > 3)
     {
-        Pg      = wr * (length / wr);
-        Pn      = Pg * (wr - wc) / wr;                //number of source symbols
+        Pg = wr * (length / wr);
+        Pn = Pg * (wr - wc) / wr;                //number of source symbols
     }
     else
     {
@@ -781,7 +779,7 @@ jab_int32 decodeLDPChd(jab_byte* data, jab_int32 length, jab_int32 wc, jab_int32
                 }
                 if(is_correct==0)
                 {
-                    reportError("To many errors in message. LDPC decoding failed.");
+                    reportError("Too many errors in message. LDPC decoding failed.");
                     free(matrixA1);
                     return 0;
                 }
@@ -830,7 +828,7 @@ jab_int32 decodeLDPChd(jab_byte* data, jab_int32 length, jab_int32 wc, jab_int32
                 }
                 if(is_correct==0)
                 {
-                    reportError("To many errors in message. LDPC decoding failed.");
+                    reportError("Too many errors in message. LDPC decoding failed.");
                     free(matrixA);
                     return 0;
                 }
@@ -1216,7 +1214,6 @@ jab_int32 decodeLDPC(jab_float* enc, jab_int32 length, jab_int32 wc, jab_int32 w
     if(Pn_sub_block * nb_sub_blocks < Pn)
         decoding_iterations--;
 
-
     //parity check matrix
     jab_int32* matrixA;
     if(wr > 0)
@@ -1237,8 +1234,8 @@ jab_int32 decodeLDPC(jab_float* enc, jab_int32 length, jab_int32 wc, jab_int32 w
         return 0;
     }
 #if TEST_MODE
-	JAB_REPORT_INFO(("GaussJordan matrix done"))
-#endif // TEST_MODE
+	//JAB_REPORT_INFO(("GaussJordan matrix done"))
+#endif
     jab_int32 old_Pg_sub=Pg_sub_block;
     jab_int32 old_Pn_sub=Pn_sub_block;
     for (jab_int32 iter = 0; iter < nb_sub_blocks; iter++)
@@ -1304,7 +1301,7 @@ jab_int32 decodeLDPC(jab_float* enc, jab_int32 length, jab_int32 wc, jab_int32 w
                 }
                 if(is_correct==0)
                 {
- //                   reportError("To many errors in message. LDPC decoding failed.");
+ //                   reportError("Too many errors in message. LDPC decoding failed.");
                     free(matrixA1);
                     return 0;
                 }
@@ -1353,7 +1350,7 @@ jab_int32 decodeLDPC(jab_float* enc, jab_int32 length, jab_int32 wc, jab_int32 w
                 }
                 if(is_correct==0)
                 {
-       //             reportError("To many errors in message. LDPC decoding failed.");
+       //             reportError("Too many errors in message. LDPC decoding failed.");
                     free(matrixA);
                     return 0;
                 }

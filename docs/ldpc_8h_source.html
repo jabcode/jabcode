@@ -105,32 +105,35 @@ $(document).ready(function(){initNavTree('ldpc_8h_source.html','');});
 </div><!--header-->
 <div class="contents">
 <a href="ldpc_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;</div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="preprocessor">#ifndef _LDPC_H</span></div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define _LDPC_H</span></div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="preprocessor">#ifndef JABCODE_LDPC_H</span></div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define JABCODE_LDPC_H</span></div>
 <div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="preprocessor"></span></div>
 <div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="preprocessor">#define LPDC_METADATA_SEED      38545</span></div>
 <div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define LPDC_MESSAGE_SEED       785465</span></div>
 <div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="structjab__vector2d.html">jab_vector2d</a> default_ecl = {5, 6};</div>
-<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;</div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="keyword">extern</span> <a class="code" href="structjab__data.html">jab_data</a> *<a class="code" href="ldpc_8h.html#ac5f16f5c91857c55d240bcc6f8db530e">encodeLDPC</a>(<a class="code" href="structjab__data.html">jab_data</a>* data, jab_int32* coderate_params, jab_int32* from_to, jab_int32 index);</div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="keyword">extern</span> jab_int32 <a class="code" href="ldpc_8h.html#a2b4a2ba0002e1d79f409c5fc8a5f874a">decodeLDPChd</a>(jab_byte* data, jab_int32 length, jab_int32 wc, jab_int32 wr);</div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="keyword">extern</span> jab_int32 <a class="code" href="ldpc_8h.html#a814e33b35d7a33d56807179c81ca277a">decodeLDPC</a>(jab_float* enc, jab_int32 length, jab_int32 wc, jab_int32 wr, jab_byte* dec);</div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="comment">//#define LDPC_DEFAULT_WC               4       //default error correction level 3</span></div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="comment">//#define LDPC_DEFAULT_WR               9       //default error correction level 3</span></div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;</div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="comment">//static const jab_vector2d default_ecl = {4, 7};       //default (wc, wr) for LDPC, corresponding to ecc level 5.</span></div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="comment">//static const jab_vector2d default_ecl = {5, 6};       //This (wc, wr) could be used, if higher robustness is preferred to capacity.</span></div>
 <div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;</div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;</div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="ttc" id="ldpc_8h_html_a814e33b35d7a33d56807179c81ca277a"><div class="ttname"><a href="ldpc_8h.html#a814e33b35d7a33d56807179c81ca277a">decodeLDPC</a></div><div class="ttdeci">jab_int32 decodeLDPC(jab_float *enc, jab_int32 length, jab_int32 wc, jab_int32 wr, jab_byte *dec)</div><div class="ttdoc">LDPC decoding to performe soft decision. </div><div class="ttdef"><b>Definition:</b> ldpc.c:1173</div></div>
-<div class="ttc" id="structjab__data_html"><div class="ttname"><a href="structjab__data.html">jab_data</a></div><div class="ttdoc">Data structure. </div><div class="ttdef"><b>Definition:</b> jabcode.h:74</div></div>
-<div class="ttc" id="structjab__vector2d_html"><div class="ttname"><a href="structjab__vector2d.html">jab_vector2d</a></div><div class="ttdoc">2-dimensional integer vector </div><div class="ttdef"><b>Definition:</b> jabcode.h:66</div></div>
-<div class="ttc" id="ldpc_8h_html_ac5f16f5c91857c55d240bcc6f8db530e"><div class="ttname"><a href="ldpc_8h.html#ac5f16f5c91857c55d240bcc6f8db530e">encodeLDPC</a></div><div class="ttdeci">jab_data * encodeLDPC(jab_data *data, jab_int32 *coderate_params, jab_int32 *from_to, jab_int32 index)</div><div class="ttdoc">LDPC encoding. </div><div class="ttdef"><b>Definition:</b> ldpc.c:381</div></div>
-<div class="ttc" id="ldpc_8h_html_a2b4a2ba0002e1d79f409c5fc8a5f874a"><div class="ttname"><a href="ldpc_8h.html#a2b4a2ba0002e1d79f409c5fc8a5f874a">decodeLDPChd</a></div><div class="ttdeci">jab_int32 decodeLDPChd(jab_byte *data, jab_int32 length, jab_int32 wc, jab_int32 wr)</div><div class="ttdoc">LDPC decoding to perform hard decision. </div><div class="ttdef"><b>Definition:</b> ldpc.c:654</div></div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="keyword">extern</span> <a class="code" href="structjab__data.html">jab_data</a> *<a class="code" href="ldpc_8h.html#a6bae5bfe26f6c65da5051b54afabad94">encodeLDPC</a>(<a class="code" href="structjab__data.html">jab_data</a>* data, jab_int32* coderate_params);</div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="keyword">extern</span> jab_int32 <a class="code" href="ldpc_8h.html#a2b4a2ba0002e1d79f409c5fc8a5f874a">decodeLDPChd</a>(jab_byte* data, jab_int32 length, jab_int32 wc, jab_int32 wr);</div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="keyword">extern</span> jab_int32 <a class="code" href="ldpc_8h.html#a814e33b35d7a33d56807179c81ca277a">decodeLDPC</a>(jab_float* enc, jab_int32 length, jab_int32 wc, jab_int32 wr, jab_byte* dec);</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;</div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;</div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="ttc" id="ldpc_8h_html_a814e33b35d7a33d56807179c81ca277a"><div class="ttname"><a href="ldpc_8h.html#a814e33b35d7a33d56807179c81ca277a">decodeLDPC</a></div><div class="ttdeci">jab_int32 decodeLDPC(jab_float *enc, jab_int32 length, jab_int32 wc, jab_int32 wr, jab_byte *dec)</div><div class="ttdoc">LDPC decoding to performe soft decision. </div><div class="ttdef"><b>Definition:</b> ldpc.c:1171</div></div>
+<div class="ttc" id="structjab__data_html"><div class="ttname"><a href="structjab__data.html">jab_data</a></div><div class="ttdoc">Data structure. </div><div class="ttdef"><b>Definition:</b> jabcode.h:87</div></div>
+<div class="ttc" id="ldpc_8h_html_a2b4a2ba0002e1d79f409c5fc8a5f874a"><div class="ttname"><a href="ldpc_8h.html#a2b4a2ba0002e1d79f409c5fc8a5f874a">decodeLDPChd</a></div><div class="ttdeci">jab_int32 decodeLDPChd(jab_byte *data, jab_int32 length, jab_int32 wc, jab_int32 wr)</div><div class="ttdoc">LDPC decoding to perform hard decision. </div><div class="ttdef"><b>Definition:</b> ldpc.c:652</div></div>
+<div class="ttc" id="ldpc_8h_html_a6bae5bfe26f6c65da5051b54afabad94"><div class="ttname"><a href="ldpc_8h.html#a6bae5bfe26f6c65da5051b54afabad94">encodeLDPC</a></div><div class="ttdeci">jab_data * encodeLDPC(jab_data *data, jab_int32 *coderate_params)</div><div class="ttdoc">LDPC encoding. </div><div class="ttdef"><b>Definition:</b> ldpc.c:379</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="ldpc_8h.html">ldpc.h</a></li>
-    <li class="footer">Generated on Wed Nov 23 2016 18:20:16 for jabcode by
+    <li class="footer">Generated on Wed Mar 20 2019 09:38:23 for jabcode by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.6 </li>
   </ul>

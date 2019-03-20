@@ -11,8 +11,8 @@
  * @brief Main libjabcode header
  */
 
-#ifndef _JAB_H
-#define _JAB_H
+#ifndef JABCODE_H
+#define JABCODE_H
 
 #define VERSION "1.0.0"
 #define BUILD_DATE __DATE__
@@ -24,9 +24,13 @@
 #define ENC_MAX                 1000000
 #define NUMBER_OF_MASK_PATTERNS	8
 
-#define DEFAULT_COLOR_NUMBER 	8
-#define DEFAULT_SYMBOL_NUMBER 	1
-#define DEFAULT_MODULE_SIZE		12
+#define DEFAULT_SYMBOL_NUMBER 			1
+#define DEFAULT_MODULE_SIZE				12
+#define DEFAULT_COLOR_NUMBER 			8
+#define DEFAULT_MODULE_COLOR_MODE 		2
+#define DEFAULT_ECC_LEVEL				3
+#define DEFAULT_MASKING_REFERENCE 		7
+
 
 #define DISTANCE_TO_BORDER                  4
 #define MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS 16
@@ -42,6 +46,7 @@
 #define COMPATIBLE_DECODE	1
 
 #define VERSION2SIZE(x)		(x * 4 + 17)
+#define SIZE2VERSION(x)		((x - 17) / 4)
 #define MAX(a,b) 			({__typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b;})
 #define MIN(a,b) 			({__typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b;})
 
@@ -69,6 +74,14 @@ typedef struct {
 }jab_vector2d;
 
 /**
+ * @brief 2-dimensional float vector
+*/
+typedef struct {
+	jab_float	x;
+	jab_float	y;
+}jab_point;
+
+/**
  * @brief Data structure
 */
 typedef struct {
@@ -94,8 +107,12 @@ typedef struct {
 typedef struct {
 	jab_int32		index;
 	jab_vector2d	side_size;
-	jab_byte*		data_map;				///< Encoded data (data + error correction bits)
-	jab_data*		encoded_metadata;		///< Encoded metadata (metadata + error correction bits)
+	jab_int32		host;
+	jab_int32		slaves[4];
+	jab_int32 		wcwr[2];
+	jab_data*		data;
+	jab_byte*		data_map;
+	jab_data*		metadata;
 	jab_byte*		matrix;
 }jab_symbol;
 
@@ -110,19 +127,46 @@ typedef struct {
 	jab_int32		master_symbol_height;
 	jab_byte*		palette;				///< Palette holding used module colors in format RGB
 	jab_vector2d*	symbol_versions;
-	jab_byte* 		ecc_levels;
+	jab_byte* 		symbol_ecc_levels;
 	jab_int32*		symbol_positions;
-    jab_int32*      docked_symbol;
-
 	jab_symbol*		symbols;				///< Pointer to internal representation of JAB Code symbols
 	jab_bitmap*		bitmap;
 }jab_encode;
 
+/**
+ * @brief Decoded metadata
+*/
+typedef struct {
+	jab_byte Nc;
+	jab_byte mask_type;
+	jab_byte docked_position;
+	jab_byte VF;
+	jab_vector2d side_version;
+	jab_vector2d ecl;
+}jab_metadata;
+
+/**
+ * @brief Decoded symbol
+*/
+typedef struct {
+	jab_int32 index;
+	jab_int32 host_index;
+	jab_int32 host_position;
+	jab_vector2d side_size;
+	jab_float module_size;
+	jab_point pattern_positions[4];
+	jab_metadata metadata;
+	jab_metadata slave_metadata[4];
+	jab_byte* palette;
+	jab_data* data;
+}jab_decoded_symbol;
+
 
 extern jab_encode* createEncode(jab_int32 color_number, jab_int32 symbol_number);
 extern void destroyEncode(jab_encode* enc);
-extern jab_boolean generateJABCode(jab_encode* enc, jab_data* data);
-extern jab_data* decodeJABCode(jab_bitmap* bitmap, jab_int32 mode);
+extern jab_int32 generateJABCode(jab_encode* enc, jab_data* data);
+extern jab_data* decodeJABCode(jab_bitmap* bitmap, jab_int32 mode, jab_int32* status);
+extern jab_data* decodeJABCodeEx(jab_bitmap* bitmap, jab_int32 mode, jab_int32* status, jab_decoded_symbol* symbols, jab_int32 max_symbol_number);
 extern jab_boolean saveImage(jab_bitmap* bitmap, jab_char* filename);
 extern jab_bitmap* readImage(jab_char* filename);
 extern void reportError(jab_char* message);
