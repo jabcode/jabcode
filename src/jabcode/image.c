@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "jabcode.h"
-#include "png.h"
+#include <png.h>
 
 /**
  * @brief Save code bitmap as png image
