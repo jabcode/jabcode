@@ -19,12 +19,20 @@ jab_int32* 		symbol_ecc_levels = 0;
 jab_int32 		symbol_ecc_levels_number = 0;
 
 /**
+ * @brief Print version of JABCode writer
+*/
+void printVersion()
+{
+	printf("jabcodeWriter (Version %s Build date: %s) - Fraunhofer SIT\n", VERSION, BUILD_DATE);
+}
+
+/**
  * @brief Print usage of JABCode writer
 */
 void printUsage()
 {
 	printf("\n");
-	printf("jabcodeWriter (Version %s Build date: %s) - Fraunhofer SIT\n\n", VERSION, BUILD_DATE);
+	printVersion();
 	printf("Usage:\n\n");
 	printf("jabcodeWriter --input message-to-encode --output output-image(png) [options]\n");
 	printf("\n");
@@ -47,6 +55,7 @@ void printUsage()
     printf("--symbol-position\tSymbol positions (0 - 60), starting from master and\n\t\t\t"
 							  "then slave symbols (p0 p1 p2 ...). Only required for\n\t\t\t"
 							  "multi-symbol code.\n");
+    printf("--version\t\t\tPrint version info.\n");
     printf("--help\t\t\tPrint this help.\n");
     printf("\n");
     printf("Example for 1-symbol-code: \n");
@@ -404,9 +413,14 @@ void cleanMemory()
 */
 int main(int argc, char *argv[])
 {
-    if(argc < 2 || (0 == strcmp(argv[1],"--help")))
+	if(argc < 2 || (0 == strcmp(argv[1], "--help")))
 	{
 		printUsage();
+		return 1;
+	}
+	if(argc < 2 || (0 == strcmp(argv[1], "--version")))
+	{
+		printVersion();
 		return 1;
 	}
 	if(!parseCommandLineParameters(argc, argv))
