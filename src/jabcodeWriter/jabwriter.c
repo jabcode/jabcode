@@ -421,7 +421,7 @@ int main(int argc, char *argv[])
 	if(argc < 2 || (0 == strcmp(argv[1], "--version")))
 	{
 		printVersion();
-		return 1;
+		return 0;
 	}
 	if(!parseCommandLineParameters(argc, argv))
 	{
