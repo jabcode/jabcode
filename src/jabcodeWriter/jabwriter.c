@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "jabcode.h"
-#include "jabwriter.h"
 
 jab_data* 		data = 0;
 jab_char* 		filename = 0;
