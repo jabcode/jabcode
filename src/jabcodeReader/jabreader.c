@@ -4,16 +4,25 @@
 #include "jabcode.h"
 
 /**
+ * @brief Print version of JABCode writer
+*/
+void printVersion()
+{
+	printf("jabcodeReader (Version %s Build date: %s) - Fraunhofer SIT\n", VERSION, BUILD_DATE);
+}
+
+/**
  * @brief Print usage of JABCode reader
 */
 void printUsage()
 {
 	printf("\n");
-	printf("jabcodeReader (Version %s Build date: %s) - Fraunhofer SIT\n\n", VERSION, BUILD_DATE);
+	printVersion();
 	printf("Usage:\n\n");
 	printf("jabcodeReader input-image(png) [--output output-file]\n");
 	printf("\n");
 	printf("--output\tOutput file for decoded data.\n");
+    printf("--version\t\t\tPrint version info.\n");
 	printf("--help\t\tPrint this help.\n");
 	printf("\n");
 }
@@ -28,6 +37,11 @@ int main(int argc, char *argv[])
 	{
 		printUsage();
 		return 255;
+	}
+	if(argc < 2 || (0 == strcmp(argv[1], "--version")))
+	{
+		printVersion();
+		return 0;
 	}
 
 	jab_boolean output_as_file = 0;
