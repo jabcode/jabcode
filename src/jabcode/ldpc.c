@@ -538,6 +538,7 @@ jab_int32 decodeMessage(jab_byte* data, jab_int32* matrix, jab_int32 length, jab
     if(max_val == NULL)
     {
         reportError("Memory allocation for LDPC decoder failed");
+
         return 0;
     }
     jab_int32* equal_max=(jab_int32 *)calloc(length, sizeof(jab_int32));

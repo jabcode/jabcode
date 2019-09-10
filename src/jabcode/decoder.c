@@ -61,7 +61,7 @@ void copyAndInterpolateSubblockFrom16To32(jab_byte* palette, jab_int32 dst_offse
 */
 void interpolatePalette(jab_byte* palette, jab_int32 color_number)
 {
-	for(jab_int32 i=0; i<2; i++)
+	for(jab_int32 i=0; i<COLOR_PALETTE_NUMBER; i++)
 	{
 		jab_int32 offset = color_number * 3 * i;
 		if(color_number == 128)											//each block includes 16 colors
@@ -129,6 +129,67 @@ void interpolatePalette(jab_byte* palette, jab_int32 color_number)
 }
 
 /**
+ * @brief Write colors into color palettes
+ * @param matrix the symbol matrix
+ * @param symbol the master/slave symbol
+ * @param p_index the color palette index
+ * @param color_index the color index in color palette
+ * @param x the x coordinate of the color module
+ * @param y the y coordinate of the color module
+*/
+void writeColorPalette(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_int32 p_index, jab_int32 color_index, jab_int32 x, jab_int32 y)
+{
+	jab_int32 color_number = (jab_int32)pow(2, symbol->metadata.Nc + 1);
+	jab_int32 mtx_bytes_per_pixel = matrix->bits_per_pixel / 8;
+    jab_int32 mtx_bytes_per_row = matrix->width * mtx_bytes_per_pixel;
+
+	jab_int32 palette_offset = color_number * 3 * p_index;
+	jab_int32 mtx_offset = y * mtx_bytes_per_row + x * mtx_bytes_per_pixel;
+	symbol->palette[palette_offset + color_index*3 + 0]	= matrix->pixel[mtx_offset + 0];
+	symbol->palette[palette_offset + color_index*3 + 1] = matrix->pixel[mtx_offset + 1];
+	symbol->palette[palette_offset + color_index*3 + 2] = matrix->pixel[mtx_offset + 2];
+}
+
+/**
+ * @brief Get the coordinates of the modules in finder/alignment patterns used for color palette
+ * @param p_index the color palette index
+ * @param matrix_width the matrix width
+ * @param matrix_height the matrix height
+ * @param p1 the coordinate of the first module
+ * @param p2 the coordinate of the second module
+*/
+void getColorPalettePosInFP(jab_int32 p_index, jab_int32 matrix_width, jab_int32 matrix_height, jab_vector2d* p1, jab_vector2d* p2)
+{
+	switch(p_index)
+	{
+	case 0:
+		p1->x = DISTANCE_TO_BORDER - 1;
+		p1->y = DISTANCE_TO_BORDER - 1;
+		p2->x = p1->x + 1;
+		p2->y = p1->y;
+		break;
+	case 1:
+		p1->x = matrix_width - DISTANCE_TO_BORDER;
+		p1->y = DISTANCE_TO_BORDER - 1;
+		p2->x = p1->x - 1;
+		p2->y = p1->y;
+		break;
+	case 2:
+		p1->x = matrix_width - DISTANCE_TO_BORDER;
+		p1->y = matrix_height - DISTANCE_TO_BORDER;
+		p2->x = p1->x - 1;
+		p2->y = p1->y;
+		break;
+	case 3:
+		p1->x = DISTANCE_TO_BORDER - 1;
+		p1->y = matrix_height - DISTANCE_TO_BORDER;
+		p2->x = p1->x + 1;
+		p2->y = p1->y;
+		break;
+	}
+}
+
+/**
  * @brief Read the color palettes in master symbol
  * @param matrix the symbol matrix
  * @param symbol the master symbol
@@ -143,69 +204,69 @@ jab_int32 readColorPaletteInMaster(jab_bitmap* matrix, jab_decoded_symbol* symbo
 	//allocate buffer for palette
 	jab_int32 color_number = (jab_int32)pow(2, symbol->metadata.Nc + 1);
 	free(symbol->palette);
-	symbol->palette = (jab_byte*)malloc(color_number * sizeof(jab_byte) * 3 * 2); //two palettes
+	symbol->palette = (jab_byte*)malloc(color_number * sizeof(jab_byte) * 3 * COLOR_PALETTE_NUMBER);
 	if(symbol->palette == NULL)
 	{
 		reportError("Memory allocation for master palette failed");
 		return FATAL_ERROR;
 	}
 
-	jab_int32 palette_offset = 0;
-	jab_boolean flag = 0;					//switch palette flag
-	if((*module_count) == 0)
+	//read colors from finder patterns
+	jab_int32 color_index;			//the color index number in color palette
+	for(jab_int32 i=0; i<COLOR_PALETTE_NUMBER; i++)
 	{
-		palette_offset = 0;					//start from module 0 for palette 1 around FP0
+		jab_vector2d p1, p2;
+		getColorPalettePosInFP(i, matrix->width, matrix->height, &p1, &p2);
+		//color 0
+		color_index = master_palette_placement_index[i][0] % color_number; //for 4-color and 8-color symbols
+		writeColorPalette(matrix, symbol, i, color_index, p1.x, p1.y);
+		//color 1
+		color_index = master_palette_placement_index[i][1] % color_number; //for 4-color and 8-color symbols
+		writeColorPalette(matrix, symbol, i, color_index, p2.x, p2.y);
 	}
-	else
+
+	//read colors from metadata
+	jab_int32 color_counter = 2;	//the color counter
+	while(color_counter < MIN(color_number, 64))
 	{
-		palette_offset = color_number * 3;	//start from module 6 for palette 2 around FP2
-	}
-	if(matrix->width > matrix->height)		//palette 1 consists of the left two parts
-	{
-		flag = 1;
-	}
-	else									//palette 1 consists of the top two parts
-	{
-		flag = 0;
-	}
-	jab_int32 color_index = 0;
-	jab_int32 counter = 0;
-	jab_int32 mtx_offset;
-	jab_int32 mtx_bytes_per_pixel = matrix->bits_per_pixel / 8;
-    jab_int32 mtx_bytes_per_row = matrix->width * mtx_bytes_per_pixel;
-	while(color_index < MIN(color_number, 64))
-	{
-		//palette 1 or palette 2
-		mtx_offset = (*y) * mtx_bytes_per_row + (*x) * mtx_bytes_per_pixel;
-		symbol->palette[palette_offset + color_index*3]	    = matrix->pixel[mtx_offset];
-		symbol->palette[palette_offset + color_index*3 + 1] = matrix->pixel[mtx_offset + 1];
-		symbol->palette[palette_offset + color_index*3 + 2] = matrix->pixel[mtx_offset + 2];
+		//color palette 0
+		color_index = master_palette_placement_index[0][color_counter] % color_number; //for 4-color and 8-color symbols
+		writeColorPalette(matrix, symbol, 0, color_index, *x, *y);
 		//set data map
 		data_map[(*y) * matrix->width + (*x)] = 1;
 		//go to the next module
 		(*module_count)++;
 		getNextMetadataModuleInMaster(matrix->height, matrix->width, (*module_count), x, y);
-		//next color and switch palette when necessary
-		counter++;
-		switch(counter % 4)
-		{
-			case 1:
-				color_index++;
-				if(flag) palette_offset = (palette_offset == 0) ? color_number * 3 : 0;
-				break;
-			case 2:
-				color_index--;
-				if(!flag) palette_offset = (palette_offset == 0) ? color_number * 3 : 0;
-				break;
-			case 3:
-				color_index++;
-				if(flag) palette_offset = (palette_offset == 0) ? color_number * 3 : 0;
-				break;
-			case 0:
-				color_index++;
-				if(!flag) palette_offset = (palette_offset == 0) ? color_number * 3 : 0;
-				break;
-		}
+
+		//color palette 1
+		color_index = master_palette_placement_index[1][color_counter] % color_number; //for 4-color and 8-color symbols
+		writeColorPalette(matrix, symbol, 1, color_index, *x, *y);
+		//set data map
+		data_map[(*y) * matrix->width + (*x)] = 1;
+		//go to the next module
+		(*module_count)++;
+		getNextMetadataModuleInMaster(matrix->height, matrix->width, (*module_count), x, y);
+
+		//color palette 2
+		color_index = master_palette_placement_index[2][color_counter] % color_number; //for 4-color and 8-color symbols
+		writeColorPalette(matrix, symbol, 2, color_index, *x, *y);
+		//set data map
+		data_map[(*y) * matrix->width + (*x)] = 1;
+		//go to the next module
+		(*module_count)++;
+		getNextMetadataModuleInMaster(matrix->height, matrix->width, (*module_count), x, y);
+
+		//color palette 3
+		color_index = master_palette_placement_index[3][color_counter] % color_number; //for 4-color and 8-color symbols
+		writeColorPalette(matrix, symbol, 3, color_index, *x, *y);
+		//set data map
+		data_map[(*y) * matrix->width + (*x)] = 1;
+		//go to the next module
+		(*module_count)++;
+		getNextMetadataModuleInMaster(matrix->height, matrix->width, (*module_count), x, y);
+
+		//next color
+		color_counter++;
 	}
 
 	//interpolate the palette if there are more than 64 colors
@@ -228,59 +289,67 @@ jab_int32 readColorPaletteInSlave(jab_bitmap* matrix, jab_decoded_symbol* symbol
 	//allocate buffer for palette
 	jab_int32 color_number = (jab_int32)pow(2, symbol->metadata.Nc + 1);
 	free(symbol->palette);
-	symbol->palette = (jab_byte*)malloc(color_number * sizeof(jab_byte) * 3 * 2); //two palettes
+	symbol->palette = (jab_byte*)malloc(color_number * sizeof(jab_byte) * 3 * COLOR_PALETTE_NUMBER);
     if(symbol->palette == NULL)
     {
 		reportError("Memory allocation for slave palette failed");
 		return FATAL_ERROR;
     }
 
-    jab_int32 color_index = 0;
-	jab_int32 mtx_offset;
-    jab_int32 mtx_bytes_per_pixel = matrix->bits_per_pixel / 8;
-    jab_int32 mtx_bytes_per_row = matrix->width * mtx_bytes_per_pixel;
-	while(color_index < MIN(color_number, 64))
+    //read colors from alignment patterns
+    jab_int32 color_index;			//the color index number in color palette
+	for(jab_int32 i=0; i<COLOR_PALETTE_NUMBER; i++)
+	{
+		jab_vector2d p1, p2;
+		getColorPalettePosInFP(i, matrix->width, matrix->height, &p1, &p2);
+		//color 0
+		color_index = slave_palette_placement_index[0] % color_number;
+		writeColorPalette(matrix, symbol, i, color_index, p1.x, p1.y);
+		//color 1
+		color_index = slave_palette_placement_index[1] % color_number;
+		writeColorPalette(matrix, symbol, i, color_index, p2.x, p2.y);
+	}
+
+	//read colors from metadata
+	jab_int32 color_counter = 2;	//the color counter
+	while(color_counter < MIN(color_number, 64))
 	{
 		jab_int32 px, py;
-		if((color_index % 2) == 0)
-		{
-			//even color index in palette 1 is next to AP0
-			px = slave_palette_position[color_index/2].x;
-			py = slave_palette_position[color_index/2].y;
-		}
-		else
-		{
-			if(matrix->width > matrix->height)	//palette 1 consists of the left two parts
-			{
-				//odd color index in palette 1 is next to AP3
-				px = slave_palette_position[color_index/2].y;
-				py = matrix->height - 1 - slave_palette_position[color_index/2].x;
-			}
-			else								//palette 1 consists of the top two parts
-			{
-				//odd color index in palette 1 is next to AP1
-				px = matrix->width - 1 - slave_palette_position[color_index/2].y;
-				py = slave_palette_position[color_index/2].x;
-			}
-		}
-		//set palette 1
-		mtx_offset = py * mtx_bytes_per_row + px * mtx_bytes_per_pixel;
-		symbol->palette[color_index*3]	   = matrix->pixel[mtx_offset];
-		symbol->palette[color_index*3 + 1] = matrix->pixel[mtx_offset + 1];
-		symbol->palette[color_index*3 + 2] = matrix->pixel[mtx_offset + 2];
+
+		//color palette 0
+		px = slave_palette_position[color_counter-2].x;
+		py = slave_palette_position[color_counter-2].y;
+		color_index = slave_palette_placement_index[color_counter] % color_number;
+		writeColorPalette(matrix, symbol, 0, color_index, px, py);
 		//set data map
 		data_map[py * matrix->width + px] = 1;
-		//set palette 2
-		px = matrix->width - 1 - px;
-		py = matrix->height - 1 - py;
-		mtx_offset = py * mtx_bytes_per_row + px * mtx_bytes_per_pixel;
-		symbol->palette[color_number*3 + color_index*3]	    = matrix->pixel[mtx_offset];
-		symbol->palette[color_number*3 + color_index*3 + 1] = matrix->pixel[mtx_offset + 1];
-		symbol->palette[color_number*3 + color_index*3 + 2] = matrix->pixel[mtx_offset + 2];
+
+		//color palette 1
+		px = matrix->width - 1 - slave_palette_position[color_counter-2].y;
+		py = slave_palette_position[color_counter-2].x;
+		color_index = slave_palette_placement_index[color_counter] % color_number;
+		writeColorPalette(matrix, symbol, 1, color_index, px, py);
 		//set data map
 		data_map[py * matrix->width + px] = 1;
-		//go to the next color
-		color_index++;
+
+		//color palette 2
+		px = matrix->width - 1 - slave_palette_position[color_counter-2].x;
+		py = matrix->height - 1 - slave_palette_position[color_counter-2].y;
+		color_index = slave_palette_placement_index[color_counter] % color_number;
+		writeColorPalette(matrix, symbol, 2, color_index, px, py);
+		//set data map
+		data_map[py * matrix->width + px] = 1;
+
+		//color palette 3
+		px = slave_palette_position[color_counter-2].y;
+		py = matrix->height - 1 - slave_palette_position[color_counter-2].x;
+		color_index = slave_palette_placement_index[color_counter] % color_number;
+		writeColorPalette(matrix, symbol, 3, color_index, px, py);
+		//set data map
+		data_map[py * matrix->width + px] = 1;
+
+		//next color
+		color_counter++;
 	}
 
 	//interpolate the palette if there are more than 64 colors
@@ -292,29 +361,185 @@ jab_int32 readColorPaletteInSlave(jab_bitmap* matrix, jab_decoded_symbol* symbol
 }
 
 /**
+ * @brief Calculate the color changing slopes for all color palettes
+ * @param matrix the symbol matrix
+ * @param palette the color palettes
+ * @param color_number the number of module colors
+ * @param cs the color changing slopes
+*/
+void calculateColorSlopes(jab_bitmap* matrix, jab_byte* palette, jab_int32 color_number, jab_float* cs)
+{
+	jab_float distx = matrix->width - 7;
+	jab_float disty = matrix->height- 7;
+	jab_float distd = sqrt(distx*distx + disty*disty);
+
+	for(jab_int32 p=0; p<COLOR_PALETTE_NUMBER; p++)
+	{
+		jab_int32 px, py, pd;
+		switch(p)
+		{
+		case 0:	//slopes for palette 0
+			px = 1;//p1-p0
+			py = 3;//p3-p0
+			pd = 2;//p2-p0
+			break;
+		case 1:	//slopes for palette 1
+			px = 0;//p0-p1
+			py = 2;//p2-p1
+			pd = 3;//p3-p1
+			break;
+		case 2:
+			px = 3;
+			py = 1;
+			pd = 0;
+			break;
+		case 3:
+			px = 2;
+			py = 0;
+			pd = 1;
+			break;
+		}
+
+		for(jab_int32 i=0; i<color_number*3; i++)
+		{
+			jab_float sx = (jab_float)(palette[color_number*3*px + i] - palette[color_number*3*p + i]) / distx;
+			jab_float sy = (jab_float)(palette[color_number*3*py + i] - palette[color_number*3*p + i]) / disty;
+			jab_float sd = (jab_float)(palette[color_number*3*pd + i] - palette[color_number*3*p + i]) / distd;
+			sx += (distx / distd) * sd; //x component of sd, sd*cos(theta)
+			sy += (disty / distd) * sd; //y component of sd, sd*sin(theta)
+			cs[p*(color_number*3)*2 + i*2 + 0] = sx;
+			cs[p*(color_number*3)*2 + i*2 + 1] = sy;
+		}
+	}
+}
+
+/**
+ * @brief Calibrate module color according to the color changing slopes
+ * @param cs the color changing slopes
+ * @param color_number the number of module colors
+ * @param p_index the color palette index
+ * @param color_index the color index in the palette
+ * @param px the x coordinate of the palette
+ * @param py the y coordinate of the palette
+ * @param x the x coordinate of the module
+ * @param y the y coordinate of the module
+ * @param rgb the pixel value in RGB format
+*/
+void CaliColor(jab_float* cs, jab_int32 color_number, jab_int32 p_index, jab_int32 color_index, jab_int32 px, jab_int32 py, jab_int32 x, jab_int32 y, jab_byte* rgb)
+{
+	//calculate the distance between the module and the color palette
+	jab_int32 distx, disty;
+	distx = x - px;
+	disty = y - py;
+	switch(p_index)	//switch the sign of the distance
+	{
+	case 0:
+		break;
+	case 1:
+		distx = -distx;
+		break;
+	case 2:
+		disty = -disty;
+		break;
+	case 3:
+		distx = -distx;
+		disty = -disty;
+		break;
+	}
+	//calculate the color difference in x and y directions
+	jab_float rgb_dx[3], rgb_dy[3];
+	for(jab_int32 i=0; i<3; i++)
+	{
+		jab_float cs_x = cs[p_index*(color_number*3)*2 + (color_index*3 + i)*2 + 0];
+		jab_float cs_y = cs[p_index*(color_number*3)*2 + (color_index*3 + i)*2 + 1];
+		rgb_dx[i] = distx * cs_x;
+		rgb_dy[i] = disty * cs_y;
+	}
+	//calculate the color difference
+	jab_float dist = DIST(px, py, x, y);
+	jab_float cos_theta = fabs(distx) / dist;
+	jab_float sin_theta = fabs(disty) / dist;
+	jab_int32 dr = (jab_int32)(rgb_dx[0] * cos_theta + rgb_dy[0] * sin_theta);
+	jab_int32 dg = (jab_int32)(rgb_dx[1] * cos_theta + rgb_dy[1] * sin_theta);
+	jab_int32 db = (jab_int32)(rgb_dx[2] * cos_theta + rgb_dy[2] * sin_theta);
+	//calibrate color
+	rgb[0] = MIN(MAX((rgb[0] + dr), 0), 255);
+	rgb[1] = MIN(MAX((rgb[1] + dg), 0), 255);
+	rgb[2] = MIN(MAX((rgb[2] + db), 0), 255);
+}
+
+/**
+ * @brief Get the index of the nearest color palette
+ * @param matrix the symbol matrix
+ * @param px the x coordinates of the color palettes
+ * @param py the y coordinates of the color palettes
+ * @param x the x coordinate of the module
+ * @param y the y coordinate of the module
+ * @return the index of the nearest color palette
+*/
+jab_int32 getNearestPalette(jab_bitmap* matrix, jab_int32 px[], jab_int32 py[], jab_int32 x, jab_int32 y)
+{
+	//get the palette coordinates
+	px[0] = DISTANCE_TO_BORDER - 1;
+	py[0] = DISTANCE_TO_BORDER - 1;
+	px[1] = matrix->width - DISTANCE_TO_BORDER;
+	py[1] = DISTANCE_TO_BORDER - 1;
+	px[2] = matrix->width - DISTANCE_TO_BORDER;
+	py[2] = matrix->height- DISTANCE_TO_BORDER;
+	px[3] = DISTANCE_TO_BORDER - 1;
+	py[3] = matrix->height- DISTANCE_TO_BORDER;
+
+	//calculate the nearest palette
+	jab_float min = DIST(0, 0, matrix->width, matrix->height);
+	jab_int32 p_index = 0;
+	for(jab_int32 i=0; i<COLOR_PALETTE_NUMBER; i++)
+	{
+		jab_float dist = DIST(x, y, px[i], py[i]);
+		if(dist < min)
+		{
+			min = dist;
+			p_index = i;
+		}
+	}
+	return p_index;
+}
+
+/**
  * @brief Decode a module using hard decision
- * @param palette the color palette
- * @param color_number the number of colors
- * @param r the red channel value
- * @param g the green channel value
- * @param b the blue channel value
+ * @param matrix the symbol matrix
+ * @param palette the color palettes
+ * @param color_number the number of module colors
+ * @param cs the color changing slopes
+ * @param x the x coordinate of the module
+ * @param y the y coordinate of the module
  * @return the decoded value
 */
-jab_byte decodeModuleHD(jab_byte* palette, jab_int32 color_number, jab_byte r, jab_byte g, jab_byte b)
+jab_byte decodeModuleHD(jab_bitmap* matrix, jab_byte* palette, jab_int32 color_number, jab_float* cs, jab_int32 x, jab_int32 y)
 {
+	jab_byte rgb[3];
+	jab_int32 mtx_bytes_per_pixel = matrix->bits_per_pixel / 8;
+    jab_int32 mtx_bytes_per_row = matrix->width * mtx_bytes_per_pixel;
+    jab_int32 mtx_offset = y * mtx_bytes_per_row + x * mtx_bytes_per_pixel;
+	rgb[0] = matrix->pixel[mtx_offset + 0];
+	rgb[1] = matrix->pixel[mtx_offset + 1];
+	rgb[2] = matrix->pixel[mtx_offset + 2];
+
+	//get the palette coordinate and the nearest palette
+	jab_int32 px[COLOR_PALETTE_NUMBER], py[COLOR_PALETTE_NUMBER];
+	jab_int32 p_index = getNearestPalette(matrix, px, py, x, y);
+
 	jab_byte index1 = 0, index2 = 0;
 	if(palette)
 	{
-		//jab_int32 min1 = 766, min2 = 766;
 		jab_int32 min1 = 255*255*3, min2 = 255*255*3;
 		for(jab_int32 i=0; i<color_number; i++)
 		{
-			/*jab_int32 diff = abs(palette[i*3]	  - r) +
-							 abs(palette[i*3 + 1] - g) +
-							 abs(palette[i*3 + 2] - b);*/
-			jab_int32 diff = (palette[i*3 + 0] - r) * (palette[i*3 + 0] - r) +
-							 (palette[i*3 + 1] - g) * (palette[i*3 + 1] - g) +
-							 (palette[i*3 + 2] - b) * (palette[i*3 + 2] - b);
+			//calibrate color
+			CaliColor(cs, color_number, p_index, i, px[p_index], py[p_index], x, y, rgb);
+			//compare module color with palette
+			jab_int32 diff = (palette[color_number*3*p_index + i*3 + 0] - rgb[0]) * (palette[color_number*3*p_index + i*3 + 0] - rgb[0]) +
+							 (palette[color_number*3*p_index + i*3 + 1] - rgb[1]) * (palette[color_number*3*p_index + i*3 + 1] - rgb[1]) +
+							 (palette[color_number*3*p_index + i*3 + 2] - rgb[2]) * (palette[color_number*3*p_index + i*3 + 2] - rgb[2]);
 			if(diff < min1)
 			{
 				//copy min1 to min2
@@ -333,19 +558,19 @@ jab_byte decodeModuleHD(jab_byte* palette, jab_int32 color_number, jab_byte r, j
 		//if the minimum is close to the second minimum, do further match
 		if(min1 * 1.5 > min2)
 		{
-			//printf("min1(%d) * 1.5 > min2(%d), %d %d %d", index1, index2, r, g, b);
-			jab_int32 rg = abs(r - g);
-			jab_int32 rb = abs(r - b);
-			jab_int32 gb = abs(g - b);
+			//printf("min1(%d) * 1.5 > min2(%d), %d %d %d", index1, index2, rgb[0], rgb[1], rgb[2]);
+			jab_int32 rg = abs(rgb[0] - rgb[1]);
+			jab_int32 rb = abs(rgb[0] - rgb[2]);
+			jab_int32 gb = abs(rgb[1] - rgb[2]);
 
-			jab_int32 c1rg = abs(palette[index1*3] - palette[index1*3 + 1]);
-			jab_int32 c1rb = abs(palette[index1*3] - palette[index1*3 + 2]);
-			jab_int32 c1gb = abs(palette[index1*3 + 1] - palette[index1*3 + 2]);
+			jab_int32 c1rg = abs(palette[color_number*3*p_index + index1*3 + 0] - palette[color_number*3*p_index + index1*3 + 1]);
+			jab_int32 c1rb = abs(palette[color_number*3*p_index + index1*3 + 0] - palette[color_number*3*p_index + index1*3 + 2]);
+			jab_int32 c1gb = abs(palette[color_number*3*p_index + index1*3 + 1] - palette[color_number*3*p_index + index1*3 + 2]);
 			jab_int32 diff1 = abs(rg - c1rg) + abs(rb - c1rb) + abs(gb - c1gb);
 
-			jab_int32 c2rg = abs(palette[index2*3] - palette[index2*3 + 1]);
-			jab_int32 c2rb = abs(palette[index2*3] - palette[index2*3 + 2]);
-			jab_int32 c2gb = abs(palette[index2*3 + 1] - palette[index2*3 + 2]);
+			jab_int32 c2rg = abs(palette[color_number*3*p_index + index2*3 + 0] - palette[color_number*3*p_index + index2*3 + 1]);
+			jab_int32 c2rb = abs(palette[color_number*3*p_index + index2*3 + 0] - palette[color_number*3*p_index + index2*3 + 2]);
+			jab_int32 c2gb = abs(palette[color_number*3*p_index + index2*3 + 1] - palette[color_number*3*p_index + index2*3 + 2]);
 			jab_int32 diff2 = abs(rg - c2rg) + abs(rb - c2rb) + abs(gb - c2gb);
 
 			if(diff2 < diff1)
@@ -355,9 +580,50 @@ jab_byte decodeModuleHD(jab_byte* palette, jab_int32 color_number, jab_byte r, j
 	}
 	else	//if no palette is available, decode the module as black/white
 	{
-		index1 = ((r > 100 ? 1 : 0) + (g > 100 ? 1 : 0) + (b > 100 ? 1 : 0)) > 1 ? 1 : 0;
+		index1 = ((rgb[0] > 100 ? 1 : 0) + (rgb[1] > 100 ? 1 : 0) + (rgb[2] > 100 ? 1 : 0)) > 1 ? 1 : 0;
 	}
 	return index1;
+}
+
+/**
+ * @brief Decode a module for PartI (Nc) of the metadata of master symbol
+ * @param rgb the pixel value in RGB format
+ * @return the decoded value
+*/
+jab_byte decodeModuleNc(jab_byte* rgb)
+{
+	jab_int32 ths_black = 80;
+	jab_double ths_std = 0.08;
+	//check black pixel
+	if(rgb[0] < ths_black && rgb[1] < ths_black && rgb[2] < ths_black)
+	{
+		return 0;//000
+	}
+	//check color
+	jab_double ave, var;
+	getAveVar(rgb, &ave, &var);
+	jab_double std = sqrt(var);	//standard deviation
+	jab_byte min, mid, max;
+	jab_int32 index_min, index_mid, index_max;
+	getMinMax(rgb, &min, &mid, &max, &index_min, &index_mid, &index_max);
+	std /= (jab_double)max;	//normalize std
+	jab_byte bits[3];
+	if(std > ths_std)
+	{
+		bits[index_max] = 1;
+		bits[index_min] = 0;
+		jab_double r1 = (jab_double)rgb[index_mid] / (jab_double)rgb[index_min];
+		jab_double r2 = (jab_double)rgb[index_max] / (jab_double)rgb[index_mid];
+		if(r1 > r2)
+			bits[index_mid] = 1;
+		else
+			bits[index_mid] = 0;
+	}
+	else
+	{
+		return 7;//111
+	}
+	return ((bits[0] << 2) + (bits[1] << 1) + bits[2]);
 }
 
 /**
@@ -443,44 +709,6 @@ jab_byte decodeModule(jab_byte* palette, jab_int32 color_number, jab_float* ths,
 		}
 		else							//8-color
 		{
-/*			//fine-tune red and magenta
-			jab_float r = rgb[0];
-			jab_float g = rgb[1];
-			jab_float b = rgb[2];
-			if(cv[0] == 1 && cv[1] == 0)
-			{
-				jab_int32 cpb0 = MAX(MAX(MAX(palette[2], palette[8]), palette[14]), palette[20]);
-				jab_int32 cpb1 = MIN(MIN(MIN(palette[5], palette[11]), palette[17]), palette[23]);
-				jab_float b_g = ((jab_float)palette[14] / (jab_float)palette[13] + (jab_float)palette[17] / (jab_float)palette[16]) / 2.0f;
-				if(cv[2] == 0 && b > cpb0)
-				{
-					if(b/g > b_g)
-						cv[2] = 1;
-				}
-				else if(cv[2] == 1 && b < cpb1)
-				{
-					if(b/g < b_g)
-						cv[2] = 0;
-				}
-			}
-			//fine-tune blue and cyan
-			else if(cv[0] == 0 && cv[2] == 1)
-			{
-				jab_int32 cpg0 = MAX(MAX(MAX(palette[1], palette[4]), palette[13]), palette[16]);
-				jab_int32 cpg1 = MIN(MIN(MIN(palette[7], palette[10]), palette[19]), palette[22]);
-				jab_float g_b = ((jab_float)palette[4] / (jab_float)palette[5] + (jab_float)palette[10] / (jab_float)palette[11]) / 2.0f;
-				if(cv[1] == 0 && g > cpg0)
-				{
-					if(g/b > g_b)
-						cv[1] = 1;
-				}
-				else if(cv[1] == 1 && g < cpg1)
-				{
-					if(g/b < g_b)
-						cv[1] = 0;
-				}
-			}
-*/
 			index = cv[0] * vs[1] * vs[2] + cv[1] * vs[2] + cv[2];
 			p[0] = cp[0];
 			p[1] = cp[1];
@@ -810,7 +1038,6 @@ jab_int32 decodeSlaveMetadata(jab_decoded_symbol* host_symbol, jab_int32 docked_
 	SS = data->data[index--];//SS
 	if(SS == 0)
 	{
-		host_symbol->slave_metadata[docked_position].VF = host_symbol->metadata.VF;
 		host_symbol->slave_metadata[docked_position].side_version = host_symbol->metadata.side_version;
 	}
 	if(index < 0) return DECODE_METADATA_FAILED;
@@ -839,16 +1066,6 @@ jab_int32 decodeSlaveMetadata(jab_decoded_symbol* host_symbol, jab_int32 docked_
 			host_symbol->slave_metadata[docked_position].side_version.x = host_symbol->metadata.side_version.x;
 			host_symbol->slave_metadata[docked_position].side_version.y = side_version;
 		}
-		//calculate VF
-		jab_int32 sv_max = MAX(host_symbol->slave_metadata[docked_position].side_version.x, host_symbol->slave_metadata[docked_position].side_version.y);
-		if(sv_max <= 4)
-			host_symbol->slave_metadata[docked_position].VF = 0;
-		else if(sv_max <= 8)
-			host_symbol->slave_metadata[docked_position].VF = 1;
-		else if(sv_max <= 16)
-			host_symbol->slave_metadata[docked_position].VF = 2;
-		else if(sv_max <= 32)
-			host_symbol->slave_metadata[docked_position].VF = 3;
 	}
 	if(SE == 1)
 	{
@@ -881,326 +1098,190 @@ jab_int32 decodeSlaveMetadata(jab_decoded_symbol* host_symbol, jab_int32 docked_
 }
 
 /**
- * @brief Decode master symbol metadata
+ * @brief Decode the encoded bits of Nc from the module color
+ * @param module1_color the color of the first module
+ * @param module2_color the color of the second module
+ * @return the decoded bits
+*/
+jab_byte decodeNcModuleColor(jab_byte module1_color, jab_byte module2_color)
+{
+	for(jab_int32 i=0; i<8; i++)
+	{
+		if(module1_color == nc_color_encode_table[i][0] && module2_color == nc_color_encode_table[i][1])
+			return i;
+	}
+	return 8; //if no match, return an invalid value
+}
+
+/**
+ * @brief Decode the PartI of master symbol metadata
  * @param matrix the symbol matrix
  * @param symbol the master symbol
  * @param data_map the data module positions
- * @return JAB_SUCCESS | JAB_FAILURE | DECODE_METADATA_FAILED | FATAL_ERROR
+ * @param module_count the index number of the next module
+ * @param x the x coordinate of the current and the next module
+ * @param y the y coordinate of the current and the next module
+ * @return JAB_SUCCESS | JAB_FAILURE | DECODE_METADATA_FAILED
 */
-jab_int32 decodeMasterMetadata(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map)
+jab_int32 decodeMasterMetadataPartI(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map, jab_int32* module_count, jab_int32* x, jab_int32* y)
 {
-	if(matrix == NULL)
-	{
-		reportError("Invalid master symbol matrix");
-		return FATAL_ERROR;
-	}
-
+	//decode Nc module color
+	jab_byte module_color[MASTER_METADATA_PART1_MODULE_NUMBER];
 	jab_int32 mtx_bytes_per_pixel = matrix->bits_per_pixel / 8;
     jab_int32 mtx_bytes_per_row = matrix->width * mtx_bytes_per_pixel;
     jab_int32 mtx_offset;
-
-	jab_int32 x = MASTER_METADATA_X;
-	jab_int32 y = MASTER_METADATA_Y;
-	jab_int32 module_count = 0;
-
-	jab_byte part1[MASTER_METADATA_PART1_LENGTH] = {0};			//6 encoded bits
-	jab_byte part2[MASTER_METADATA_PART2_LENGTH] = {0};			//12 encoded bits
-	jab_float part2_p[MASTER_METADATA_PART2_LENGTH] = {0.0f};
-	jab_byte part3[MASTER_METADATA_PART3_MAX_LENGTH] = {0};		//16-32 encoded bits
-	jab_float part3_p[MASTER_METADATA_PART3_MAX_LENGTH] = {0.0f};
-	jab_int32 part1_bit_length = MASTER_METADATA_PART1_LENGTH;	//part1 encoded length
-	jab_int32 part2_bit_length = MASTER_METADATA_PART2_LENGTH;	//part2 encoded length
-	jab_int32 part3_bit_length = 0;								//part3 encoded length
-	jab_int32 part1_bit_count = 0;
-	jab_int32 part2_bit_count = 0;
-	jab_int32 part3_bit_count = 0;
-	jab_uint32 SS, VF, V, E;
-	jab_uint32 V_length = 0, E_length = 6;
-
-	//read part 1 - decode Nc out of modules in 2-color mode
-	while(part1_bit_count < part1_bit_length)
+	while((*module_count) < MASTER_METADATA_PART1_MODULE_NUMBER)
 	{
-		//decode bit out of the module at [x][y]
-		mtx_offset = y * mtx_bytes_per_row + x * mtx_bytes_per_pixel;
-		part1[part1_bit_count++] = decodeModuleHD(0, 0,
-											      matrix->pixel[mtx_offset],
-											      matrix->pixel[mtx_offset + 1],
-											      matrix->pixel[mtx_offset + 2]);
+		//decode bit out of the module at (x,y)
+		mtx_offset = (*y) * mtx_bytes_per_row + (*x) * mtx_bytes_per_pixel;
+		jab_byte rgb =  decodeModuleNc(&matrix->pixel[mtx_offset]);
+		if(rgb != 0 && rgb != 3 && rgb != 6)
+		{
+#if TEST_MODE
+		reportError("Invalid module color in primary metadata part 1 found");
+#endif
+			return DECODE_METADATA_FAILED;
+		}
+		module_color[*module_count] = rgb;
 		//set data map
-		data_map[y * matrix->width + x] = 1;
+		data_map[(*y) * matrix->width + (*x)] = 1;
 		//go to the next module
-		module_count++;
-		getNextMetadataModuleInMaster(matrix->height, matrix->width, module_count, &x, &y);
+		(*module_count)++;
+		getNextMetadataModuleInMaster(matrix->height, matrix->width, (*module_count), x, y);
 	}
+
+	//decode encoded Nc
+	jab_byte bits[2];
+	bits[0] = decodeNcModuleColor(module_color[0], module_color[1]);	//the first 3 bits
+	bits[1] = decodeNcModuleColor(module_color[2], module_color[3]);	//the last 3 bits
+	if(bits[0] > 7 || bits[1] > 7)
+	{
+#if TEST_MODE
+		reportError("Invalid color combination in primary metadata part 1 found");
+#endif
+		return DECODE_METADATA_FAILED;
+	}
+	//set bits in part1
+	jab_byte part1[MASTER_METADATA_PART1_LENGTH] = {0};			//6 encoded bits
+	jab_int32 bit_count = 0;
+	for(jab_int32 n=0; n<2; n++)
+	{
+		for(jab_int32 i=0; i<3; i++)
+		{
+			jab_byte bit = (bits[n] >> (2 - i)) & 0x01;
+			part1[bit_count] = bit;
+			bit_count++;
+		}
+	}
+
 	//decode ldpc for part1
-	if( !decodeLDPChd(part1, part1_bit_length, part1_bit_length > 36 ? 4 : 3, 0) )
+	if( !decodeLDPChd(part1, MASTER_METADATA_PART1_LENGTH, MASTER_METADATA_PART1_LENGTH > 36 ? 4 : 3, 0) )
 	{
 #if TEST_MODE
 		reportError("LDPC decoding for master metadata part 1 failed");
 #endif
-		return DECODE_METADATA_FAILED;
+		return JAB_FAILURE;
 	}
 	//parse part1
 	symbol->metadata.Nc = (part1[0] << 2) + (part1[1] << 1) + part1[2];
+
+	return JAB_SUCCESS;
+}
+
+/**
+ * @brief Decode the PartII of master symbol metadata
+ * @param matrix the symbol matrix
+ * @param symbol the master symbol
+ * @param data_map the data module positions
+ * @param cs the color changing slopes
+ * @param module_count the index number of the next module
+ * @param x the x coordinate of the current and the next module
+ * @param y the y coordinate of the current and the next module
+ * @return JAB_SUCCESS | JAB_FAILURE | DECODE_METADATA_FAILED | FATAL_ERROR
+*/
+jab_int32 decodeMasterMetadataPartII(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map, jab_float* cs, jab_int32* module_count, jab_int32* x, jab_int32* y)
+{
+	jab_byte part2[MASTER_METADATA_PART2_LENGTH] = {0};			//38 encoded bits
+	jab_int32 part2_bit_count = 0;
+	jab_uint32 V, E;
+	jab_uint32 V_length = 10, E_length = 6;
+
 	jab_int32 color_number = (jab_int32)pow(2, symbol->metadata.Nc + 1);
 	jab_int32 bits_per_module = (jab_int32)(log(color_number) / log(2));
 
-	//read color palettes
-	if(readColorPaletteInMaster(matrix, symbol, data_map, &module_count, &x, &y) < 0)
-	{
-		reportError("Reading color palettes in master symbol failed");
-		return FATAL_ERROR;
-	}
-
-	//calculate palette thresholds and reference points
-    jab_float* palette_ths1 = 0;
-    jab_float* palette_rp1 = 0;
-    if(!getPaletteThreshold(symbol->palette, color_number, &palette_ths1, &palette_rp1))
-	{
-		reportError("Getting palette threshold and reference points failed");
-		free(palette_ths1);
-		free(palette_rp1);
-		return FATAL_ERROR;
-	}
-	jab_float* palette_ths2 = 0;
-    jab_float* palette_rp2 = 0;
-    if(!getPaletteThreshold(symbol->palette + color_number * 3, color_number, &palette_ths2, &palette_rp2))
-	{
-		reportError("Getting palette threshold and reference points failed");
-		free(palette_ths1);
-		free(palette_rp1);
-		free(palette_ths2);
-		free(palette_rp2);
-		return FATAL_ERROR;
-	}
-
     //read part2
-    jab_float bits_p[bits_per_module];
-    while(part2_bit_count < part2_bit_length)
+    while(part2_bit_count < MASTER_METADATA_PART2_LENGTH)
     {
-		//decode bits out of the module at [x][y]
-		jab_byte* palette;
-		jab_float* palette_ths;
-		jab_float* palette_rp;
-		if(matrix->width > matrix->height)		//if the width is bigger than the height,
-		{										//the first palette is used for the modules in the left half
-			if(x < matrix->width/2)
-			{
-				palette = symbol->palette;
-				palette_ths = palette_ths1;
-				palette_rp = palette_rp1;
-			}
-			else								//the second palette is used for the modules in the right half
-			{
-				palette = symbol->palette + color_number * 3;
-				palette_ths = palette_ths2;
-				palette_rp = palette_rp2;
-			}
-		}
-		else									//if the height is bigger than the width,
-		{										//the first palette is used for the modules in the upper half
-			if(y < matrix->height/2)
-			{
-				palette = symbol->palette;
-				palette_ths = palette_ths1;
-				palette_rp = palette_rp1;
-			}
-			else								//the second palette is used for the modules in the lower half
-			{
-				palette = symbol->palette + color_number * 3;
-				palette_ths = palette_ths2;
-				palette_rp = palette_rp2;
-			}
-		}
-		mtx_offset = y * mtx_bytes_per_row + x * mtx_bytes_per_pixel;
-		jab_byte bits = decodeModule(palette,
-									 color_number,
-									 palette_ths,
-									 palette_rp,
-									 &matrix->pixel[mtx_offset],
-									 bits_p);
+		//decode bits out of the module at (x,y)
+		jab_byte bits = decodeModuleHD(matrix, symbol->palette, color_number, cs, *x, *y);
 		//write the bits into part2
 		for(jab_int32 i=0; i<bits_per_module; i++)
 		{
 			jab_byte bit = (bits >> (bits_per_module - 1 - i)) & 0x01;
-			if(part2_bit_count < part2_bit_length)
+			if(part2_bit_count < MASTER_METADATA_PART2_LENGTH)
 			{
 				part2[part2_bit_count] = bit;
-				part2_p[part2_bit_count] = bits_p[i];
 				part2_bit_count++;
 			}
-			else	//if part2 is full, write the rest bits into part3
-			{
-				part3[part3_bit_count] = bit;
-				part3_p[part3_bit_count] = bits_p[i];
-				part3_bit_count++;
-
-			}
-		}
-		//set data map
-		data_map[y * matrix->width + x] = 1;
-		//go to the next module
-		module_count++;
-		getNextMetadataModuleInMaster(matrix->height, matrix->width, module_count, &x, &y);
-    }
-	//decode ldpc for part2
-	if( !decodeLDPC(part2_p, part2_bit_length, part2_bit_length > 36 ? 4 : 3, 0, part2) )
-	{
-#if TEST_MODE
-		reportError("LDPC decoding for master metadata part 2 failed");
-#endif
-		free(palette_ths1);
-		free(palette_rp1);
-		free(palette_ths2);
-		free(palette_rp2);
-		return DECODE_METADATA_FAILED;
-	}
-    //parse part2
-	SS = part2[0];
-	VF = (part2[1] << 1) + part2[2];
-	symbol->metadata.VF = VF;
-	symbol->metadata.mask_type = (part2[3] << 2) + (part2[4] << 1) + part2[5];
-
-	if(SS == 0)	//square symbol
-	{
-		V_length = (VF == 0) ? 2 : (VF + 1);
-	}
-	else		//rectangle symbol
-	{
-		V_length = VF * 2 + 4;
-	}
-	part3_bit_length += V_length * 2;
-	part3_bit_length += E_length * 2;
-
-    //read part3
-	while(part3_bit_count < part3_bit_length)
-	{
-		//decode bits out of the module at [x][y]
-		jab_byte* palette;
-		jab_float* palette_ths;
-		jab_float* palette_rp;
-		if(matrix->width > matrix->height)		//if the width is bigger than the height,
-		{										//the first palette is used for the modules in the left half
-			if(x < matrix->width/2)
-			{
-				palette = symbol->palette;
-				palette_ths = palette_ths1;
-				palette_rp = palette_rp1;
-			}
-			else								//the second palette is used for the modules in the right half
-			{
-				palette = symbol->palette + color_number * 3;
-				palette_ths = palette_ths2;
-				palette_rp = palette_rp2;
-			}
-		}
-		else									//if the height is bigger than the width,
-		{										//the first palette is used for the modules in the upper half
-			if(y < matrix->height/2)
-			{
-				palette = symbol->palette;
-				palette_ths = palette_ths1;
-				palette_rp = palette_rp1;
-			}
-			else								//the second palette is used for the modules in the lower half
-			{
-				palette = symbol->palette + color_number * 3;
-				palette_ths = palette_ths2;
-				palette_rp = palette_rp2;
-			}
-		}
-		mtx_offset = y * mtx_bytes_per_row + x * mtx_bytes_per_pixel;
-		jab_byte bits = decodeModule(palette,
-									 color_number,
-									 palette_ths,
-									 palette_rp,
-									 &matrix->pixel[mtx_offset],
-									 bits_p);
-		//write the bits into part1
-		for(jab_int32 i=0; i<bits_per_module; i++)
-		{
-			jab_byte bit = (bits >> (bits_per_module - 1 - i)) & 0x01;
-			if(part3_bit_count < part3_bit_length)
-			{
-				part3[part3_bit_count] = bit;
-				part3_p[part3_bit_count] = bits_p[i];
-				part3_bit_count++;
-			}
-			else	//if part3 is full, stop
+			else	//if part2 is full, stop
 			{
 				break;
 			}
 		}
 		//set data map
-		data_map[y * matrix->width + x] = 1;
+		data_map[(*y) * matrix->width + (*x)] = 1;
 		//go to the next module
-		module_count++;
-		getNextMetadataModuleInMaster(matrix->height, matrix->width, module_count, &x, &y);
-	}
-	//decode ldpc for part3
-	if( !decodeLDPC(part3_p, part3_bit_length, part3_bit_length > 36 ? 4 : 3, 0, part3) )
+		(*module_count)++;
+		getNextMetadataModuleInMaster(matrix->height, matrix->width, (*module_count), x, y);
+    }
+
+	//decode ldpc for part2
+	if( !decodeLDPChd(part2, MASTER_METADATA_PART2_LENGTH, MASTER_METADATA_PART2_LENGTH > 36 ? 4 : 3, 0) )
 	{
 #if TEST_MODE
-		reportError("LDPC decoding for master metadata part 3 failed");
+		reportError("LDPC decoding for master metadata part 2 failed");
 #endif
-		free(palette_ths1);
-		free(palette_rp1);
-		free(palette_ths2);
-		free(palette_rp2);
 		return DECODE_METADATA_FAILED;
 	}
-    //parse part3
-	jab_int32 bit_index = 0;
-	if(V_length > 0)	//parse V
+
+    //parse part2
+	//read V
+	//get horizontal side version
+	V = 0;
+	for(jab_int32 i=0; i<V_length/2; i++)
 	{
-		if(SS == 0)	//square symbol
-		{
-			V = 0;
-			for(jab_int32 i=0; i<V_length; i++)
-			{
-				V += part3[i] << (V_length - 1 - i);
-			}
-			jab_int32 side_version = (VF == 0) ? V + 1 : pow(2, VF + 1) + V + 1;
-			symbol->metadata.side_version.x = side_version;
-			symbol->metadata.side_version.y = side_version;
-		}
-		else		//rectangle symbol
-		{
-			//get horizontal side version
-			V = 0;
-			for(jab_int32 i=0; i<V_length/2; i++)
-			{
-				V += part3[i] << (V_length/2 - 1 - i);
-			}
-			symbol->metadata.side_version.x = V + 1;
-			//get vertical side version
-			V = 0;
-			for(jab_int32 i=0; i<V_length/2; i++)
-			{
-				V += part3[i+V_length/2] << (V_length/2 - 1 - i);
-			}
-			symbol->metadata.side_version.y = V + 1;
-		}
-		bit_index += V_length;
+		V += part2[i] << (V_length/2 - 1 - i);
 	}
-	if(E_length > 0)	//parse E
+	symbol->metadata.side_version.x = V + 1;
+	//get vertical side version
+	V = 0;
+	for(jab_int32 i=0; i<V_length/2; i++)
 	{
-		//get wc (the first half of E)
-		E = 0;
-		for(jab_int32 i=bit_index; i<(bit_index+E_length/2); i++)
-		{
-			E += part3[i] << (E_length/2 - 1 - (i - bit_index));
-		}
-		symbol->metadata.ecl.x = E + 3;		//wc = E_part1 + 3
-		//get wr (the second half of E)
-		E = 0;
-		for(jab_int32 i=bit_index; i<(bit_index+E_length/2); i++)
-		{
-			E += part3[i+E_length/2] << (E_length/2 - 1 - (i - bit_index));
-		}
-		symbol->metadata.ecl.y = E + 4;		//wr = E_part2 + 4
-		bit_index += E_length;
+		V += part2[i+V_length/2] << (V_length/2 - 1 - i);
 	}
+	symbol->metadata.side_version.y = V + 1;
+
+	//read E
+	jab_int32 bit_index = V_length;
+	//get wc (the first half of E)
+	E = 0;
+	for(jab_int32 i=bit_index; i<(bit_index+E_length/2); i++)
+	{
+		E += part2[i] << (E_length/2 - 1 - (i - bit_index));
+	}
+	symbol->metadata.ecl.x = E + 3;		//wc = E_part1 + 3
+	//get wr (the second half of E)
+	E = 0;
+	for(jab_int32 i=bit_index; i<(bit_index+E_length/2); i++)
+	{
+		E += part2[i+E_length/2] << (E_length/2 - 1 - (i - bit_index));
+	}
+	symbol->metadata.ecl.y = E + 4;		//wr = E_part2 + 4
+
+	//read MSK
+	bit_index = V_length + E_length;
+	symbol->metadata.mask_type = (part2[bit_index+0] << 2) + (part2[bit_index+1] << 1) + part2[bit_index+2];
+
 	symbol->metadata.docked_position = 0;
 
 	//check side version
@@ -1208,11 +1289,7 @@ jab_int32 decodeMasterMetadata(jab_bitmap* matrix, jab_decoded_symbol* symbol, j
 	symbol->side_size.y = VERSION2SIZE(symbol->metadata.side_version.y);
 	if(matrix->width != symbol->side_size.x || matrix->height != symbol->side_size.y)
 	{
-		reportError("Master symbol matrix size does not match the metadata");
-		free(palette_ths1);
-		free(palette_rp1);
-		free(palette_ths2);
-		free(palette_rp2);
+		reportError("Primary symbol matrix size does not match the metadata");
 		return JAB_FAILURE;
 	}
 	//check wc and wr
@@ -1220,20 +1297,9 @@ jab_int32 decodeMasterMetadata(jab_bitmap* matrix, jab_decoded_symbol* symbol, j
 	jab_int32 wr = symbol->metadata.ecl.y;
 	if(wc >= wr)
 	{
-#if TEST_MODE
-		reportError("Incorrect error correction parameter in master metadata");
-#endif
-		free(palette_ths1);
-		free(palette_rp1);
-		free(palette_ths2);
-		free(palette_rp2);
+		reportError("Incorrect error correction parameter in primary symbol metadata");
 		return DECODE_METADATA_FAILED;
 	}
-
-	free(palette_ths1);
-	free(palette_rp1);
-	free(palette_ths2);
-	free(palette_rp2);
 	return JAB_SUCCESS;
 }
 
@@ -1242,15 +1308,11 @@ jab_int32 decodeMasterMetadata(jab_bitmap* matrix, jab_decoded_symbol* symbol, j
  * @param matrix the symbol matrix
  * @param symbol the symbol to be decoded
  * @param data_map the data module positions
- * @param bits_p the probability of the reliability of the decoded bits
+ * @param cs the color changing slopes
  * @return the decoded data | NULL if failed
 */
-jab_data* readRawModuleData(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map, jab_float** bits_p)
+jab_data* readRawModuleData(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map, jab_float* cs)
 {
-	jab_int32 mtx_bytes_per_pixel = matrix->bits_per_pixel / 8;
-    jab_int32 mtx_bytes_per_row = matrix->width * mtx_bytes_per_pixel;
-    jab_int32 mtx_offset;
-
     jab_int32 color_number = (jab_int32)pow(2, symbol->metadata.Nc + 1);
 	jab_int32 module_count = 0;
     jab_data* data = (jab_data*)malloc(sizeof(jab_data) + matrix->width * matrix->height * sizeof(jab_char));
@@ -1259,55 +1321,8 @@ jab_data* readRawModuleData(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_
 		reportError("Memory allocation for raw module data failed");
 		return NULL;
 	}
-
-	jab_int32 bits_per_module = symbol->metadata.Nc + 1;
-	(*bits_p) = (jab_float*)malloc(matrix->width * matrix->height * bits_per_module * sizeof(jab_float));
-	if((*bits_p) == NULL)
-	{
-		reportError("Memory allocation for bit probability failed");
-		return NULL;
-	}
-
-	//calculate palette thresholds and reference points
-    jab_float* palette_ths1 = 0;
-    jab_float* palette_rp1 = 0;
-    if(!getPaletteThreshold(symbol->palette, color_number, &palette_ths1, &palette_rp1))
-	{
-		reportError("Getting palette threshold and reference points failed");
-		free(palette_ths1);
-		free(palette_rp1);
-		return JAB_FAILURE;
-	}
-	jab_float* palette_ths2 = 0;
-    jab_float* palette_rp2 = 0;
-    if(!getPaletteThreshold(symbol->palette + color_number * 3, color_number, &palette_ths2, &palette_rp2))
-	{
-		reportError("Getting palette threshold and reference points failed");
-		free(palette_ths1);
-		free(palette_rp1);
-		free(palette_ths2);
-		free(palette_rp2);
-		return JAB_FAILURE;
-	}
 #if TEST_MODE
-	printf("p1:\n");
-	for(int i=0;i<color_number;i++)
-	{
-		printf("%d\t%d\t%d\n", symbol->palette[i*3], symbol->palette[i*3+1], symbol->palette[i*3+2]);
-	}
-	printf("ths1r: %f, %f, %f\n", palette_ths1[0], palette_ths1[1], palette_ths1[2]);
-	printf("ths1g: %f, %f, %f\n", palette_ths1[3], palette_ths1[4], palette_ths1[5]);
-	printf("ths1b: %f, %f, %f\n", palette_ths1[6], palette_ths1[7], palette_ths1[8]);
-	printf("p2:\n");
-	for(int i=0;i<color_number;i++)
-	{
-		printf("%d\t%d\t%d\n", symbol->palette[3*color_number+i*3], symbol->palette[3*color_number+i*3+1], symbol->palette[3*color_number+i*3+2]);
-	}
-	printf("ths2r: %f, %f, %f\n", palette_ths2[0], palette_ths2[1], palette_ths2[2]);
-	printf("ths2g: %f, %f, %f\n", palette_ths2[3], palette_ths2[4], palette_ths2[5]);
-	printf("ths2b: %f, %f, %f\n", palette_ths2[6], palette_ths2[7], palette_ths2[8]);
-
-	FILE* fp = fopen("dec_module_rgb.bin", "wb");
+	FILE* fp = fopen("jab_dec_module_rgb.bin", "wb");
 #endif // TEST_MODE
 	for(jab_int32 j=0; j<matrix->width; j++)
 	{
@@ -1315,68 +1330,32 @@ jab_data* readRawModuleData(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_
 		{
 			if(data_map[i*matrix->width + j] == 0)
 			{
-				//decode bits out of the module at [x][y]
-				jab_byte* palette;
-				jab_float* palette_ths;
-				jab_float* palette_rp;
-				if(matrix->width > matrix->height)		//if the width is bigger than the height,
-				{										//the first palette is used for the modules in the left half
-					if(j < matrix->width/2)
-					{
-						palette = symbol->palette;
-						palette_ths = palette_ths1;
-						palette_rp = palette_rp1;
-					}
-					else								//the second palette is used for the modules in the right half
-					{
-						palette = symbol->palette + color_number * 3;
-						palette_ths = palette_ths2;
-						palette_rp = palette_rp2;
-					}
-				}
-				else									//if the height is bigger than the width,
-				{										//the first palette is used for the modules in the upper half
-					if(i < matrix->height/2)
-					{
-						palette = symbol->palette;
-						palette_ths = palette_ths1;
-						palette_rp = palette_rp1;
-					}
-					else								//the second palette is used for the modules in the lower half
-					{
-						palette = symbol->palette + color_number * 3;
-						palette_ths = palette_ths2;
-						palette_rp = palette_rp2;
-					}
-				}
-				mtx_offset = i * mtx_bytes_per_row + j * mtx_bytes_per_pixel;
-				/*jab_byte bits = decodeModuleHD(palette, color_number,
-											   matrix->pixel[mtx_offset],
-											   matrix->pixel[mtx_offset + 1],
-											   matrix->pixel[mtx_offset + 2]);*/
-				jab_byte bits = decodeModule(palette,
-											 color_number,
-											 palette_ths,
-											 palette_rp,
-											 &matrix->pixel[mtx_offset],
-											 (*bits_p) + module_count * bits_per_module);
+				//decode bits out of the module at (x,y)
+				jab_byte bits = decodeModuleHD(matrix, symbol->palette, color_number, cs, j, i);
 				//write the bits into data
 				data->data[module_count] = (jab_char)bits;
-#if TEST_MODE
-				fwrite(&matrix->pixel[mtx_offset], 3, 1, fp);
-#endif // TEST_MODE
 				module_count++;
 			}
+#if TEST_MODE
+			if(data_map[i*matrix->width + j] == 0)
+			{
+				jab_int32 mtx_bytes_per_pixel = matrix->bits_per_pixel / 8;
+				jab_int32 mtx_bytes_per_row = matrix->width * mtx_bytes_per_pixel;
+				jab_int32 mtx_offset = i * mtx_bytes_per_row + j * mtx_bytes_per_pixel;
+				fwrite(&matrix->pixel[mtx_offset], 3, 1, fp);
+			}
+			else
+			{
+				jab_byte rgb[3] = {128,128,128};
+				fwrite(rgb, 3, 1, fp);
+			}
+#endif // TEST_MODE
 		}
 	}
-	data->length = module_count;
 #if TEST_MODE
 	fclose(fp);
 #endif // TEST_MODE
-	free(palette_ths1);
-	free(palette_rp1);
-	free(palette_ths2);
-	free(palette_rp2);
+	data->length = module_count;
 	return data;
 }
 
@@ -1513,11 +1492,12 @@ void fillDataMap(jab_byte* data_map, jab_int32 width, jab_int32 height, jab_int3
  * @brief Load default metadata values and color palettes for master symbol
  * @param matrix the symbol matrix
  * @param symbol the master symbol
- * @param data_map the data module positions
- * @return JAB_SUCCESS | FATAL_ERROR
 */
-jab_int32 loadDefaultMasterMetadata(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map)
+void loadDefaultMasterMetadata(jab_bitmap* matrix, jab_decoded_symbol* symbol)
 {
+#if TEST_MODE
+	JAB_REPORT_INFO(("Loading default master metadata"))
+#endif
 	//set default metadata values
 	symbol->metadata.Nc = DEFAULT_MODULE_COLOR_MODE;
 	symbol->metadata.ecl.x = ecclevel2wcwr[DEFAULT_ECC_LEVEL][0];
@@ -1526,26 +1506,6 @@ jab_int32 loadDefaultMasterMetadata(jab_bitmap* matrix, jab_decoded_symbol* symb
 	symbol->metadata.docked_position = 0;							//no default value
 	symbol->metadata.side_version.x = SIZE2VERSION(matrix->width);	//no default value
 	symbol->metadata.side_version.y = SIZE2VERSION(matrix->height);	//no default value
-	jab_int32 max_side_version = MAX(symbol->metadata.side_version.x, symbol->metadata.side_version.y);
-	if(max_side_version <= 4)
-		symbol->metadata.VF = 0;
-	else if(max_side_version <= 8)
-		symbol->metadata.VF = 1;
-	else if(max_side_version <= 16)
-		symbol->metadata.VF = 2;
-	else
-		symbol->metadata.VF = 3;
-
-	//read color palettes
-	jab_int32 x = MASTER_METADATA_X;
-	jab_int32 y = MASTER_METADATA_Y;
-	jab_int32 module_count = 0;
-    if(readColorPaletteInMaster(matrix, symbol, data_map, &module_count, &x, &y) < 0)
-	{
-		reportError("Reading color palettes in master symbol failed");
-		return FATAL_ERROR;
-	}
-    return JAB_SUCCESS;
 }
 
 /**
@@ -1553,26 +1513,49 @@ jab_int32 loadDefaultMasterMetadata(jab_bitmap* matrix, jab_decoded_symbol* symb
  * @param matrix the symbol matrix
  * @param symbol the symbol to be decoded
  * @param data_map the data module positions
+ * @param cs the color changing slopes
  * @param type the symbol type, 0: master, 1: slave
  * @return JAB_SUCCESS | JAB_FAILURE | DECODE_METADATA_FAILED | FATAL_ERROR
 */
-jab_int32 decodeSymbol(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map, jab_int32 type)
+jab_int32 decodeSymbol(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map, jab_float* cs, jab_int32 type)
 {
+#if TEST_MODE
+	jab_int32 color_number = (jab_int32)pow(2, symbol->metadata.Nc + 1);
+	printf("p1:\n");
+	for(int i=0;i<color_number;i++)
+	{
+		printf("%d\t%d\t%d\n", symbol->palette[i*3], symbol->palette[i*3+1], symbol->palette[i*3+2]);
+	}
+	printf("p2:\n");
+	for(int i=0;i<color_number;i++)
+	{
+		printf("%d\t%d\t%d\n", symbol->palette[3*color_number+i*3], symbol->palette[3*color_number+i*3+1], symbol->palette[3*color_number+i*3+2]);
+	}
+	printf("p3:\n");
+	for(int i=0;i<color_number;i++)
+	{
+		printf("%d\t%d\t%d\n", symbol->palette[3*color_number*2+i*3], symbol->palette[3*color_number*2+i*3+1], symbol->palette[3*color_number*2+i*3+2]);
+	}
+	printf("p4:\n");
+	for(int i=0;i<color_number;i++)
+	{
+		printf("%d\t%d\t%d\n", symbol->palette[3*color_number*3+i*3], symbol->palette[3*color_number*3+i*3+1], symbol->palette[3*color_number*3+i*3+2]);
+	}
+#endif // TEST_MODE
+
 	//fill data map
 	fillDataMap(data_map, matrix->width, matrix->height, type);
 
 	//read raw data
-	jab_float* bits_p = 0;
-	jab_data* raw_module_data = readRawModuleData(matrix, symbol, data_map, &bits_p);
+	jab_data* raw_module_data = readRawModuleData(matrix, symbol, data_map, cs);
 	if(raw_module_data == NULL)
 	{
 		JAB_REPORT_ERROR(("Reading raw module data in symbol %d failed", symbol->index))
 		free(data_map);
 		return FATAL_ERROR;
 	}
-
 #if TEST_MODE
-	FILE* fp = fopen("dec_module_data.bin", "wb");
+	FILE* fp = fopen("jab_dec_module_data.bin", "wb");
 	fwrite(raw_module_data->data, raw_module_data->length, 1, fp);
 	fclose(fp);
 #endif // TEST_MODE
@@ -1580,6 +1563,11 @@ jab_int32 decodeSymbol(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte*
 	//demask
 	demaskSymbol(raw_module_data, data_map, symbol->side_size, symbol->metadata.mask_type, (jab_int32)pow(2, symbol->metadata.Nc + 1));
 	free(data_map);
+#if TEST_MODE
+	fp = fopen("jab_demasked_module_data.bin", "wb");
+	fwrite(raw_module_data->data, raw_module_data->length, 1, fp);
+	fclose(fp);
+#endif // TEST_MODE
 
 	//change to one-bit-per-byte representation
 	jab_data* raw_data = rawModuleData2RawData(raw_module_data, symbol->metadata.Nc + 1);
@@ -1598,25 +1586,22 @@ jab_int32 decodeSymbol(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte*
 
 	//deinterleave data
 	raw_data->length = Pg;	//drop the padding bits
-    deinterleaveData(raw_data, bits_p);
+    deinterleaveData(raw_data);
 
 #if TEST_MODE
 	JAB_REPORT_INFO(("wc:%d, wr:%d, Pg:%d, Pn: %d", wc, wr, Pg, Pn))
-	fp = fopen("dec_bit_data.bin", "wb");
+	fp = fopen("jab_dec_bit_data.bin", "wb");
 	fwrite(raw_data->data, raw_data->length, 1, fp);
 	fclose(fp);
 #endif // TEST_MODE
 
 	//decode ldpc
-    //if(decodeLDPC(bits_p, Pg, symbol->metadata.ecl.x, symbol->metadata.ecl.y, (jab_byte*)raw_data->data) != Pn)
     if(decodeLDPChd((jab_byte*)raw_data->data, Pg, symbol->metadata.ecl.x, symbol->metadata.ecl.y) != Pn)
     {
 		JAB_REPORT_ERROR(("LDPC decoding for data in symbol %d failed", symbol->index))
 		free(raw_data);
-		free(bits_p);
 		return JAB_FAILURE;
 	}
-	free(bits_p);
 
 	//find the start flag of metadata
 	jab_int32 metadata_offset = Pn - 1;
@@ -1690,23 +1675,52 @@ jab_int32 decodeMaster(jab_bitmap* matrix, jab_decoded_symbol* symbol)
 		return FATAL_ERROR;
 	}
 
-	//decode metadata and build palette
-	jab_int32 ret = decodeMasterMetadata(matrix, symbol, data_map);
-	if(DECODE_METADATA_FAILED == ret)
+	//decode metadata and color palette
+	jab_int32 x = MASTER_METADATA_X;
+	jab_int32 y = MASTER_METADATA_Y;
+	jab_int32 module_count = 0;
+
+	//decode metadata PartI (Nc)
+	jab_int32 decode_partI_ret = decodeMasterMetadataPartI(matrix, symbol, data_map, &module_count, &x, &y);
+	if(decode_partI_ret == JAB_FAILURE)
 	{
+		return JAB_FAILURE;
+	}
+	if(decode_partI_ret == DECODE_METADATA_FAILED)
+	{
+		//reset variables
+		x = MASTER_METADATA_X;
+		y = MASTER_METADATA_Y;
+		module_count = 0;
 		//clear data_map
 		memset(data_map, 0, matrix->width*matrix->height*sizeof(jab_byte));
 		//load default metadata and color palette
-		if(loadDefaultMasterMetadata(matrix, symbol, data_map) < 0)
+		loadDefaultMasterMetadata(matrix, symbol);
+	}
+
+	//read color palettes
+    if(readColorPaletteInMaster(matrix, symbol, data_map, &module_count, &x, &y) < 0)
+	{
+		reportError("Reading color palettes in master symbol failed");
+		return JAB_FAILURE;
+	}
+
+	//calculate color changing slopes
+	jab_int32 color_number = (jab_int32)pow(2, symbol->metadata.Nc + 1);
+	jab_float cs[COLOR_PALETTE_NUMBER * (color_number*3) * 2];	//color slopes for 4 palettes in x and y directions
+	calculateColorSlopes(matrix, symbol->palette, color_number, cs);
+
+	//decode metadata PartII
+	if(decode_partI_ret == JAB_SUCCESS)
+	{
+		if(decodeMasterMetadataPartII(matrix, symbol, data_map, cs, &module_count, &x, &y) <= 0)
 		{
-			reportError("Loading default master metadata failed");
-			free(data_map);
-			return FATAL_ERROR;
+			return JAB_FAILURE;
 		}
 	}
 
 	//decode master symbol
-	return decodeSymbol(matrix, symbol, data_map, 0);
+	return decodeSymbol(matrix, symbol, data_map, cs, 0);
 }
 
 /**
@@ -1739,8 +1753,14 @@ jab_int32 decodeSlave(jab_bitmap* matrix, jab_decoded_symbol* symbol)
 		return FATAL_ERROR;
 	}
 
+	//calculate color changing slope
+	jab_int32 color_number = (jab_int32)pow(2, symbol->metadata.Nc + 1);
+	jab_float cs[COLOR_PALETTE_NUMBER * (color_number*3) * 2];	//color slopes for 4 palettes in x and y directions
+	//calculate color changing slopes
+	calculateColorSlopes(matrix, symbol->palette, color_number, cs);
+
 	//decode slave symbol
-	return decodeSymbol(matrix, symbol, data_map, 1);
+	return decodeSymbol(matrix, symbol, data_map, cs, 1);
 }
 
 /**

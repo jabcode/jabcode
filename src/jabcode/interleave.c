@@ -37,10 +37,9 @@ void interleaveData(jab_data* data)
 
 /**
  * @brief In-place deinterleaving
- * @param data the first input data to be deinterleaved
- * @param p the second input data to be deinterleaved
+ * @param data the input data to be deinterleaved
 */
-void deinterleaveData(jab_data* data, jab_float* p)
+void deinterleaveData(jab_data* data)
 {
     jab_int32 * index = (jab_int32 *)malloc(data->length * sizeof(jab_int32));
     if(index == NULL)
@@ -68,20 +67,11 @@ void deinterleaveData(jab_data* data, jab_float* p)
         reportError("Memory allocation for temporary buffer in deinterleaver failed");
         return;
     }
-    jab_float* tmp_p = (jab_float *)malloc(data->length * sizeof(jab_float));
-    if(tmp_p == NULL)
-    {
-        reportError("Memory allocation for temporary buffer in deinterleaver failed");
-        return;
-    }
-	memcpy(tmp_data, data->data, data->length);
-	memcpy(tmp_p, p, data->length * sizeof(jab_float));
+	memcpy(tmp_data, data->data, data->length*sizeof(jab_char));
 	for(jab_int32 i=0; i<data->length; i++)
     {
         data->data[index[i]] = tmp_data[i];
-        p[index[i]] = tmp_p[i];
     }
     free(tmp_data);
-    free(tmp_p);
     free(index);
 }

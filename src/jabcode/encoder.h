@@ -28,34 +28,45 @@ static const jab_byte jab_default_palette[] = {0, 	0, 		0, 		//0: black
 											   };
 
 /**
+ * @brief Color palette placement index in master symbol
+*/
+static const jab_int32 master_palette_placement_index[4][8] = {{0, 3, 5, 6, 1, 2, 4, 7}, {0, 6, 5, 3, 1, 2, 4, 7},
+															   {6, 0, 5, 3, 1, 2, 4, 7}, {3, 0, 5, 6, 1, 2, 4, 7}};
+
+/**
+ * @brief Color palette placement index in slave symbol
+*/
+static const jab_int32 slave_palette_placement_index[8] = {3, 6, 5, 0, 1, 2, 4, 7};
+
+/**
  * @brief Finder pattern core color index in default palette
 */
-#define	FP0_CORE_COLOR	1
-#define	FP1_CORE_COLOR	2
-#define	FP2_CORE_COLOR	5
-#define	FP3_CORE_COLOR	6
+#define	FP0_CORE_COLOR	0
+#define	FP1_CORE_COLOR	0
+#define	FP2_CORE_COLOR	6
+#define	FP3_CORE_COLOR	3
 
 /**
  * @brief Alignment pattern core color index in default palette
 */
-#define	AP0_CORE_COLOR	0
-#define	AP1_CORE_COLOR	0
-#define	AP2_CORE_COLOR	0
-#define	AP3_CORE_COLOR	0
-#define APX_CORE_COLOR	7
+#define	AP0_CORE_COLOR	3
+#define	AP1_CORE_COLOR	3
+#define	AP2_CORE_COLOR	3
+#define	AP3_CORE_COLOR	3
+#define APX_CORE_COLOR	6
 
 /**
  * @brief Finder pattern core color index for all color modes
 */
-static const jab_byte fp0_core_color_index[] = {0, 0, FP0_CORE_COLOR, 1, 1, 3, 3, 3};
-static const jab_byte fp1_core_color_index[] = {0, 1, FP1_CORE_COLOR, 2, 6, 12, 12, 28};
-static const jab_byte fp2_core_color_index[] = {0, 2, FP2_CORE_COLOR, 13, 25, 51, 115, 227};
-static const jab_byte fp3_core_color_index[] = {0, 3, FP3_CORE_COLOR, 14, 30, 60, 124, 252};
+static const jab_byte fp0_core_color_index[] = {0, 0, FP0_CORE_COLOR, 0, 0, 0, 0, 0};
+static const jab_byte fp1_core_color_index[] = {0, 0, FP1_CORE_COLOR, 0, 0, 0, 0, 0};
+static const jab_byte fp2_core_color_index[] = {0, 2, FP2_CORE_COLOR, 14, 30, 60, 124, 252};
+static const jab_byte fp3_core_color_index[] = {0, 3, FP3_CORE_COLOR, 3, 7, 15, 15, 31};
 /**
  * @brief Alignment pattern core color index for all color modes
 */
-static const jab_byte apn_core_color_index[] = {0, 4, AP0_CORE_COLOR, 0, 0, 0, 0, 0};
-static const jab_byte apx_core_color_index[] = {0, 5, APX_CORE_COLOR, 15, 31, 63, 127, 255};
+static const jab_byte apn_core_color_index[] = {0, 3, AP0_CORE_COLOR, 3, 7, 15, 15, 31};
+static const jab_byte apx_core_color_index[] = {0, 2, APX_CORE_COLOR, 14, 30, 60, 124, 252};
 
 /**
  * @brief Finder pattern types
@@ -100,6 +111,11 @@ static const jab_vector2d jab_symbol_pos[MAX_SYMBOL_NUMBER] =
 			{ 0,-5}, {-1,-4}, { 1,-4}, {-2,-3}, { 2,-3}, {-3,-2}, { 3,-2}, {-4,-1},	{ 4,-1}, { 0, 5},
 			{-1, 4}, { 1, 4}, {-2, 3}, { 2, 3}, {-3, 2}, { 3, 2}, {-4, 1}, { 4, 1}, {-5, 0}, { 5, 0}
 		};
+
+/**
+ * @brief Nc color encoding table
+*/
+static const jab_byte nc_color_encode_table[8][2] = {{0,0}, {0,3}, {0,6}, {3,0}, {3,3}, {3,6}, {6,0}, {6,3}};
 
 /**
  * @brief Encoding table

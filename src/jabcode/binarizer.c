@@ -15,8 +15,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "jabcode.h"
+#include <math.h>
 
-#define BLOCK_SIZE_POWER	3
+#define BLOCK_SIZE_POWER	5
 #define BLOCK_SIZE 			(1 << BLOCK_SIZE_POWER)
 #define BLOCK_SIZE_MASK 	(BLOCK_SIZE - 1)
 #define MINIMUM_DIMENSION 	(BLOCK_SIZE * 5)
@@ -411,7 +412,7 @@ jab_bitmap* binarizer(jab_bitmap* bitmap, jab_int32 channel)
 		jab_int32 sub_width = bitmap->width >> BLOCK_SIZE_POWER;
 		if((sub_width & BLOCK_SIZE_MASK) != 0 )	sub_width++;
 		jab_int32 sub_height= bitmap->height>> BLOCK_SIZE_POWER;
-		if((sub_height& BLOCK_SIZE_MASK) != 0 )	sub_height++;
+		if((sub_height & BLOCK_SIZE_MASK) != 0 )	sub_height++;
 
 		jab_byte* black_points = (jab_byte*)malloc(sub_width * sub_height * sizeof(jab_byte));
 		if(black_points == NULL)
@@ -444,4 +445,267 @@ jab_bitmap* binarizer(jab_bitmap* bitmap, jab_int32 channel)
 		//if the bitmap is too small, use the global histogram-based method
 		return binarizerHist(bitmap, channel);
 	}
+}
+
+/**
+ * @brief Get the histogram of a color channel
+ * @param bitmap the image
+ * @param channel the channel
+ * @param hist the histogram
+*/
+void getHistogram(jab_bitmap* bitmap, jab_int32 channel, jab_int32 hist[256])
+{
+	//get histogram
+	memset(hist, 0, 256*sizeof(jab_int32));
+	jab_int32 bytes_per_pixel = bitmap->bits_per_pixel / 8;
+	for(jab_int32 i=0; i<bitmap->width*bitmap->height; i++)
+	{
+		hist[bitmap->pixel[i*bytes_per_pixel + channel]]++;
+	}
+}
+
+/**
+ * @brief Get the min and max index in the histogram whose value is larger than the threshold
+ * @param hist the histogram
+ * @param max the max index
+ * @param min the min index
+ * @param ths the threshold
+*/
+void getHistMaxMin(jab_int32 hist[256], jab_int32* max, jab_int32* min, jab_int32 ths)
+{
+	//get min
+	*min = 0;
+	for(jab_int32 i=0; i<256; i++)
+	{
+		if(hist[i] > ths)
+		{
+			*min = i;
+			break;
+		}
+	}
+	//get max
+	*max = 255;
+	for(jab_int32 i=255; i>=0; i--)
+	{
+		if(hist[i] > ths)
+		{
+			*max = i;
+			break;
+		}
+	}
+}
+
+/**
+ * @brief Stretch the histograms of R, G and B channels
+ * @param bitmap the image
+*/
+void balanceRGB(jab_bitmap* bitmap)
+{
+	jab_int32 bytes_per_pixel = bitmap->bits_per_pixel / 8;
+    jab_int32 bytes_per_row = bitmap->width * bytes_per_pixel;
+
+	//calculate max and min for each channel
+	jab_int32 max_r, max_g, max_b;
+    jab_int32 min_r, min_g, min_b;
+    jab_int32 hist_r[256], hist_g[256], hist_b[256];
+
+    getHistogram(bitmap, 0, hist_r);
+    getHistogram(bitmap, 1, hist_g);
+    getHistogram(bitmap, 2, hist_b);
+
+    //threshold for the number of pixels having the max or min values
+	jab_int32 count_ths = 20;
+    getHistMaxMin(hist_r, &max_r, &min_r, count_ths);
+    getHistMaxMin(hist_g, &max_g, &min_g, count_ths);
+    getHistMaxMin(hist_b, &max_b, &min_b, count_ths);
+
+	//normalize each channel
+	for(jab_int32 i=0; i<bitmap->height; i++)
+	{
+		for(jab_int32 j=0; j<bitmap->width; j++)
+		{
+			jab_int32 offset = i * bytes_per_row + j * bytes_per_pixel;
+			//R channel
+			if		(bitmap->pixel[offset + 0] < min_r)	bitmap->pixel[offset + 0] = 0;
+			else if (bitmap->pixel[offset + 0] > max_r)	bitmap->pixel[offset + 0] = 255;
+			else 	 bitmap->pixel[offset + 0] = (jab_byte)((jab_double)(bitmap->pixel[offset + 0] - min_r) / (jab_double)(max_r - min_r) * 255.0);
+			//G channel
+			if		(bitmap->pixel[offset + 1] < min_g)	bitmap->pixel[offset + 1] = 0;
+			else if (bitmap->pixel[offset + 1] > max_g)	bitmap->pixel[offset + 1] = 255;
+			else 	 bitmap->pixel[offset + 1] = (jab_byte)((jab_double)(bitmap->pixel[offset + 1] - min_g) / (jab_double)(max_g - min_g) * 255.0);
+			//B channel
+			if		(bitmap->pixel[offset + 2] < min_b) bitmap->pixel[offset + 2] = 0;
+			else if	(bitmap->pixel[offset + 2] > max_b)	bitmap->pixel[offset + 2] = 255;
+			else 	 bitmap->pixel[offset + 2] = (jab_byte)((jab_double)(bitmap->pixel[offset + 2] - min_b) / (jab_double)(max_b - min_b) * 255.0);
+		}
+	}
+}
+
+/**
+ * @brief Get the average and variance of RGB values
+ * @param rgb the pixel with RGB values
+ * @param ave the average value
+ * @param var the variance value
+*/
+void getAveVar(jab_byte* rgb, jab_double* ave, jab_double* var)
+{
+	//calculate mean
+	*ave = (rgb[0] + rgb[1] + rgb[2]) / 3;
+	//calculate variance
+	jab_double sum = 0.0;
+	for(jab_int32 i=0; i<3; i++)
+	{
+		sum += (rgb[i] - (*ave)) * (rgb[i] - (*ave));
+	}
+	*var = sum / 3;
+}
+
+/**
+ * @brief Swap two variables
+*/
+void swap(jab_int32* a, jab_int32* b)
+{
+	jab_int32 tmp;
+	tmp = *a;
+	*a = *b;
+	*b = tmp;
+}
+
+/**
+ * @brief Get the min, middle and max value of three values and the corresponding indexes
+ * @param rgb the pixel with RGB values
+ * @param min the min value
+ * @param mid the middle value
+ * @param max the max value
+*/
+void getMinMax(jab_byte* rgb, jab_byte* min, jab_byte* mid, jab_byte* max, jab_int32* index_min, jab_int32* index_mid, jab_int32* index_max)
+{
+	*index_min = 0;
+	*index_mid = 1;
+	*index_max = 2;
+	if(rgb[*index_min] > rgb[*index_max])
+		swap(index_min, index_max);
+	if(rgb[*index_min] > rgb[*index_mid])
+		swap(index_min, index_mid);
+	if(rgb[*index_mid] > rgb[*index_max])
+		swap(index_mid, index_max);
+	*min = rgb[*index_min];
+	*mid = rgb[*index_mid];
+	*max = rgb[*index_max];
+}
+
+/**
+ * @brief Binarize a color channel of a bitmap using local binarization algorithm
+ * @param bitmap the input bitmap
+ * @param rgb the binarized RGB channels
+ * @return JAB_SUCCESS | JAB_FAILURE
+*/
+jab_boolean binarizerRGB(jab_bitmap* bitmap, jab_bitmap* rgb[3])
+{
+	for(jab_int32 i=0; i<3; i++)
+	{
+		rgb[i] = (jab_bitmap*)calloc(1, sizeof(jab_bitmap) + bitmap->width*bitmap->height*sizeof(jab_byte));
+		if(rgb[i] == NULL)
+		{
+			JAB_REPORT_ERROR(("Memory allocation for binary bitmap %d failed", i))
+			return JAB_FAILURE;
+		}
+		rgb[i]->width = bitmap->width;
+		rgb[i]->height= bitmap->height;
+		rgb[i]->bits_per_channel = 8;
+		rgb[i]->bits_per_pixel = 8;
+		rgb[i]->channel_count = 1;
+	}
+
+	jab_int32 bytes_per_pixel = bitmap->bits_per_pixel / 8;
+    jab_int32 bytes_per_row = bitmap->width * bytes_per_pixel;
+
+	//calculate the average pixel value, block-wise
+	jab_int32 max_block_size = MAX(bitmap->width, bitmap->height) / 2;
+	jab_int32 block_num_x = (bitmap->width % max_block_size) != 0 ? (bitmap->width / max_block_size) + 1 : (bitmap->width / max_block_size);
+	jab_int32 block_num_y = (bitmap->height% max_block_size) != 0 ? (bitmap->height/ max_block_size) + 1 : (bitmap->height/ max_block_size);
+	jab_int32 block_size_x = bitmap->width / block_num_x;
+	jab_int32 block_size_y = bitmap->height/ block_num_y;
+
+	jab_float pixel_ave[block_num_x*block_num_y][3];
+	for(jab_int32 i=0; i<block_num_y; i++)
+	{
+		for(jab_int32 j=0; j<block_num_x; j++)
+		{
+			jab_int32 block_index = i*block_num_x + j;
+
+			pixel_ave[block_index][0] = 0;
+			pixel_ave[block_index][1] = 0;
+			pixel_ave[block_index][2] = 0;
+
+			jab_int32 sx = j * block_size_x;
+			jab_int32 ex = (j == block_num_x-1) ? bitmap->width : (sx + block_size_x);
+			jab_int32 sy = i * block_size_y;
+			jab_int32 ey = (i == block_num_y-1) ? bitmap->height: (sy + block_size_y);
+			jab_int32 counter = 0;
+			for(jab_int32 y=sy; y<ey; y++)
+			{
+				for(jab_int32 x=sx; x<ex; x++)
+				{
+					jab_int32 offset = y * bytes_per_row + x * bytes_per_pixel;
+					pixel_ave[block_index][0] += bitmap->pixel[offset + 0];
+					pixel_ave[block_index][1] += bitmap->pixel[offset + 1];
+					pixel_ave[block_index][2] += bitmap->pixel[offset + 2];
+					counter++;
+				}
+			}
+			pixel_ave[block_index][0] /= counter;
+			pixel_ave[block_index][1] /= counter;
+			pixel_ave[block_index][2] /= counter;
+		}
+	}
+
+	//binarize each pixel in each channel
+	jab_double ths_std = 0.08;
+    for(jab_int32 i=0; i<bitmap->height; i++)
+	{
+		for(jab_int32 j=0; j<bitmap->width; j++)
+		{
+			jab_int32 offset = i * bytes_per_row + j * bytes_per_pixel;
+			//check black pixel
+			jab_int32 block_index = MIN(i/block_size_y, block_num_y-1) * block_num_x + MIN(j/block_size_x, block_num_x-1);
+			if(bitmap->pixel[offset + 0] < pixel_ave[block_index][0] && bitmap->pixel[offset + 1] < pixel_ave[block_index][1] && bitmap->pixel[offset + 2] < pixel_ave[block_index][2])
+			{
+				rgb[0]->pixel[i*bitmap->width + j] = 0;
+				rgb[1]->pixel[i*bitmap->width + j] = 0;
+				rgb[2]->pixel[i*bitmap->width + j] = 0;
+				continue;
+			}
+
+			jab_double ave, var;
+			getAveVar(&bitmap->pixel[offset], &ave, &var);
+			jab_double std = sqrt(var);	//standard deviation
+			jab_byte min, mid, max;
+			jab_int32 index_min, index_mid, index_max;
+			getMinMax(&bitmap->pixel[offset], &min, &mid, &max, &index_min, &index_mid, &index_max);
+			std /= (jab_double)max;	//normalize std
+
+			if(std < ths_std && (bitmap->pixel[offset + 0] > pixel_ave[block_index][0] && bitmap->pixel[offset + 1] > pixel_ave[block_index][1] && bitmap->pixel[offset + 2] > pixel_ave[block_index][2]))
+			{
+				rgb[0]->pixel[i*bitmap->width + j] = 255;
+				rgb[1]->pixel[i*bitmap->width + j] = 255;
+				rgb[2]->pixel[i*bitmap->width + j] = 255;
+			}
+			else
+			{
+				rgb[index_max]->pixel[i*bitmap->width + j] = 255;
+				rgb[index_min]->pixel[i*bitmap->width + j] = 0;
+				jab_double r1 = (jab_double)bitmap->pixel[offset + index_mid] / (jab_double)bitmap->pixel[offset + index_min];
+				jab_double r2 = (jab_double)bitmap->pixel[offset + index_max] / (jab_double)bitmap->pixel[offset + index_mid];
+				if(r1 > r2)
+					rgb[index_mid]->pixel[i*bitmap->width + j] = 255;
+				else
+					rgb[index_mid]->pixel[i*bitmap->width + j] = 0;
+			}
+		}
+	}
+	filterBinary(rgb[0]);
+	filterBinary(rgb[1]);
+	filterBinary(rgb[2]);
+	return JAB_SUCCESS;
 }
