@@ -14,7 +14,7 @@
 #ifndef JABCODE_H
 #define JABCODE_H
 
-#define VERSION "1.0.0"
+#define VERSION "2.0.0"
 #define BUILD_DATE __DATE__
 
 #define MAX_SYMBOL_NUMBER       61
@@ -34,6 +34,7 @@
 
 #define DISTANCE_TO_BORDER                  4
 #define MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS 16
+#define COLOR_PALETTE_NUMBER	4
 
 #define BITMAP_BITS_PER_PIXEL	32
 #define BITMAP_BITS_PER_CHANNEL	8
@@ -140,7 +141,6 @@ typedef struct {
 	jab_byte Nc;
 	jab_byte mask_type;
 	jab_byte docked_position;
-	jab_byte VF;
 	jab_vector2d side_version;
 	jab_vector2d ecl;
 }jab_metadata;
@@ -168,6 +168,7 @@ extern jab_int32 generateJABCode(jab_encode* enc, jab_data* data);
 extern jab_data* decodeJABCode(jab_bitmap* bitmap, jab_int32 mode, jab_int32* status);
 extern jab_data* decodeJABCodeEx(jab_bitmap* bitmap, jab_int32 mode, jab_int32* status, jab_decoded_symbol* symbols, jab_int32 max_symbol_number);
 extern jab_boolean saveImage(jab_bitmap* bitmap, jab_char* filename);
+extern jab_boolean saveImageCMYK(jab_bitmap* bitmap, jab_boolean isCMYK, jab_char* filename);
 extern jab_bitmap* readImage(jab_char* filename);
 extern void reportError(jab_char* message);
 

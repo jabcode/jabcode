@@ -20,9 +20,9 @@
 #define MASTER_METADATA_X	6
 #define MASTER_METADATA_Y	1
 
-#define MASTER_METADATA_PART1_LENGTH 6		//master metadata part 1 encoded length
-#define MASTER_METADATA_PART2_LENGTH 12		//master metadata part 2 encoded length
-#define MASTER_METADATA_PART3_MAX_LENGTH 32	//master metadata part 3 maximal encoded length
+#define MASTER_METADATA_PART1_LENGTH 6			//master metadata part 1 encoded length
+#define MASTER_METADATA_PART2_LENGTH 38			//master metadata part 2 encoded length
+#define MASTER_METADATA_PART1_MODULE_NUMBER 4	//the number of modules used to encode master metadata part 1
 
 /**
  * @brief The positions of the first 32 color palette modules in slave symbol
@@ -64,7 +64,7 @@ typedef enum {
 extern jab_int32 decodeMaster(jab_bitmap* matrix, jab_decoded_symbol* symbol);
 extern jab_int32 decodeSlave(jab_bitmap* matrix, jab_decoded_symbol* symbol);
 extern jab_data* decodeData(jab_data* bits);
-extern void deinterleaveData(jab_data* data, jab_float* p);
+extern void deinterleaveData(jab_data* data);
 extern void getNextMetadataModuleInMaster(jab_int32 matrix_height, jab_int32 matrix_width, jab_int32 next_module_count, jab_int32* x, jab_int32* y);
 extern void demaskSymbol(jab_data* data, jab_byte* data_map, jab_vector2d symbol_size, jab_int32 mask_type, jab_int32 color_number);
 extern jab_int32 readColorPaletteInMaster(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map, jab_int32* module_count, jab_int32* x, jab_int32* y);

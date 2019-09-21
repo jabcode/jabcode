@@ -7,7 +7,7 @@ TARGET = bin/jabcodeReader
 OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
 
 $(TARGET): $(OBJECTS)
-	$(CC) $^ -L../jabcode/build -ljabcode -L../jabcode/lib -lpng -lz -lm $(CFLAGS) -o $@
+	$(CC) $^ -L../jabcode/build -ljabcode -L../jabcode/lib -ltiff -lpng -lz -lm $(CFLAGS) -o $@
 
 $(OBJECTS): %.o: %.c
 	$(CC) -c -I. -I../jabcode -I../jabcode/include $(CFLAGS) $< -o $@
