@@ -32,8 +32,8 @@
 #define DEFAULT_MASKING_REFERENCE 		7
 
 
-#define DISTANCE_TO_BORDER                  4
-#define MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS 16
+#define DISTANCE_TO_BORDER      4
+#define MAX_ALIGNMENT_NUMBER    9
 #define COLOR_PALETTE_NUMBER	4
 
 #define BITMAP_BITS_PER_PIXEL	32
@@ -138,6 +138,7 @@ typedef struct {
  * @brief Decoded metadata
 */
 typedef struct {
+	jab_boolean default_mode;
 	jab_byte Nc;
 	jab_byte mask_type;
 	jab_byte docked_position;

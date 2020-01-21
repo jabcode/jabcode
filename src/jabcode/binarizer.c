@@ -628,15 +628,12 @@ jab_boolean binarizerRGB(jab_bitmap* bitmap, jab_bitmap* rgb[3])
 	jab_int32 block_size_y = bitmap->height/ block_num_y;
 
 	jab_float pixel_ave[block_num_x*block_num_y][3];
+	memset(pixel_ave, 0, sizeof(jab_float)*block_num_x*block_num_y*3);
 	for(jab_int32 i=0; i<block_num_y; i++)
 	{
 		for(jab_int32 j=0; j<block_num_x; j++)
 		{
 			jab_int32 block_index = i*block_num_x + j;
-
-			pixel_ave[block_index][0] = 0;
-			pixel_ave[block_index][1] = 0;
-			pixel_ave[block_index][2] = 0;
 
 			jab_int32 sx = j * block_size_x;
 			jab_int32 ex = (j == block_num_x-1) ? bitmap->width : (sx + block_size_x);

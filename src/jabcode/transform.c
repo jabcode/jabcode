@@ -97,7 +97,7 @@ jab_perspective_transform* quad2Square( jab_float x0, jab_float y0,
 	jab_perspective_transform* pt = (jab_perspective_transform*)malloc(sizeof(jab_perspective_transform));
 	if(pt == NULL)
 	{
-		reportError("Memory allocation for perpective transform failed");
+		reportError("Memory allocation for perspective transform failed");
 		return NULL;
 	}
 	jab_perspective_transform* s2q = square2Quad(x0, y0, x1, y1, x2, y2, x3, y3);

@@ -586,11 +586,9 @@ jab_int32 getSymbolCapacity(jab_encode* enc, jab_int32 index)
 	//number of modules for alignment pattern
 	jab_int32 side_size_x = VERSION2SIZE(enc->symbol_versions[index].x);
 	jab_int32 side_size_y = VERSION2SIZE(enc->symbol_versions[index].y);
-	jab_int32 number_of_aps_x = (side_size_x-(DISTANCE_TO_BORDER*2-1)) / MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS - 1;
-	jab_int32 number_of_aps_y = (side_size_y-(DISTANCE_TO_BORDER*2-1)) / MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS - 1;
-	if (number_of_aps_x < 0)	number_of_aps_x = 0;
-	if (number_of_aps_y < 0)	number_of_aps_y = 0;
-	jab_int32 nb_modules_ap = ((number_of_aps_x+2) * (number_of_aps_y+2) - 4) * 7;
+	jab_int32 number_of_aps_x = jab_ap_num[enc->symbol_versions[index].x - 1];
+	jab_int32 number_of_aps_y = jab_ap_num[enc->symbol_versions[index].y - 1];
+	jab_int32 nb_modules_ap = (number_of_aps_x * number_of_aps_y - 4) * 7;
 	//number of modules for metadata
 	jab_int32 nb_of_bpm = log(enc->color_number) / log(2);
 	jab_int32 nb_modules_metadata = 0;
@@ -1037,79 +1035,68 @@ jab_boolean createMatrix(jab_encode* enc, jab_int32 index, jab_data* ecc_encoded
     }
     memset(enc->symbols[index].data_map, 1, enc->symbols[index].side_size.x * enc->symbols[index].side_size.y * sizeof(jab_byte));
 
-    //calculate number of alignment pattern depending on the side_size and their positions
-    jab_int32 number_of_alignment_pattern_x = (enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER*2-1))/MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS-1;
-    jab_int32 number_of_alignment_pattern_y = (enc->symbols[index].side_size.y-(DISTANCE_TO_BORDER*2-1))/MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS-1;
-    if (number_of_alignment_pattern_x < 0)
-        number_of_alignment_pattern_x=0;
-    if (number_of_alignment_pattern_y < 0)
-        number_of_alignment_pattern_y=0;
-    jab_float alignment_distance_x;
-    jab_float alignment_distance_y;
-    if(number_of_alignment_pattern_x != 0)
-        alignment_distance_x = (jab_float)(enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER*2-1))/((jab_float)number_of_alignment_pattern_x+1.0f);
-    else
-        alignment_distance_x = (jab_float)(enc->symbols[index].side_size.x-(DISTANCE_TO_BORDER*2-1));
-    if(number_of_alignment_pattern_y!=0)
-        alignment_distance_y = (jab_float)(enc->symbols[index].side_size.y-(DISTANCE_TO_BORDER*2-1))/((jab_float)number_of_alignment_pattern_y+1.0f);
-    else
-        alignment_distance_y = (jab_float)(enc->symbols[index].side_size.y-(DISTANCE_TO_BORDER*2-1));
-
-    jab_int32 x_offset;
-    jab_int32 y_offset;
-    jab_byte left;
     //set alignment patterns
     jab_int32 Nc = log(enc->color_number)/log(2.0) - 1;
 	jab_byte apx_core_color = apx_core_color_index[Nc];
 	jab_byte apx_peri_color = apn_core_color_index[Nc];
-
-    for(jab_int32 i=0;i<=number_of_alignment_pattern_x+1;i++)
+	jab_int32 side_ver_x_index = SIZE2VERSION(enc->symbols[index].side_size.x) - 1;
+	jab_int32 side_ver_y_index = SIZE2VERSION(enc->symbols[index].side_size.y) - 1;
+    for(jab_int32 x=0; x<jab_ap_num[side_ver_x_index]; x++)
     {
-        if (i%2 == 1)
+    	jab_byte left;
+        if (x%2 == 1)
             left=0;
         else
             left=1;
-        for(jab_int32 j=0;j<=number_of_alignment_pattern_y+1;j++)
+        for(jab_int32 y=0; y<jab_ap_num[side_ver_y_index]; y++)
         {
-            x_offset=DISTANCE_TO_BORDER+i*alignment_distance_x;
-            y_offset=DISTANCE_TO_BORDER+j*alignment_distance_y;
+            jab_int32 x_offset = jab_ap_pos[side_ver_x_index][x] - 1;
+            jab_int32 y_offset = jab_ap_pos[side_ver_y_index][y] - 1;
             //left alignment patterns
-            if((i != 0 || j!=0) && (i != 0 || j!=(number_of_alignment_pattern_y+1)) && (i != (number_of_alignment_pattern_x+1) || j!=0) && (i != number_of_alignment_pattern_x+1 || j!=number_of_alignment_pattern_y+1) && left==1)
+            if(	left == 1
+				&& (x != 0 || y != 0)
+				&& (x != 0 || y != jab_ap_num[side_ver_y_index]-1)
+				&& (x != jab_ap_num[side_ver_x_index]-1 || y != 0)
+				&& (x != jab_ap_num[side_ver_x_index]-1 || y != jab_ap_num[side_ver_y_index]-1))
             {
-            	enc->symbols[index].matrix[(y_offset-2) *enc->symbols[index].side_size.x + x_offset-2 ]=
-				enc->symbols[index].matrix[(y_offset-2) *enc->symbols[index].side_size.x + x_offset-1 ]=
-				enc->symbols[index].matrix[(y_offset-1) *enc->symbols[index].side_size.x + x_offset-2 ]=
-				enc->symbols[index].matrix[(y_offset-1) *enc->symbols[index].side_size.x + x_offset   ]=
-				enc->symbols[index].matrix[y_offset     *enc->symbols[index].side_size.x + x_offset-1 ]=
-				enc->symbols[index].matrix[y_offset     *enc->symbols[index].side_size.x + x_offset   ]=apx_peri_color;
-				enc->symbols[index].matrix[(y_offset-1) *enc->symbols[index].side_size.x + x_offset-1 ]=apx_core_color;
+            	enc->symbols[index].matrix[(y_offset-1)*enc->symbols[index].side_size.x + x_offset-1]=
+				enc->symbols[index].matrix[(y_offset-1)*enc->symbols[index].side_size.x + x_offset  ]=
+				enc->symbols[index].matrix[(y_offset  )*enc->symbols[index].side_size.x + x_offset-1]=
+				enc->symbols[index].matrix[(y_offset  )*enc->symbols[index].side_size.x + x_offset+1]=
+				enc->symbols[index].matrix[(y_offset+1)*enc->symbols[index].side_size.x + x_offset  ]=
+				enc->symbols[index].matrix[(y_offset+1)*enc->symbols[index].side_size.x + x_offset+1]=apx_peri_color;
+				enc->symbols[index].matrix[(y_offset  )*enc->symbols[index].side_size.x + x_offset  ]=apx_core_color;
 
-				enc->symbols[index].data_map[(y_offset-2)*enc->symbols[index].side_size.x + x_offset-2 ]=
-				enc->symbols[index].data_map[(y_offset-2)*enc->symbols[index].side_size.x + x_offset-1 ]=
-				enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x + x_offset-2 ]=
-				enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x + x_offset   ]=
-				enc->symbols[index].data_map[y_offset    *enc->symbols[index].side_size.x + x_offset-1 ]=
-				enc->symbols[index].data_map[y_offset    *enc->symbols[index].side_size.x + x_offset   ]=
-				enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x + x_offset-1 ]=0;
+				enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x + x_offset-1]=
+				enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x + x_offset  ]=
+				enc->symbols[index].data_map[(y_offset  )*enc->symbols[index].side_size.x + x_offset-1]=
+				enc->symbols[index].data_map[(y_offset  )*enc->symbols[index].side_size.x + x_offset+1]=
+				enc->symbols[index].data_map[(y_offset+1)*enc->symbols[index].side_size.x + x_offset  ]=
+				enc->symbols[index].data_map[(y_offset+1)*enc->symbols[index].side_size.x + x_offset+1]=
+				enc->symbols[index].data_map[(y_offset  )*enc->symbols[index].side_size.x + x_offset  ]=0;
             }
             //right alignment patterns
-            else if((i != 0 || j!=0) && (i != 0 || j!=(number_of_alignment_pattern_y+1)) && (i != (number_of_alignment_pattern_x+1) || j!=0) && (i != number_of_alignment_pattern_x+1 || j!=number_of_alignment_pattern_y+1) && left==0)
+            else if(left == 0
+					&& (x != 0 || y != 0)
+					&& (x != 0 || y != jab_ap_num[side_ver_y_index]-1)
+					&& (x != jab_ap_num[side_ver_x_index]-1 || y != 0)
+					&& (x != jab_ap_num[side_ver_x_index]-1 || y != jab_ap_num[side_ver_y_index]-1))
             {
-            	enc->symbols[index].matrix[(y_offset-2) *enc->symbols[index].side_size.x + x_offset   ]=
-				enc->symbols[index].matrix[(y_offset-2) *enc->symbols[index].side_size.x + x_offset-1 ]=
-				enc->symbols[index].matrix[(y_offset-1) *enc->symbols[index].side_size.x + x_offset-2 ]=
-				enc->symbols[index].matrix[(y_offset-1) *enc->symbols[index].side_size.x + x_offset   ]=
-				enc->symbols[index].matrix[y_offset     *enc->symbols[index].side_size.x + x_offset-1 ]=
-				enc->symbols[index].matrix[y_offset     *enc->symbols[index].side_size.x + x_offset-2 ]=apx_peri_color;
-				enc->symbols[index].matrix[(y_offset-1) *enc->symbols[index].side_size.x + x_offset-1 ]=apx_core_color;
+            	enc->symbols[index].matrix[(y_offset-1)*enc->symbols[index].side_size.x + x_offset+1]=
+				enc->symbols[index].matrix[(y_offset-1)*enc->symbols[index].side_size.x + x_offset  ]=
+				enc->symbols[index].matrix[(y_offset  )*enc->symbols[index].side_size.x + x_offset-1]=
+				enc->symbols[index].matrix[(y_offset  )*enc->symbols[index].side_size.x + x_offset+1]=
+				enc->symbols[index].matrix[(y_offset+1)*enc->symbols[index].side_size.x + x_offset  ]=
+				enc->symbols[index].matrix[(y_offset+1)*enc->symbols[index].side_size.x + x_offset-1]=apx_peri_color;
+				enc->symbols[index].matrix[(y_offset  )*enc->symbols[index].side_size.x + x_offset  ]=apx_core_color;
 
-				enc->symbols[index].data_map[(y_offset-2)*enc->symbols[index].side_size.x + x_offset   ]=
-				enc->symbols[index].data_map[(y_offset-2)*enc->symbols[index].side_size.x + x_offset-1 ]=
-				enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x + x_offset-2 ]=
-				enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x + x_offset   ]=
-				enc->symbols[index].data_map[y_offset    *enc->symbols[index].side_size.x + x_offset-1 ]=
-				enc->symbols[index].data_map[y_offset    *enc->symbols[index].side_size.x + x_offset-2 ]=
-				enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x + x_offset-1 ]=0;
+				enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x + x_offset+1]=
+				enc->symbols[index].data_map[(y_offset-1)*enc->symbols[index].side_size.x + x_offset  ]=
+				enc->symbols[index].data_map[(y_offset  )*enc->symbols[index].side_size.x + x_offset-1]=
+				enc->symbols[index].data_map[(y_offset  )*enc->symbols[index].side_size.x + x_offset+1]=
+				enc->symbols[index].data_map[(y_offset+1)*enc->symbols[index].side_size.x + x_offset  ]=
+				enc->symbols[index].data_map[(y_offset+1)*enc->symbols[index].side_size.x + x_offset-1]=
+				enc->symbols[index].data_map[(y_offset  )*enc->symbols[index].side_size.x + x_offset  ]=0;
             }
             if (left==0)
                 left=1;

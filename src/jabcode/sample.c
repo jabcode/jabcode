@@ -91,7 +91,9 @@ jab_bitmap* sampleSymbol(jab_bitmap* bitmap, jab_perspective_transform* pt, jab_
 				matrix->pixel[i*mtx_bytes_per_row + j*mtx_bytes_per_pixel + c] = ave;
 				//matrix->pixel[i*mtx_bytes_per_row + j*mtx_bytes_per_pixel + c] = bitmap->pixel[mapped_y*bmp_bytes_per_row + mapped_x*bmp_bytes_per_pixel + c];
 #if TEST_MODE
-				test_mode_bitmap->pixel[mapped_y*bmp_bytes_per_row + mapped_x*bmp_bytes_per_pixel + c] = 255;
+				test_mode_bitmap->pixel[mapped_y*bmp_bytes_per_row + mapped_x*bmp_bytes_per_pixel + c] = test_mode_color;
+				if(c == 3 && test_mode_color == 0)
+                    test_mode_bitmap->pixel[mapped_y*bmp_bytes_per_row + mapped_x*bmp_bytes_per_pixel + c] = 255;
 #endif
 			}
 		}

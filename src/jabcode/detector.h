@@ -17,6 +17,7 @@
 #define TEST_MODE			0
 #if TEST_MODE
 jab_bitmap* test_mode_bitmap;
+jab_int32	test_mode_color;
 #endif
 
 #define MAX_MODULES 		145	//the number of modules in side-version 32
@@ -28,6 +29,9 @@ jab_bitmap* test_mode_bitmap;
 
 #define DIST(x1, y1, x2, y2) (jab_float)(sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)))
 
+/**
+ * @brief Detection modes
+*/
 typedef enum
 {
 	QUICK_DETECT = 0,
@@ -36,7 +40,7 @@ typedef enum
 }jab_detect_mode;
 
 /**
- * @brief Finder pattern
+ * @brief Finder pattern, alignment pattern
 */
 typedef struct {
 	jab_int32		type;
@@ -44,18 +48,7 @@ typedef struct {
 	jab_point		center;			//coordinates of the center
 	jab_int32		found_count;
 	jab_int32 		direction;
-}jab_finder_pattern;
-
-/**
- * @brief Alignment pattern
-*/
-typedef struct {
-	jab_int32		type;
-	jab_float		module_size;
-	jab_point		center;			//coordinates of the center
-	jab_int32		found_count;
-	jab_int32 		direction;
-}jab_alignment_pattern;
+}jab_finder_pattern, jab_alignment_pattern;
 
 /**
  * @brief Perspective transform

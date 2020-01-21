@@ -1734,7 +1734,7 @@ jab_finder_pattern* findMasterSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_d
         JAB_REPORT_INFO(("x:%6.1f\ty:%6.1f\tsize:%.2f\tcnt:%d\ttype:%d\tdir:%d", fps[i].center.x, fps[i].center.y, fps[i].module_size, fps[i].found_count, fps[i].type, fps[i].direction))
     }
     drawFoundFinderPatterns(fps, total_finder_patterns, 0x00ff00);
-    saveImage(test_mode_bitmap, "jab_detector_result.png");
+    saveImage(test_mode_bitmap, "jab_detector_result_fp.png");
 #endif
 
     //if less than 3 finder patterns are found, detection fails
@@ -1837,7 +1837,7 @@ jab_finder_pattern* findMasterSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_d
         JAB_REPORT_INFO(("x:%6.1f\ty:%6.1f\tsize:%.2f\tcnt:%d\ttype:%d\tdir:%d", fps[i].center.x, fps[i].center.y, fps[i].module_size, fps[i].found_count, fps[i].type, fps[i].direction))
     }
 	drawFoundFinderPatterns(fps, 4, 0xff0000);
-	saveImage(test_mode_bitmap, "jab_detector_result.png");
+	saveImage(test_mode_bitmap, "jab_detector_result_fp.png");
 #endif
     return fps;
 }
@@ -2645,7 +2645,7 @@ jab_boolean findSlaveSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_sy
         JAB_REPORT_INFO(("x: %6.1f\ty: %6.1f\tcount: %d\ttype: %d\tsize: %.2f", aps[i].center.x, aps[i].center.y, aps[i].found_count, aps[i].type, aps[i].module_size))
     }
     drawFoundFinderPatterns((jab_finder_pattern*)aps, 4, 0xff0000);
-	saveImage(test_mode_bitmap, "jab_detector_result.png");
+	saveImage(test_mode_bitmap, "jab_detector_result_slave.png");
 #endif
 
     free(aps);
@@ -2656,23 +2656,23 @@ jab_boolean findSlaveSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_sy
  * @brief Get the nearest valid side size to a given size
  * @param size the input size
  * @param flag the flag indicating the magnitude of error
- * @return the nearest valid side size
+ * @return the nearest valid side size | -1: invalid side size
 */
 jab_int32 getSideSize(jab_int32 size, jab_int32* flag)
 {
 	*flag = 1;
     switch (size & 0x03) //mod 4
     {
-        case 0:
-            size++;
-            break;
-        case 2:
-            size--;
-            break;
-        case 3:
-            size += 2;	//error is bigger than 1, guess the next version and try anyway
-            *flag = 0;
-            break;
+    case 0:
+        size++;
+        break;
+    case 2:
+        size--;
+        break;
+    case 3:
+        size += 2;	//error is bigger than 1, guess the next version and try anyway
+        *flag = 0;
+        break;
     }
     if(size < 21)
 	{
@@ -2713,58 +2713,47 @@ jab_int32 chooseSideSize(jab_int32 size1, jab_int32 flag1, jab_int32 size2, jab_
 }
 
 /**
+ * @brief Calculate the number of modules between two finder/alignment patterns
+ * @param fp1 the first finder/alignment pattern
+ * @param fp2 the second finder/alignment pattern
+ * @return the number of modules
+*/
+jab_int32 calculateModuleNumber(jab_finder_pattern fp1, jab_finder_pattern fp2)
+{
+    jab_float dist = DIST(fp1.center.x, fp1.center.y, fp2.center.x, fp2.center.y);
+    //the angle between the scanline and the connection between finder/alignment patterns
+	jab_float cos_theta = MAX(fabs(fp2.center.x - fp1.center.x), fabs(fp2.center.y - fp1.center.y)) / dist;
+    jab_float mean = (fp1.module_size + fp2.module_size)*cos_theta / 2.0f;
+    jab_int32 number = (jab_int32)(dist / mean + 0.5f);
+    return number;
+}
+
+/**
  * @brief Calculate the side sizes of master symbol
- * @param ch the binarized color channels of the image
  * @param fps the finder patterns
- * @param module_size the module size
  * @return the horizontal and vertical side sizes
 */
-jab_vector2d calculateSideSize(jab_bitmap* ch[], jab_finder_pattern* fps, jab_float* module_size)
+jab_vector2d calculateSideSize(jab_finder_pattern* fps)
 {
-    //TODO: calculate module size more accurately using Bresenham's line algorithm
-    jab_float total_module_size = 0;
-    for(jab_int32 i=0; i<4; i++)
-    {
-        total_module_size += fps[i].module_size;
-    }
-    jab_float mean = total_module_size / 4.0f;
-    *module_size = mean;
-
     /* finder pattern type layout
         0	1
         3	2
     */
-    jab_float dist_x01 = DIST(fps[0].center.x, fps[0].center.y, fps[1].center.x, fps[1].center.y);
-    jab_float dist_x32 = DIST(fps[3].center.x, fps[3].center.y, fps[2].center.x, fps[2].center.y);
-    jab_float dist_y03 = DIST(fps[0].center.x, fps[0].center.y, fps[3].center.x, fps[3].center.y);
-    jab_float dist_y12 = DIST(fps[1].center.x, fps[1].center.y, fps[2].center.x, fps[2].center.y);
-
 	jab_vector2d side_size = {-1, -1};
 	jab_int32 flag1, flag2;
 
 	//calculate the horizontal side size
-	jab_float cos_theta;	//the angle between the scanline and the connection between finder patterns
-	cos_theta = MAX(fabs(fps[1].center.x - fps[0].center.x), fabs(fps[1].center.y - fps[0].center.y)) / dist_x01;
-    mean = (fps[0].module_size + fps[1].module_size)*cos_theta / 2.0f;
-    jab_int32 size_x_top = (jab_int32)(dist_x01 / mean + 7.5f);
+    jab_int32 size_x_top = calculateModuleNumber(fps[0], fps[1]) + 7;
     size_x_top = getSideSize(size_x_top, &flag1);
-
-    cos_theta = MAX(fabs(fps[2].center.x - fps[3].center.x), fabs(fps[2].center.y - fps[3].center.y)) / dist_x32;
-    mean = (fps[3].module_size + fps[2].module_size)*cos_theta / 2.0f;
-    jab_int32 size_x_bottom = (jab_int32)(dist_x32 / mean + 7.5f);
+    jab_int32 size_x_bottom = calculateModuleNumber(fps[3], fps[2]) + 7;
 	size_x_bottom = getSideSize(size_x_bottom, &flag2);
 
 	side_size.x = chooseSideSize(size_x_top, flag1, size_x_bottom, flag2);
 
 	//calculate the vertical side size
-	cos_theta = MAX(fabs(fps[3].center.x - fps[0].center.x), fabs(fps[3].center.y - fps[0].center.y)) / dist_y03;
-    mean = (fps[0].module_size + fps[3].module_size)*cos_theta / 2.0f;
-    jab_int32 size_y_left = (jab_int32)(dist_y03 / mean + 7.5f);
+	jab_int32 size_y_left = calculateModuleNumber(fps[0], fps[3]) + 7;
     size_y_left = getSideSize(size_y_left, &flag1);
-
-    cos_theta = MAX(fabs(fps[2].center.x - fps[1].center.x), fabs(fps[2].center.y - fps[1].center.y)) / dist_y12;
-    mean = (fps[1].module_size + fps[2].module_size)*cos_theta / 2.0f;
-    jab_int32 size_y_right = (jab_int32)(dist_y12 / mean + 7.5f);
+    jab_int32 size_y_right = calculateModuleNumber(fps[1], fps[2]) + 7;
     size_y_right = getSideSize(size_y_right, &flag2);
 
     side_size.y = chooseSideSize(size_y_left, flag1, size_y_right, flag2);
@@ -2773,48 +2762,238 @@ jab_vector2d calculateSideSize(jab_bitmap* ch[], jab_finder_pattern* fps, jab_fl
 }
 
 /**
+ * @brief Get the nearest valid position of the first alignment pattern
+ * @param pos the input position
+ * @return the nearest valid position | -1: invalid position
+*/
+jab_int32 getFirstAPPos(jab_int32 pos)
+{
+    switch (pos % 3)
+    {
+    case 0:
+        pos--;
+        break;
+    case 1:
+        pos++;
+        break;
+    }
+    if(pos < 14 || pos > 26)
+        pos = -1;
+    return pos;
+}
+
+/**
+ * @brief Detect the first alignment pattern between two finder patterns
+ * @param ch the binarized color channels of the image
+ * @param side_version the side version
+ * @param fp1 the first finder pattern
+ * @param fp2 the second finder pattern
+ * @return the position of the found alignment pattern | JAB_FAILURE: if not found
+*/
+jab_int32 detectFirstAP(jab_bitmap* ch[], jab_int32 side_version, jab_finder_pattern fp1, jab_finder_pattern fp2)
+{
+    jab_alignment_pattern ap;
+     //direction: from FP1 to FP2
+    jab_float distx = fp2.center.x - fp1.center.x;
+    jab_float disty = fp2.center.y - fp1.center.y;
+    jab_float alpha = atan2(disty, distx);
+
+    jab_int32 next_version = side_version;
+    jab_int32 dir = 1;
+    jab_int32 up = 0, down = 0;
+    do
+    {
+        //distance to FP1
+        jab_float distance = fp1.module_size * (jab_ap_pos[next_version-1][1] - jab_ap_pos[next_version-1][0]);
+        //estimate the coordinate of the first AP
+        ap.center.x = fp1.center.x + distance * cos(alpha);
+        ap.center.y = fp1.center.y + distance * sin(alpha);
+        ap.module_size = fp1.module_size;
+        //detect AP
+        ap.found_count = 0;
+        ap = findAlignmentPattern(ch, ap.center.x, ap.center.y, ap.module_size, APX);
+        if(ap.found_count > 0)
+        {
+            jab_int32 pos = getFirstAPPos(4 + calculateModuleNumber(fp1, ap));
+            if(pos > 0)
+                return pos;
+        }
+
+        //try next version
+        dir = -dir;
+        if(dir == -1)
+        {
+            up++;
+            next_version = up * dir + side_version;
+            if(next_version < 6 || next_version > 32)
+            {
+                dir = -dir;
+                up--;
+                down++;
+                next_version = down * dir + side_version;
+            }
+        }
+        else
+        {
+            down++;
+            next_version = down * dir + side_version;
+            if(next_version < 6 || next_version > 32)
+            {
+                dir = -dir;
+                down--;
+                up++;
+                next_version = up * dir + side_version;
+            }
+        }
+    }while((up+down) < 5);
+
+    return JAB_FAILURE;
+
+}
+
+/**
+ * @brief Confirm the side version by alignment pattern's positions
+ * @param side_version the side version
+ * @param found_ap_number the number of the found alignment patterns
+ * @param ap_positions the positions of the found alignment patterns
+ * @return the confirmed side version | JAB_FAILURE: if can not be confirmed
+*/
+jab_int32 confirmSideVersion(jab_int32 side_version, jab_int32 first_ap_pos)
+{
+    if(first_ap_pos <= 0)
+    {
+#if TEST_MODE
+        JAB_REPORT_ERROR(("Invalid position of the first AP."))
+#endif
+        return JAB_FAILURE;
+    }
+
+    jab_int32 v = side_version;
+    jab_int32 k = 1, sign = -1;
+    jab_boolean flag = 0;
+    do
+    {
+        if(first_ap_pos == jab_ap_pos[v-1][1])
+        {
+            flag = 1;
+            break;
+        }
+        v = side_version + sign*k;
+        if(sign > 0) k++;
+        sign = -sign;
+    }while(v>=6 && v<=32);
+
+    if(flag) return v;
+    else     return JAB_FAILURE;
+}
+
+/**
+ * @brief Confirm the symbol size by alignment patterns
+ * @param ch the binarized color channels of the image
+ * @param fps the finder patterns
+ * @param symbol the symbol
+ * @return JAB_SUCCESS | JAB_FAILURE
+*/
+jab_int32 confirmSymbolSize(jab_bitmap* ch[], jab_finder_pattern* fps, jab_decoded_symbol* symbol)
+{
+ 	jab_int32 first_ap_pos;
+
+	//side version x: scan the line between FP0 and FP1
+    first_ap_pos = detectFirstAP(ch, symbol->metadata.side_version.x, fps[0], fps[1]);
+#if TEST_MODE
+    JAB_REPORT_INFO(("The position of the first AP between FP0 and FP1 is %d", first_ap_pos))
+#endif // TEST_MODE
+    jab_int32 side_version_x = confirmSideVersion(symbol->metadata.side_version.x, first_ap_pos);
+    if(side_version_x == 0) //if failed, try the line between FP3 and FP2
+    {
+        first_ap_pos = detectFirstAP(ch, symbol->metadata.side_version.x, fps[3], fps[2]);
+#if TEST_MODE
+        JAB_REPORT_INFO(("The position of the first AP between FP3 and FP2 is %d", first_ap_pos))
+#endif // TEST_MODE
+        side_version_x = confirmSideVersion(symbol->metadata.side_version.x, first_ap_pos);
+        if(side_version_x == 0)
+        {
+#if TEST_MODE
+            JAB_REPORT_ERROR(("Confirming side version x failed."))
+#endif
+            return JAB_FAILURE;
+        }
+    }
+    symbol->metadata.side_version.x = side_version_x;
+    symbol->side_size.x = VERSION2SIZE(side_version_x);
+
+    //side version y: scan the line between FP0 and FP3
+    first_ap_pos = detectFirstAP(ch, symbol->metadata.side_version.y, fps[0], fps[3]);
+#if TEST_MODE
+    JAB_REPORT_INFO(("The position of the first AP between FP0 and FP3 is %d", first_ap_pos))
+#endif // TEST_MODE
+    jab_int32 side_version_y = confirmSideVersion(symbol->metadata.side_version.y, first_ap_pos);
+    if(side_version_y == 0) //if failed, try the line between FP1 and FP2
+    {
+        first_ap_pos = detectFirstAP(ch, symbol->metadata.side_version.y, fps[1], fps[2]);
+#if TEST_MODE
+        JAB_REPORT_INFO(("The position of the first AP between FP1 and FP2 is %d", first_ap_pos))
+#endif // TEST_MODE
+        side_version_y = confirmSideVersion(symbol->metadata.side_version.y, first_ap_pos);
+        if(side_version_y == 0)
+        {
+#if TEST_MODE
+            JAB_REPORT_ERROR(("Confirming side version y failed."))
+#endif
+            return JAB_FAILURE;
+        }
+    }
+    symbol->metadata.side_version.y = side_version_y;
+    symbol->side_size.y = VERSION2SIZE(side_version_y);
+
+    return JAB_SUCCESS;
+}
+
+/**
  * @brief Sample a symbol using alignment patterns
  * @param bitmap the image bitmap
  * @param ch the binarized color channels of the image
  * @param symbol the symbol to be sampled
- * @param fps the finder/alignment patterns
+ * @param fps the finder patterns
  * @return the sampled symbol matrix | NULL if failed
 */
-jab_bitmap* sampleSymbolByAlignmentPattern(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_symbol* symbol, jab_alignment_pattern* fps)
+jab_bitmap* sampleSymbolByAlignmentPattern(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_symbol* symbol, jab_finder_pattern* fps)
 {
-	//calculate the number of alignment patterns between the finder patterns
-	jab_int32 width = symbol->side_size.x;
-	jab_int32 height= symbol->side_size.y;
-    jab_int32 number_of_ap_x = (width - (DISTANCE_TO_BORDER*2 - 1)) / MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS - 1;
-    jab_int32 number_of_ap_y = (height- (DISTANCE_TO_BORDER*2 - 1)) / MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS - 1;
-	if(number_of_ap_x < 0)
-		number_of_ap_x = 0;
-	if(number_of_ap_y < 0)
-		number_of_ap_y = 0;
 	//if no alignment pattern available, abort
-	if(number_of_ap_x == 0 && number_of_ap_y == 0)
+    if(symbol->metadata.side_version.x < 6 && symbol->metadata.side_version.y < 6)
+	{
+		reportError("No alignment pattern is available");
 		return NULL;
-	//calculate the distance between alignment patters
-    jab_float ap_distance_x = 0.0f;
-    jab_float ap_distance_y = 0.0f;
-    ap_distance_x = (jab_float)(width - (DISTANCE_TO_BORDER*2 - 1)) / (jab_float)(number_of_ap_x + 1);
-    ap_distance_y = (jab_float)(height- (DISTANCE_TO_BORDER*2 - 1)) / (jab_float)(number_of_ap_y + 1);
-	//add the finder patterns
-	number_of_ap_x += 2;
-	number_of_ap_y += 2;
+	}
 
-	//find all alignment patterns' positions
+	//For default mode, first confirm the symbol side size
+	if(symbol->metadata.default_mode)
+    {
+        if(!confirmSymbolSize(ch, fps, symbol))
+        {
+            reportError("The symbol size can not be recognized.");
+            return NULL;
+        }
+#if TEST_MODE
+        JAB_REPORT_INFO(("Side sizes confirmed by APs: %d %d", symbol->side_size.x, symbol->side_size.y))
+#endif
+    }
+
+    jab_int32 side_ver_x_index = symbol->metadata.side_version.x - 1;
+	jab_int32 side_ver_y_index = symbol->metadata.side_version.y - 1;
+	jab_int32 number_of_ap_x = jab_ap_num[side_ver_x_index];
+    jab_int32 number_of_ap_y = jab_ap_num[side_ver_y_index];
+
+    //buffer for all possible alignment patterns
 	jab_alignment_pattern* aps = (jab_alignment_pattern *)malloc(number_of_ap_x * number_of_ap_y *sizeof(jab_alignment_pattern));
 	if(aps == NULL)
 	{
 		reportError("Memory allocation for alignment patterns failed");
 		return NULL;
 	}
-	jab_int32 not_found_in_a_row = 0;
-	jab_int32 not_found_total = 0;
+    //detect all APs
 	for(jab_int32 i=0; i<number_of_ap_y; i++)
 	{
-		not_found_in_a_row = 0;
 		for(jab_int32 j=0; j<number_of_ap_x; j++)
 		{
 			jab_int32 index = i * number_of_ap_x + j;
@@ -2828,17 +3007,14 @@ jab_bitmap* sampleSymbolByAlignmentPattern(jab_bitmap* bitmap, jab_bitmap* ch[],
 				aps[index] = fps[3];
 			else
 			{
-				jab_int32 module_interval;
-				jab_float distance;
 				if(i == 0)
 				{
 					//direction: from aps[0][j-1] to fps[1]
 					jab_float distx = fps[1].center.x - aps[j-1].center.x;
 					jab_float disty = fps[1].center.y - aps[j-1].center.y;
 					jab_float alpha = atan2(disty, distx);
-					//distance:  module_interval * aps[0][j-1].module_size
-					module_interval = (jab_int32)(j * ap_distance_x) - (jab_int32)((j-1) * ap_distance_x);
-					distance = module_interval * aps[j-1].module_size;
+					//distance:  aps[0][j-1].module_size * module_number_between_APs
+					jab_float distance = aps[j-1].module_size * (jab_ap_pos[side_ver_x_index][j] - jab_ap_pos[side_ver_x_index][j-1]);
 					//calculate the coordinate of ap[index]
 					aps[index].center.x = aps[j-1].center.x + distance * cos(alpha);
 					aps[index].center.y = aps[j-1].center.y + distance * sin(alpha);
@@ -2850,9 +3026,8 @@ jab_bitmap* sampleSymbolByAlignmentPattern(jab_bitmap* bitmap, jab_bitmap* ch[],
 					jab_float distx = fps[3].center.x - aps[(i-1) * number_of_ap_x].center.x;
 					jab_float disty = fps[3].center.y - aps[(i-1) * number_of_ap_x].center.y;
 					jab_float alpha = atan2(disty, distx);
-					//distance:  module_interval * aps[i-1][0].module_size
-					module_interval = (jab_int32)(i * ap_distance_y) - (jab_int32)((i-1) * ap_distance_y);
-					distance = module_interval * aps[(i-1) * number_of_ap_x].module_size;
+					//distance:  aps[i-1][0].module_size * module_number_between_APs
+					jab_float distance = aps[(i-1) * number_of_ap_x].module_size * (jab_ap_pos[side_ver_y_index][i] - jab_ap_pos[side_ver_y_index][i-1]);
 					//calculate the coordinate of ap[index]
 					aps[index].center.x = aps[(i-1) * number_of_ap_x].center.x + distance * cos(alpha);
 					aps[index].center.y = aps[(i-1) * number_of_ap_x].center.y + distance * sin(alpha);
@@ -2877,11 +3052,9 @@ jab_bitmap* sampleSymbolByAlignmentPattern(jab_bitmap* bitmap, jab_bitmap* ch[],
 				if(aps[index].found_count == 0)
 				{
 					aps[index] = tmp;	//recover the estimated one
-					not_found_in_a_row++;
-					not_found_total++;
 #if TEST_MODE
 					JAB_REPORT_ERROR(("The alignment pattern (index: %d) at (X: %f, Y: %f) not found", index, aps[index].center.x, aps[index].center.y))
-#endif // TEST_MODE
+#endif
 				}
 			}
 		}
@@ -2889,8 +3062,7 @@ jab_bitmap* sampleSymbolByAlignmentPattern(jab_bitmap* bitmap, jab_bitmap* ch[],
 
 #if TEST_MODE
 	drawFoundFinderPatterns((jab_finder_pattern*)aps, number_of_ap_x * number_of_ap_y, 0x0000ff);
-	saveImage(test_mode_bitmap, "jab_detector_result.png");
-#endif // TEST_MODE
+#endif
 
 	//determine the minimal sampling rectangle for each block
 	jab_int32 block_number = (number_of_ap_x-1) * (number_of_ap_y-1);
@@ -2972,6 +3144,8 @@ jab_bitmap* sampleSymbolByAlignmentPattern(jab_bitmap* bitmap, jab_bitmap* ch[],
 	}
 
 	//allocate the buffer for the sampled matrix of the symbol
+    jab_int32 width = symbol->side_size.x;
+	jab_int32 height= symbol->side_size.y;
 	jab_int32 mtx_bytes_per_pixel = bitmap->bits_per_pixel / 8;
 	jab_int32 mtx_bytes_per_row = width * mtx_bytes_per_pixel;
 	jab_bitmap* matrix = (jab_bitmap*)malloc(sizeof(jab_bitmap) + width*height*mtx_bytes_per_pixel*sizeof(jab_byte));
@@ -2992,8 +3166,8 @@ jab_bitmap* sampleSymbolByAlignmentPattern(jab_bitmap* bitmap, jab_bitmap* ch[],
 		jab_point p0, p1, p2, p3;
 
 		//middle blocks
-		blk_size.x = (jab_int32)(rect[i+1].x * ap_distance_x) - (jab_int32)(rect[i].x * ap_distance_x) + 1;
-		blk_size.y = (jab_int32)(rect[i+1].y * ap_distance_y) - (jab_int32)(rect[i].y * ap_distance_y) + 1;
+		blk_size.x = jab_ap_pos[side_ver_x_index][rect[i+1].x] - jab_ap_pos[side_ver_x_index][rect[i].x] + 1;
+		blk_size.y = jab_ap_pos[side_ver_y_index][rect[i+1].y] - jab_ap_pos[side_ver_y_index][rect[i].y] + 1;
 		p0.x = 0.5f;
 		p0.y = 0.5f;
 		p1.x = (jab_float)blk_size.x - 0.5f;
@@ -3051,8 +3225,10 @@ jab_bitmap* sampleSymbolByAlignmentPattern(jab_bitmap* bitmap, jab_bitmap* ch[],
 			return NULL;
 		}
 		//sample the current block
-		jab_bitmap* block;
-		block = sampleSymbol(bitmap, pt, blk_size);
+#if TEST_MODE
+		test_mode_color = 0;
+#endif
+		jab_bitmap* block = sampleSymbol(bitmap, pt, blk_size);
 		free(pt);
 		if(block == NULL)
 		{
@@ -3062,12 +3238,12 @@ jab_bitmap* sampleSymbolByAlignmentPattern(jab_bitmap* bitmap, jab_bitmap* ch[],
 			return NULL;
 		}
 		//save the sampled block in the matrix
-		jab_int32 start_x = (DISTANCE_TO_BORDER - 1) + rect[i].x * ap_distance_x;
-		jab_int32 start_y = (DISTANCE_TO_BORDER - 1) + rect[i].y * ap_distance_y;
+		jab_int32 start_x = jab_ap_pos[side_ver_x_index][rect[i].x] - 1;
+		jab_int32 start_y = jab_ap_pos[side_ver_y_index][rect[i].y] - 1;
 		if(rect[i].x == 0)
-			start_x -= (DISTANCE_TO_BORDER - 1);
+			start_x = 0;
 		if(rect[i].y == 0)
-			start_y -= (DISTANCE_TO_BORDER - 1);
+			start_y = 0;
 		jab_int32 blk_bytes_per_pixel = block->bits_per_pixel / 8;
 		jab_int32 blk_bytes_per_row = blk_size.x * mtx_bytes_per_pixel;
 		for(jab_int32 y=0, mtx_y=start_y; y<blk_size.y && mtx_y<height; y++, mtx_y++)
@@ -3085,7 +3261,7 @@ jab_bitmap* sampleSymbolByAlignmentPattern(jab_bitmap* bitmap, jab_bitmap* ch[],
 		free(block);
 	}
 #if TEST_MODE
-		saveImage(test_mode_bitmap, "jab_sample_pos_ap.png");
+    saveImage(test_mode_bitmap, "jab_sample_pos_ap.png");
 #endif
 
 	free(aps);
@@ -3110,7 +3286,7 @@ jab_boolean detectMaster(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_symbo
     }
 
     //calculate the master symbol side size
-    jab_vector2d side_size = calculateSideSize(ch, fps, &master_symbol->module_size);
+    jab_vector2d side_size = calculateSideSize(fps);
     if(side_size.x == -1 || side_size.y == -1)
     {
 		reportError("Calculating side size failed");
@@ -3132,10 +3308,13 @@ jab_boolean detectMaster(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_symbo
 	}
 
 	//sample master symbol
+#if TEST_MODE
+	test_mode_color = 255;
+#endif
 	jab_bitmap* matrix = sampleSymbol(bitmap, pt, side_size);
 	free(pt);
 #if TEST_MODE
-		saveImage(test_mode_bitmap, "jab_sample_pos_fp.png");
+	saveImage(test_mode_bitmap, "jab_sample_pos_fp.png");
 #endif
 	if(matrix == NULL)
 	{
@@ -3148,6 +3327,7 @@ jab_boolean detectMaster(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_symbo
 	master_symbol->index = 0;
 	master_symbol->host_index = 0;
 	master_symbol->side_size = side_size;
+	master_symbol->module_size = (fps[0].module_size + fps[1].module_size + fps[2].module_size + fps[3].module_size) / 4.0f;
 	master_symbol->pattern_positions[0] = fps[0].center;
 	master_symbol->pattern_positions[1] = fps[1].center;
 	master_symbol->pattern_positions[2] = fps[2].center;
@@ -3169,12 +3349,11 @@ jab_boolean detectMaster(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_symbo
 	else	//if decoding using only finder patterns failed, try decoding using alignment patterns
 	{
 #if TEST_MODE
-			reportError("\n");
-			reportError("Trying to sample master symbol using alignment pattern...");
+		JAB_REPORT_INFO(("Trying to sample master symbol using alignment pattern..."))
 #endif // TEST_MODE
 		master_symbol->side_size.x = VERSION2SIZE(master_symbol->metadata.side_version.x);
 		master_symbol->side_size.y = VERSION2SIZE(master_symbol->metadata.side_version.y);
-		matrix = sampleSymbolByAlignmentPattern(bitmap, ch, master_symbol, (jab_alignment_pattern*)fps);
+		matrix = sampleSymbolByAlignmentPattern(bitmap, ch, master_symbol, fps);
 		free(fps);
 		if(matrix == NULL)
 		{
@@ -3226,7 +3405,10 @@ jab_bitmap* detectSlave(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_symbol
         return NULL;
     }
 
-    //sample master symbol
+    //sample slave symbol
+#if TEST_MODE
+	test_mode_color = 255;
+#endif
     jab_bitmap* matrix = sampleSymbol(bitmap, pt, slave_symbol->side_size);
     if(matrix == NULL)
     {

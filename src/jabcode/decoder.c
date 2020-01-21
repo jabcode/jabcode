@@ -361,132 +361,23 @@ jab_int32 readColorPaletteInSlave(jab_bitmap* matrix, jab_decoded_symbol* symbol
 }
 
 /**
- * @brief Calculate the color changing slopes for all color palettes
- * @param matrix the symbol matrix
- * @param palette the color palettes
- * @param color_number the number of module colors
- * @param cs the color changing slopes
-*/
-void calculateColorSlopes(jab_bitmap* matrix, jab_byte* palette, jab_int32 color_number, jab_float* cs)
-{
-	jab_float distx = matrix->width - 7;
-	jab_float disty = matrix->height- 7;
-	jab_float distd = sqrt(distx*distx + disty*disty);
-
-	for(jab_int32 p=0; p<COLOR_PALETTE_NUMBER; p++)
-	{
-		jab_int32 px, py, pd;
-		switch(p)
-		{
-		case 0:	//slopes for palette 0
-			px = 1;//p1-p0
-			py = 3;//p3-p0
-			pd = 2;//p2-p0
-			break;
-		case 1:	//slopes for palette 1
-			px = 0;//p0-p1
-			py = 2;//p2-p1
-			pd = 3;//p3-p1
-			break;
-		case 2:
-			px = 3;
-			py = 1;
-			pd = 0;
-			break;
-		case 3:
-			px = 2;
-			py = 0;
-			pd = 1;
-			break;
-		}
-
-		for(jab_int32 i=0; i<color_number*3; i++)
-		{
-			jab_float sx = (jab_float)(palette[color_number*3*px + i] - palette[color_number*3*p + i]) / distx;
-			jab_float sy = (jab_float)(palette[color_number*3*py + i] - palette[color_number*3*p + i]) / disty;
-			jab_float sd = (jab_float)(palette[color_number*3*pd + i] - palette[color_number*3*p + i]) / distd;
-			sx += (distx / distd) * sd; //x component of sd, sd*cos(theta)
-			sy += (disty / distd) * sd; //y component of sd, sd*sin(theta)
-			cs[p*(color_number*3)*2 + i*2 + 0] = sx;
-			cs[p*(color_number*3)*2 + i*2 + 1] = sy;
-		}
-	}
-}
-
-/**
- * @brief Calibrate module color according to the color changing slopes
- * @param cs the color changing slopes
- * @param color_number the number of module colors
- * @param p_index the color palette index
- * @param color_index the color index in the palette
- * @param px the x coordinate of the palette
- * @param py the y coordinate of the palette
- * @param x the x coordinate of the module
- * @param y the y coordinate of the module
- * @param rgb the pixel value in RGB format
-*/
-void CaliColor(jab_float* cs, jab_int32 color_number, jab_int32 p_index, jab_int32 color_index, jab_int32 px, jab_int32 py, jab_int32 x, jab_int32 y, jab_byte* rgb)
-{
-	//calculate the distance between the module and the color palette
-	jab_int32 distx, disty;
-	distx = x - px;
-	disty = y - py;
-	switch(p_index)	//switch the sign of the distance
-	{
-	case 0:
-		break;
-	case 1:
-		distx = -distx;
-		break;
-	case 2:
-		disty = -disty;
-		break;
-	case 3:
-		distx = -distx;
-		disty = -disty;
-		break;
-	}
-	//calculate the color difference in x and y directions
-	jab_float rgb_dx[3], rgb_dy[3];
-	for(jab_int32 i=0; i<3; i++)
-	{
-		jab_float cs_x = cs[p_index*(color_number*3)*2 + (color_index*3 + i)*2 + 0];
-		jab_float cs_y = cs[p_index*(color_number*3)*2 + (color_index*3 + i)*2 + 1];
-		rgb_dx[i] = distx * cs_x;
-		rgb_dy[i] = disty * cs_y;
-	}
-	//calculate the color difference
-	jab_float dist = DIST(px, py, x, y);
-	jab_float cos_theta = fabs(distx) / dist;
-	jab_float sin_theta = fabs(disty) / dist;
-	jab_int32 dr = (jab_int32)(rgb_dx[0] * cos_theta + rgb_dy[0] * sin_theta);
-	jab_int32 dg = (jab_int32)(rgb_dx[1] * cos_theta + rgb_dy[1] * sin_theta);
-	jab_int32 db = (jab_int32)(rgb_dx[2] * cos_theta + rgb_dy[2] * sin_theta);
-	//calibrate color
-	rgb[0] = MIN(MAX((rgb[0] + dr), 0), 255);
-	rgb[1] = MIN(MAX((rgb[1] + dg), 0), 255);
-	rgb[2] = MIN(MAX((rgb[2] + db), 0), 255);
-}
-
-/**
  * @brief Get the index of the nearest color palette
  * @param matrix the symbol matrix
- * @param px the x coordinates of the color palettes
- * @param py the y coordinates of the color palettes
  * @param x the x coordinate of the module
  * @param y the y coordinate of the module
  * @return the index of the nearest color palette
 */
-jab_int32 getNearestPalette(jab_bitmap* matrix, jab_int32 px[], jab_int32 py[], jab_int32 x, jab_int32 y)
+jab_int32 getNearestPalette(jab_bitmap* matrix, jab_int32 x, jab_int32 y)
 {
-	//get the palette coordinates
-	px[0] = DISTANCE_TO_BORDER - 1;
+	//set the palette coordinate
+	jab_int32 px[COLOR_PALETTE_NUMBER], py[COLOR_PALETTE_NUMBER];
+	px[0] = DISTANCE_TO_BORDER - 1 + 3;
 	py[0] = DISTANCE_TO_BORDER - 1;
-	px[1] = matrix->width - DISTANCE_TO_BORDER;
+	px[1] = matrix->width - DISTANCE_TO_BORDER - 3;
 	py[1] = DISTANCE_TO_BORDER - 1;
-	px[2] = matrix->width - DISTANCE_TO_BORDER;
+	px[2] = matrix->width - DISTANCE_TO_BORDER - 3;
 	py[2] = matrix->height- DISTANCE_TO_BORDER;
-	px[3] = DISTANCE_TO_BORDER - 1;
+	px[3] = DISTANCE_TO_BORDER - 1 + 3;
 	py[3] = matrix->height- DISTANCE_TO_BORDER;
 
 	//calculate the nearest palette
@@ -509,13 +400,18 @@ jab_int32 getNearestPalette(jab_bitmap* matrix, jab_int32 px[], jab_int32 py[], 
  * @param matrix the symbol matrix
  * @param palette the color palettes
  * @param color_number the number of module colors
- * @param cs the color changing slopes
+ * @param norm_palette the normalized color palettes
+ * @param pal_ths the palette RGB value thresholds
  * @param x the x coordinate of the module
  * @param y the y coordinate of the module
  * @return the decoded value
 */
-jab_byte decodeModuleHD(jab_bitmap* matrix, jab_byte* palette, jab_int32 color_number, jab_float* cs, jab_int32 x, jab_int32 y)
+jab_byte decodeModuleHD(jab_bitmap* matrix, jab_byte* palette, jab_int32 color_number, jab_float* norm_palette, jab_float* pal_ths, jab_int32 x, jab_int32 y)
 {
+	//get the nearest palette
+	jab_int32 p_index = getNearestPalette(matrix, x, y);
+
+	//read the RGB values
 	jab_byte rgb[3];
 	jab_int32 mtx_bytes_per_pixel = matrix->bits_per_pixel / 8;
     jab_int32 mtx_bytes_per_row = matrix->width * mtx_bytes_per_pixel;
@@ -524,22 +420,35 @@ jab_byte decodeModuleHD(jab_bitmap* matrix, jab_byte* palette, jab_int32 color_n
 	rgb[1] = matrix->pixel[mtx_offset + 1];
 	rgb[2] = matrix->pixel[mtx_offset + 2];
 
-	//get the palette coordinate and the nearest palette
-	jab_int32 px[COLOR_PALETTE_NUMBER], py[COLOR_PALETTE_NUMBER];
-	jab_int32 p_index = getNearestPalette(matrix, px, py, x, y);
-
 	jab_byte index1 = 0, index2 = 0;
+
+	//check black module
+	if(rgb[0] < pal_ths[p_index*3 + 0] && rgb[1] < pal_ths[p_index*3 + 1] && rgb[2] < pal_ths[p_index*3 + 2])
+	{
+		index1 = 0;
+		return index1;
+	}
 	if(palette)
 	{
-		jab_int32 min1 = 255*255*3, min2 = 255*255*3;
+		jab_float min1 = 255*255*3, min2 = 255*255*3;
 		for(jab_int32 i=0; i<color_number; i++)
 		{
-			//calibrate color
-			CaliColor(cs, color_number, p_index, i, px[p_index], py[p_index], x, y, rgb);
-			//compare module color with palette
-			jab_int32 diff = (palette[color_number*3*p_index + i*3 + 0] - rgb[0]) * (palette[color_number*3*p_index + i*3 + 0] - rgb[0]) +
-							 (palette[color_number*3*p_index + i*3 + 1] - rgb[1]) * (palette[color_number*3*p_index + i*3 + 1] - rgb[1]) +
-							 (palette[color_number*3*p_index + i*3 + 2] - rgb[2]) * (palette[color_number*3*p_index + i*3 + 2] - rgb[2]);
+			//normalize the RGB values
+			jab_float rgb_max = MAX(rgb[0], MAX(rgb[1], rgb[2]));
+			jab_float r = (jab_float)rgb[0] / rgb_max;
+			jab_float g = (jab_float)rgb[1] / rgb_max;
+			jab_float b = (jab_float)rgb[2] / rgb_max;
+			jab_float l = ((rgb[0] + rgb[1] + rgb[2]) / 3.0f) / 255.0f;
+
+			//normalize the color values in color palette
+			jab_float pr = norm_palette[color_number*4*p_index + i*4 + 0];
+			jab_float pg = norm_palette[color_number*4*p_index + i*4 + 1];
+			jab_float pb = norm_palette[color_number*4*p_index + i*4 + 2];
+			jab_float pl = norm_palette[color_number*4*p_index + i*4 + 3];
+
+			//compare the normalized module color with palette
+			jab_float diff = (pr - r) * (pr - r) + (pg - g) * (pg - g) + (pb - b) * (pb - b);// + (pl - l) * (pl - l);
+
 			if(diff < min1)
 			{
 				//copy min1 to min2
@@ -555,8 +464,24 @@ jab_byte decodeModuleHD(jab_bitmap* matrix, jab_byte* palette, jab_int32 color_n
 				index2 = (jab_byte)i;
 			}
 		}
+
+		if(index1 == 0 || index1 == 7)
+		{
+			jab_int32 rgb_sum = rgb[0] + rgb[1] + rgb[2];
+			jab_int32 p0_sum = palette[color_number*3*p_index + 0*3 + 0] + palette[color_number*3*p_index + 0*3 + 1] + palette[color_number*3*p_index + 0*3 + 2];
+			jab_int32 p7_sum = palette[color_number*3*p_index + 7*3 + 0] + palette[color_number*3*p_index + 7*3 + 1] + palette[color_number*3*p_index + 7*3 + 2];
+
+			if(rgb_sum < ((p0_sum + p7_sum) / 2))
+			{
+				index1 = 0;
+			}
+			else
+			{
+				index1 = 7;
+			}
+		}
 		//if the minimum is close to the second minimum, do further match
-		if(min1 * 1.5 > min2)
+/*		if(min1 * 1.5 > min2)
 		{
 			//printf("min1(%d) * 1.5 > min2(%d), %d %d %d", index1, index2, rgb[0], rgb[1], rgb[2]);
 			jab_int32 rg = abs(rgb[0] - rgb[1]);
@@ -577,6 +502,7 @@ jab_byte decodeModuleHD(jab_bitmap* matrix, jab_byte* palette, jab_int32 color_n
 				index1 = index2;
 			//printf("final: %d\n", index1);
 		}
+*/
 	}
 	else	//if no palette is available, decode the module as black/white
 	{
@@ -627,215 +553,14 @@ jab_byte decodeModuleNc(jab_byte* rgb)
 }
 
 /**
- * @brief Decode a module using soft decision
+ * @brief Get the pixel value thresholds for each channel of the colors in the palette
  * @param palette the color palette
  * @param color_number the number of colors
- * @param ths the pixel value thresholds
- * @param rp the reference pixel values
- * @param rgb the pixel value in RGB format
- * @param p the probability of the reliability of the decoded bits
- * @return the decoded value
+ * @param palette_ths the palette RGB value thresholds
 */
-jab_byte decodeModule(jab_byte* palette, jab_int32 color_number, jab_float* ths, jab_float* rp, jab_byte* rgb, jab_float* p)
+void getPaletteThreshold(jab_byte* palette, jab_int32 color_number, jab_float* palette_ths)
 {
-	jab_int32 vs[3] = {0};	//the number of variable colors for r, g, b channels
-	switch(color_number)
-	{
-	case 2:
-	case 4:
-	case 8:
-		vs[0] = 2;
-		vs[1] = 2;
-		vs[2] = 2;
-		break;
-	case 16:
-		vs[0] = 4;
-		vs[1] = 2;
-		vs[2] = 2;
-		break;
-	case 32:
-		vs[0] = 4;
-		vs[1] = 4;
-		vs[2] = 2;
-		break;
-	case 64:
-		vs[0] = 4;
-		vs[1] = 4;
-		vs[2] = 4;
-		break;
-	case 128:
-		vs[0] = 8;
-		vs[1] = 4;
-		vs[2] = 4;
-		break;
-	case 256:
-		vs[0] = 8;
-		vs[1] = 8;
-		vs[2] = 4;
-		break;
-	}
-
-	jab_byte index = 0;
-	jab_float cp[3] = {0.0f};
-	jab_byte cv[3] = {0};
-	if(color_number < 16)
-	{
-		jab_int32 ths_offset = 0;
-		for(jab_int32 ch=0; ch<3; ch++) //r, g, b channel
-		{
-			if(rgb[ch] < ths[ths_offset + 1])
-			{
-				cp[ch] = 1.0f - rgb[ch] / ths[ths_offset + 1];
-				cv[ch] = 0;
-			}
-			else
-			{
-				cp[ch] = (rgb[ch] - ths[ths_offset + 1]) / (255.0f - ths[ths_offset + 1]);
-				cv[ch] = 1;
-			}
-			//update offset for threshold
-			ths_offset += vs[ch] + 1;
-		}
-		if(color_number == 2)			//2-color
-		{
-			index = (cv[0] + cv[1] + cv[2]) > 1 ? 1 : 0;
-			p[0] = (cp[0] + cp[1] + cp[2]) / 3.0f;
-		}
-		else if(color_number == 4)		//4-color
-		{
-			index = cv[0] * vs[1] + cv[1];
-			p[0] = cp[0];
-			p[1] = cp[1];
-		}
-		else							//8-color
-		{
-			index = cv[0] * vs[1] * vs[2] + cv[1] * vs[2] + cv[2];
-			p[0] = cp[0];
-			p[1] = cp[1];
-			p[2] = cp[2];
-		}
-	}
-	else
-	{
-		jab_int32 ths_offset = 0;
-		jab_int32 rp_offset = 0;
-		for(jab_int32 ch=0; ch<3; ch++)			//r, g, b channels
-		{
-			for(jab_int32 i=0; i<vs[ch]; i++)	//variable colors in each channel
-			{
-				if(rgb[ch] >= ths[ths_offset + i] && rgb[ch] <= ths[ths_offset + i + 1])
-				{
-					cv[ch] = i;
-					if(i == 0)
-						cp[ch] = 1.0f - rgb[ch] / ths[ths_offset + i + 1];
-					else if(i == vs[ch] - 1)
-						cp[ch] = (rgb[ch] - ths[ths_offset + i]) / (255.0f - ths[ths_offset + i]);
-					else
-					{
-						if(rgb[ch] <= rp[rp_offset + i - 1])
-							cp[ch] = (rgb[ch] - ths[ths_offset + i]) / (rp[rp_offset + i - 1] - ths[ths_offset + i]);
-						else
-							cp[ch] = (ths[ths_offset + i + 1] - rgb[ch]) / (ths[ths_offset + i + 1] - rp[rp_offset + i - 1]);
-					}
-				}
-			}
-			//update offset for threshold and reference point
-			ths_offset += vs[ch] + 1;
-			rp_offset += vs[ch] - 2;
-		}
-		//get the palette index of c
-		index = cv[0] * vs[1] * vs[2] + cv[1] * vs[2] + cv[2];
-		//get probability for each bit
-		jab_int32 bits_count = (jab_int32)(log(color_number) / log(2));
-		for(jab_int32 i=0; i<bits_count; i++)
-			p[i] = (cp[0] + cp[1] + cp[2]) / 3.0f;
-	}
-	return index;
-}
-
-/**
- * @brief Get the pixel value thresholds and reference points for each channel of the colors in the palette
- * @param palette the color palette
- * @param color_number the number of colors
- * @param palette_ths the pixel value thresholds
- * @param palette_rp the reference pixel values
- * @return JAB_SUCCESS | JAB_FAILURE
-*/
-jab_boolean getPaletteThreshold(jab_byte* palette, jab_int32 color_number, jab_float** palette_ths, jab_float** palette_rp)
-{
-	jab_int32 vs[3] = {0};	//the number of variable colors for r, g, b channels
-	switch(color_number)
-	{
-	case 2:
-	case 4:
-	case 8:
-		vs[0] = 2;
-		vs[1] = 2;
-		vs[2] = 2;
-		break;
-	case 16:
-		vs[0] = 4;
-		vs[1] = 2;
-		vs[2] = 2;
-		break;
-	case 32:
-		vs[0] = 4;
-		vs[1] = 4;
-		vs[2] = 2;
-		break;
-	case 64:
-		vs[0] = 4;
-		vs[1] = 4;
-		vs[2] = 4;
-		break;
-	case 128:
-		vs[0] = 8;
-		vs[1] = 4;
-		vs[2] = 4;
-		break;
-	case 256:
-		vs[0] = 8;
-		vs[1] = 8;
-		vs[2] = 4;
-		break;
-	}
-
-	jab_int32 ths_size = (vs[0] + 1) + (vs[1] + 1) + (vs[2] + 1); //the number of thresholds for all channels
-	jab_int32 rp_size  = (vs[0] - 2) + (vs[1] - 2) + (vs[2] - 2); //the number of reference points for all channels
-
-	(*palette_ths) = (jab_float*)malloc(sizeof(jab_float)*ths_size);
-    if((*palette_ths) == NULL)
-    {
-		reportError("Memory allocation for palette thresholds failed");
-		return JAB_FAILURE;
-    }
-    if(rp_size == 0)
-	{
-		(*palette_rp) = 0;
-	}
-	else
-	{
-		(*palette_rp) = (jab_float*)malloc(sizeof(jab_float)*rp_size);
-		if((*palette_rp) == NULL)
-		{
-			reportError("Memory allocation for palette reference points failed");
-			return JAB_FAILURE;
-		}
-	}
-
-	if(color_number == 2)
-	{
-		jab_int32 ths_offset = 0;
-		for(jab_int32 ch=0; ch<3; ch++)
-		{
-			(*palette_ths)[ths_offset + 0] = 0;
-			(*palette_ths)[ths_offset + 1] = (jab_float)(palette[ch] + palette[3 + ch]) / 2.0f;
-			(*palette_ths)[ths_offset + 2] = 255;
-			//update offset for threshold and reference point
-			ths_offset += vs[ch] + 1;
-		}
-	}
-	else if(color_number == 4)
+	if(color_number == 4)
 	{
 		jab_int32 cpr0 = MAX(palette[0], palette[3]);
 		jab_int32 cpr1 = MIN(palette[6], palette[9]);
@@ -844,15 +569,9 @@ jab_boolean getPaletteThreshold(jab_byte* palette, jab_int32 color_number, jab_f
 		jab_int32 cpb0 = MAX(palette[8], palette[11]);
 		jab_int32 cpb1 = MIN(palette[2], palette[5]);
 
-		(*palette_ths)[0] = 0;
-		(*palette_ths)[1] = (cpr0 + cpr1) / 2.0f;
-		(*palette_ths)[2] = 255;
-		(*palette_ths)[3] = 0;
-		(*palette_ths)[4] = (cpg0 + cpg1) / 2.0f;
-		(*palette_ths)[5] = 255;
-		(*palette_ths)[6] = 0;
-		(*palette_ths)[7] = (cpb0 + cpb1) / 2.0f;
-		(*palette_ths)[8] = 255;
+		palette_ths[0] = (cpr0 + cpr1) / 2.0f;
+		palette_ths[1] = (cpg0 + cpg1) / 2.0f;
+		palette_ths[2] = (cpb0 + cpb1) / 2.0f;
 	}
 	else if(color_number == 8)
 	{
@@ -863,113 +582,10 @@ jab_boolean getPaletteThreshold(jab_byte* palette, jab_int32 color_number, jab_f
 		jab_int32 cpb0 = MAX(MAX(MAX(palette[2], palette[8]), palette[14]), palette[20]);
 		jab_int32 cpb1 = MIN(MIN(MIN(palette[5], palette[11]), palette[17]), palette[23]);
 
-		(*palette_ths)[0] = 0;
-		(*palette_ths)[1] = (cpr0 + cpr1) / 2.0f;
-		(*palette_ths)[2] = 255;
-		(*palette_ths)[3] = 0;
-		(*palette_ths)[4] = (cpg0 + cpg1) / 2.0f;
-		(*palette_ths)[5] = 255;
-		(*palette_ths)[6] = 0;
-		(*palette_ths)[7] = (cpb0 + cpb1) / 2.0f;
-		(*palette_ths)[8] = 255;
+		palette_ths[0] = (cpr0 + cpr1) / 2.0f;
+		palette_ths[1] = (cpg0 + cpg1) / 2.0f;
+		palette_ths[2] = (cpb0 + cpb1) / 2.0f;
 	}
-	else //more than 8 colors
-	{
-		//calculate critical points
-		jab_int32 cps_size = (vs[0] - 1) * 2 + (vs[1] - 1) * 2 + (vs[2] - 1) * 2; //the number of critical points for all channels
-		jab_int32* cps = (jab_int32 *)malloc(cps_size * sizeof(jab_int32));
-		if(cps == NULL)
-		{
-			reportError("Memory allocation for critical points failed");
-			return JAB_FAILURE;
-		}
-		jab_int32 cps_offset = 0;
-		for(jab_int32 ch=0; ch<3; ch++)
-		{
-			jab_int32 block, step;
-			switch(ch)
-			{
-			case 0:
-				block = vs[1] * vs[2];	//block size for one channel value
-				step = vs[0] * block;	//step size for next block
-				break;
-			case 1:
-				block = vs[2];
-				step = vs[1] * block;
-				break;
-			case 2:
-				block = 1;
-				step = vs[2];
-				break;
-			}
-			jab_int32 cps_count = (vs[ch] - 1) * 2; //the number of critical points in one channel
-			jab_int32 cps_index = 0;
-			jab_int32 min = 255;
-			jab_int32 max = 0;
-			//calculate min and max for each possible pixel value in this channel
-			for(jab_int32 i=0; i<vs[ch]; i++)
-			{
-				min = 255;
-				max = 0;
-				for(jab_int32 j=i*block; j<color_number; j+=step)
-				{
-					for(jab_int32 k=0; k<block; k++)
-					{
-						if(palette[3*(j+k) + ch] < min)
-							min = palette[3*(j+k) + ch];
-						if(palette[3*(j+k) + ch] > max)
-							max = palette[3*(j+k) + ch];
-					}
-				}
-				if(cps_index == 0)
-				{
-					cps[cps_offset + cps_index] = max;
-					cps_index++;
-				}
-				else if(cps_index == cps_count - 1)
-				{
-					cps[cps_offset + cps_index] = min;
-				}
-				else
-				{
-					cps[cps_offset + cps_index] = min;
-					cps[cps_offset + cps_index + 1] = max;
-					cps_index += 2;
-				}
-			}
-			cps_offset += cps_count;
-		}
-
-		//get thresholds and reference points
-		cps_offset = 0;
-		jab_int32 ths_offset = 0;
-		jab_int32 rp_offset = 0;
-		for(jab_int32 ch=0; ch<3; ch++)
-		{
-			//set the first threshold
-			(*palette_ths)[ths_offset + 0] = 0;
-			//set the other thresholds
-			jab_int32 cps_index = 0;
-			for(jab_int32 i=1; i<vs[ch]; i++)
-			{
-				(*palette_ths)[ths_offset + i] = (cps[cps_offset + cps_index] + cps[cps_offset + cps_index + 1]) / 2.0f;
-				//set reference points
-				if(i != vs[ch] - 1)
-				{
-					(*palette_rp)[rp_offset + i - 1] = (cps[cps_offset + cps_index + 1] + cps[cps_offset + cps_index + 2]) / 2.0f;
-				}
-				cps_index += 2;
-			}
-			//set the last threshold
-			(*palette_ths)[ths_offset + vs[ch]] = 255;
-			//update offset for threshold and reference point
-			cps_offset += (vs[ch] - 1) * 2;
-			ths_offset += vs[ch] + 1;
-			rp_offset += vs[ch] - 2;
-		}
-		free(cps);
-	}
-	return JAB_SUCCESS;
 }
 
 /**
@@ -1193,13 +809,14 @@ jab_int32 decodeMasterMetadataPartI(jab_bitmap* matrix, jab_decoded_symbol* symb
  * @param matrix the symbol matrix
  * @param symbol the master symbol
  * @param data_map the data module positions
- * @param cs the color changing slopes
+ * @param norm_palette the normalized color palettes
+ * @param pal_ths the palette RGB value thresholds
  * @param module_count the index number of the next module
  * @param x the x coordinate of the current and the next module
  * @param y the y coordinate of the current and the next module
  * @return JAB_SUCCESS | JAB_FAILURE | DECODE_METADATA_FAILED | FATAL_ERROR
 */
-jab_int32 decodeMasterMetadataPartII(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map, jab_float* cs, jab_int32* module_count, jab_int32* x, jab_int32* y)
+jab_int32 decodeMasterMetadataPartII(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map, jab_float* norm_palette, jab_float* pal_ths, jab_int32* module_count, jab_int32* x, jab_int32* y)
 {
 	jab_byte part2[MASTER_METADATA_PART2_LENGTH] = {0};			//38 encoded bits
 	jab_int32 part2_bit_count = 0;
@@ -1213,7 +830,7 @@ jab_int32 decodeMasterMetadataPartII(jab_bitmap* matrix, jab_decoded_symbol* sym
     while(part2_bit_count < MASTER_METADATA_PART2_LENGTH)
     {
 		//decode bits out of the module at (x,y)
-		jab_byte bits = decodeModuleHD(matrix, symbol->palette, color_number, cs, *x, *y);
+		jab_byte bits = decodeModuleHD(matrix, symbol->palette, color_number, norm_palette, pal_ths, *x, *y);
 		//write the bits into part2
 		for(jab_int32 i=0; i<bits_per_module; i++)
 		{
@@ -1308,10 +925,11 @@ jab_int32 decodeMasterMetadataPartII(jab_bitmap* matrix, jab_decoded_symbol* sym
  * @param matrix the symbol matrix
  * @param symbol the symbol to be decoded
  * @param data_map the data module positions
- * @param cs the color changing slopes
+ * @param norm_palette the normalized color palettes
+ * @param pal_ths the palette RGB value thresholds
  * @return the decoded data | NULL if failed
 */
-jab_data* readRawModuleData(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map, jab_float* cs)
+jab_data* readRawModuleData(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map, jab_float* norm_palette, jab_float* pal_ths)
 {
     jab_int32 color_number = (jab_int32)pow(2, symbol->metadata.Nc + 1);
 	jab_int32 module_count = 0;
@@ -1321,9 +939,11 @@ jab_data* readRawModuleData(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_
 		reportError("Memory allocation for raw module data failed");
 		return NULL;
 	}
+
 #if TEST_MODE
-	FILE* fp = fopen("jab_dec_module_rgb.bin", "wb");
-#endif // TEST_MODE
+	jab_byte decoded_module_color_index[matrix->height * matrix->width];
+#endif
+
 	for(jab_int32 j=0; j<matrix->width; j++)
 	{
 		for(jab_int32 i=0; i<matrix->height; i++)
@@ -1331,31 +951,63 @@ jab_data* readRawModuleData(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_
 			if(data_map[i*matrix->width + j] == 0)
 			{
 				//decode bits out of the module at (x,y)
-				jab_byte bits = decodeModuleHD(matrix, symbol->palette, color_number, cs, j, i);
+				jab_byte bits = decodeModuleHD(matrix, symbol->palette, color_number, norm_palette, pal_ths, j, i);
 				//write the bits into data
 				data->data[module_count] = (jab_char)bits;
 				module_count++;
-			}
 #if TEST_MODE
-			if(data_map[i*matrix->width + j] == 0)
-			{
-				jab_int32 mtx_bytes_per_pixel = matrix->bits_per_pixel / 8;
-				jab_int32 mtx_bytes_per_row = matrix->width * mtx_bytes_per_pixel;
-				jab_int32 mtx_offset = i * mtx_bytes_per_row + j * mtx_bytes_per_pixel;
-				fwrite(&matrix->pixel[mtx_offset], 3, 1, fp);
+				decoded_module_color_index[i*matrix->width + j] = bits;
+#endif
 			}
 			else
 			{
-				jab_byte rgb[3] = {128,128,128};
-				fwrite(rgb, 3, 1, fp);
+#if TEST_MODE
+				decoded_module_color_index[i*matrix->width + j] = 255;
+#endif
 			}
-#endif // TEST_MODE
 		}
 	}
-#if TEST_MODE
-	fclose(fp);
-#endif // TEST_MODE
 	data->length = module_count;
+
+#if TEST_MODE
+	FILE* fp1 = fopen("jab_dec_module_sampled_rgb.raw", "wb");
+	FILE* fp2 = fopen("jab_dec_module_decoded_rgb.raw", "wb");
+	for(jab_int32 i=0; i<matrix->height; i++)
+	{
+		for(jab_int32 j=0; j<matrix->width; j++)
+		{
+			jab_byte rgb1[3], rgb2[3];
+			jab_int32 mtx_bytes_per_pixel = matrix->bits_per_pixel / 8;
+			jab_int32 mtx_bytes_per_row = matrix->width * mtx_bytes_per_pixel;
+			jab_int32 mtx_offset = i * mtx_bytes_per_row + j * mtx_bytes_per_pixel;
+			rgb1[0] = matrix->pixel[mtx_offset + 0];
+			rgb1[1] = matrix->pixel[mtx_offset + 1];
+			rgb1[2] = matrix->pixel[mtx_offset + 2];
+
+			if(data_map[i*matrix->width + j] == 0)
+			{
+				jab_int32 index = decoded_module_color_index[i*matrix->width + j];
+				rgb2[0] = jab_default_palette[index*3 + 0];
+				rgb2[1] = jab_default_palette[index*3 + 1];
+				rgb2[2] = jab_default_palette[index*3 + 2];
+			}
+			else
+			{
+				rgb2[0] = rgb1[0];
+				rgb2[1] = rgb1[1];
+				rgb2[2] = rgb1[2];
+				//rgb1[0] = rgb2[0] = 128;
+				//rgb1[1] = rgb2[1] = 128;
+				//rgb1[2] = rgb2[2] = 128;
+			}
+			fwrite(rgb1, 3, 1, fp1);
+			fwrite(rgb2, 3, 1, fp2);
+		}
+	}
+	fclose(fp1);
+	fclose(fp2);
+#endif // TEST_MODE
+
 	return data;
 }
 
@@ -1394,35 +1046,17 @@ jab_data* rawModuleData2RawData(jab_data* raw_module_data, jab_int32 bits_per_mo
 */
 void fillDataMap(jab_byte* data_map, jab_int32 width, jab_int32 height, jab_int32 type)
 {
-	//calculate the number of alignment patterns between the finder patterns
-    jab_int32 number_of_ap_x = (width - (DISTANCE_TO_BORDER*2 - 1)) / MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS - 1;
-    jab_int32 number_of_ap_y = (height- (DISTANCE_TO_BORDER*2 - 1)) / MINIMUM_DISTANCE_BETWEEN_ALIGNMENTS - 1;
-	if(number_of_ap_x < 0)
-		number_of_ap_x = 0;
-	if(number_of_ap_y < 0)
-		number_of_ap_y = 0;
-	//add the finder patterns
-	number_of_ap_x += 2;
-	number_of_ap_y += 2;
-	//calculate the distance between alignment patters
-    jab_float ap_distance_x = 0.0f;
-    jab_float ap_distance_y = 0.0f;
-    if(number_of_ap_x > 2)
-        ap_distance_x = (jab_float)(width - (DISTANCE_TO_BORDER*2 - 1)) / (jab_float)(number_of_ap_x - 1);
-	else
-		ap_distance_x = (jab_float)(width - (DISTANCE_TO_BORDER*2 - 1));
-    if(number_of_ap_y > 2)
-        ap_distance_y = (jab_float)(height- (DISTANCE_TO_BORDER*2 - 1)) / (jab_float)(number_of_ap_y - 1);
-	else
-		ap_distance_y = (jab_float)(height- (DISTANCE_TO_BORDER*2 - 1));
-
+	jab_int32 side_ver_x_index = SIZE2VERSION(width) - 1;
+	jab_int32 side_ver_y_index = SIZE2VERSION(height) - 1;
+    jab_int32 number_of_ap_x = jab_ap_num[side_ver_x_index];
+    jab_int32 number_of_ap_y = jab_ap_num[side_ver_y_index];
     for(jab_int32 i=0; i<number_of_ap_y; i++)
     {
 		for(jab_int32 j=0; j<number_of_ap_x; j++)
 		{
 			//the center coordinate
-			jab_int32 x_offset = (DISTANCE_TO_BORDER - 1) + j * ap_distance_x;
-			jab_int32 y_offset = (DISTANCE_TO_BORDER - 1) + i * ap_distance_y;
+			jab_int32 x_offset = jab_ap_pos[side_ver_x_index][j] - 1;
+            jab_int32 y_offset = jab_ap_pos[side_ver_y_index][i] - 1;
 			//the cross
 			data_map[y_offset 		* width + x_offset]		  =
 			data_map[y_offset		* width + (x_offset - 1)] =
@@ -1499,6 +1133,7 @@ void loadDefaultMasterMetadata(jab_bitmap* matrix, jab_decoded_symbol* symbol)
 	JAB_REPORT_INFO(("Loading default master metadata"))
 #endif
 	//set default metadata values
+	symbol->metadata.default_mode = 1;
 	symbol->metadata.Nc = DEFAULT_MODULE_COLOR_MODE;
 	symbol->metadata.ecl.x = ecclevel2wcwr[DEFAULT_ECC_LEVEL][0];
 	symbol->metadata.ecl.y = ecclevel2wcwr[DEFAULT_ECC_LEVEL][1];
@@ -1513,11 +1148,12 @@ void loadDefaultMasterMetadata(jab_bitmap* matrix, jab_decoded_symbol* symbol)
  * @param matrix the symbol matrix
  * @param symbol the symbol to be decoded
  * @param data_map the data module positions
- * @param cs the color changing slopes
+ * @param norm_palette the normalized color palettes
+ * @param pal_ths the palette RGB value thresholds
  * @param type the symbol type, 0: master, 1: slave
  * @return JAB_SUCCESS | JAB_FAILURE | DECODE_METADATA_FAILED | FATAL_ERROR
 */
-jab_int32 decodeSymbol(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map, jab_float* cs, jab_int32 type)
+jab_int32 decodeSymbol(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte* data_map, jab_float* norm_palette, jab_float* pal_ths, jab_int32 type)
 {
 #if TEST_MODE
 	jab_int32 color_number = (jab_int32)pow(2, symbol->metadata.Nc + 1);
@@ -1547,7 +1183,7 @@ jab_int32 decodeSymbol(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte*
 	fillDataMap(data_map, matrix->width, matrix->height, type);
 
 	//read raw data
-	jab_data* raw_module_data = readRawModuleData(matrix, symbol, data_map, cs);
+	jab_data* raw_module_data = readRawModuleData(matrix, symbol, data_map, norm_palette, pal_ths);
 	if(raw_module_data == NULL)
 	{
 		JAB_REPORT_ERROR(("Reading raw module data in symbol %d failed", symbol->index))
@@ -1653,6 +1289,18 @@ jab_int32 decodeSymbol(jab_bitmap* matrix, jab_decoded_symbol* symbol, jab_byte*
 	return JAB_SUCCESS;
 }
 
+void normalizeColorPalette(jab_decoded_symbol* symbol, jab_float* norm_palette, jab_int32 color_number)
+{
+	for(jab_int32 i=0; i<(color_number * COLOR_PALETTE_NUMBER); i++)
+	{
+		jab_float rgb_max = MAX(symbol->palette[i*3 + 0], MAX(symbol->palette[i*3 + 1], symbol->palette[i*3 + 2]));
+		norm_palette[i*4 + 0] = (jab_float)symbol->palette[i*3 + 0] / rgb_max;
+		norm_palette[i*4 + 1] = (jab_float)symbol->palette[i*3 + 1] / rgb_max;
+		norm_palette[i*4 + 2] = (jab_float)symbol->palette[i*3 + 2] / rgb_max;
+		norm_palette[i*4 + 3] = ((symbol->palette[i*3 + 0] + symbol->palette[i*3 + 1] + symbol->palette[i*3 + 2]) / 3.0f) / 255.0f; ;
+	}
+}
+
 /**
  * @brief Decode master symbol
  * @param matrix the symbol matrix
@@ -1705,22 +1353,29 @@ jab_int32 decodeMaster(jab_bitmap* matrix, jab_decoded_symbol* symbol)
 		return JAB_FAILURE;
 	}
 
-	//calculate color changing slopes
+	//normalize the RGB values in color palettes
 	jab_int32 color_number = (jab_int32)pow(2, symbol->metadata.Nc + 1);
-	jab_float cs[COLOR_PALETTE_NUMBER * (color_number*3) * 2];	//color slopes for 4 palettes in x and y directions
-	calculateColorSlopes(matrix, symbol->palette, color_number, cs);
+	jab_float norm_palette[color_number * 4 * COLOR_PALETTE_NUMBER];	//each color contains 4 normalized values, i.e. R, G, B and Luminance
+	normalizeColorPalette(symbol, norm_palette, color_number);
+
+	//get the palette RGB thresholds
+	jab_float pal_ths[3 * COLOR_PALETTE_NUMBER];
+	for(jab_int32 i=0; i<COLOR_PALETTE_NUMBER; i++)
+	{
+		getPaletteThreshold(symbol->palette + (color_number*3)*i, color_number, &pal_ths[i*3]);
+	}
 
 	//decode metadata PartII
 	if(decode_partI_ret == JAB_SUCCESS)
 	{
-		if(decodeMasterMetadataPartII(matrix, symbol, data_map, cs, &module_count, &x, &y) <= 0)
+		if(decodeMasterMetadataPartII(matrix, symbol, data_map, norm_palette, pal_ths, &module_count, &x, &y) <= 0)
 		{
 			return JAB_FAILURE;
 		}
 	}
 
 	//decode master symbol
-	return decodeSymbol(matrix, symbol, data_map, cs, 0);
+	return decodeSymbol(matrix, symbol, data_map, norm_palette, pal_ths, 0);
 }
 
 /**
@@ -1753,14 +1408,20 @@ jab_int32 decodeSlave(jab_bitmap* matrix, jab_decoded_symbol* symbol)
 		return FATAL_ERROR;
 	}
 
-	//calculate color changing slope
+	//normalize the RGB values in color palettes
 	jab_int32 color_number = (jab_int32)pow(2, symbol->metadata.Nc + 1);
-	jab_float cs[COLOR_PALETTE_NUMBER * (color_number*3) * 2];	//color slopes for 4 palettes in x and y directions
-	//calculate color changing slopes
-	calculateColorSlopes(matrix, symbol->palette, color_number, cs);
+	jab_float norm_palette[color_number * 4 * COLOR_PALETTE_NUMBER];	//each color contains 4 normalized values, i.e. R, G, B and Luminance
+	normalizeColorPalette(symbol, norm_palette, color_number);
+
+	//get the palette RGB thresholds
+	jab_float pal_ths[3 * COLOR_PALETTE_NUMBER];
+	for(jab_int32 i=0; i<COLOR_PALETTE_NUMBER; i++)
+	{
+		getPaletteThreshold(symbol->palette + i*3, color_number, &pal_ths[i*3]);
+	}
 
 	//decode slave symbol
-	return decodeSymbol(matrix, symbol, data_map, cs, 1);
+	return decodeSymbol(matrix, symbol, data_map, norm_palette, pal_ths, 1);
 }
 
 /**
