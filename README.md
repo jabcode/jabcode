@@ -43,7 +43,25 @@ run `jabcodeReader --help` for the detailed usage
 ##### jabcodeWriter
 run `jabcodeWriter --help` for the detailed usage
 
-## Documentation
+## Build Windows DLL
+Steps to build a DLL library on Windows System.
 
+Step 1: Download and install mingw-w64 from http://mingw-w64.org/.
+
+Step 2: For 64-bit Windows, Step 3 can be skipped, because the necessary libraries are already prebuilt. 
+
+Step 3: For 32-bit Windows, download the source codes of libpng, libtiff and zlib from the following sites. 
+			http://www.libpng.org/
+			http://www.libtiff.org/
+			https://www.zlib.net/
+		Build the static libraries for libpng, libtiff and zlib in mingw-64 and put the built libraries in the folder "jabcode/lib/win64" to replace the 64-bit version. 
+   
+Step 4: Rename the file "Makefile.win" to "Makefile" in the folder "jabcode".
+
+Step 5: Run "make" in mingw-64 in the folder "jabcode".
+
+Step 6: Find the built DLL library "libjabcode.dll" in the folder "jabcode/build".
+
+## Documentation
 * The API documentation is available at [Documentation](https://jabcode.github.io/jabcode/)
 * The technical specification of the barcode is available as [BSI TR03137 - Part 2](https://www.bsi.bund.de/EN/Publications/TechnicalGuidelines/TR03137/BSITR03137.html)
