@@ -65,4 +65,5 @@ Step 6: Find the built DLL library "libjabcode.dll" in the folder "jabcode/build
 ## Documentation
 * The API documentation is available at [Documentation](https://jabcode.github.io/jabcode/)
 * The technical specification of the barcode is available as [BSI TR03137 - Part 2](https://www.bsi.bund.de/EN/Publications/TechnicalGuidelines/TR03137/BSITR03137.html)
-(Note that JabCode is under development for ISO standardization, the source code will be updated from time to time. The documentation above may therefore differ from the source code.)
+
+(*Note that JabCode is under development for ISO standardization, the source code will be updated from time to time. The documentation above may therefore differ from the source code.*)
