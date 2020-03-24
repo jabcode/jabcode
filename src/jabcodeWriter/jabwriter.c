@@ -76,6 +76,7 @@ jab_boolean parseCommandLineParameters(jab_int32 para_number, jab_char* para[])
 				return 0;
 			}
             jab_char* data_string = para[++loop];
+            if(data) free(data);
             data = (jab_data *)malloc(sizeof(jab_data) + strlen(data_string) * sizeof(jab_char));
             if(!data)
             {
@@ -101,6 +102,7 @@ jab_boolean parseCommandLineParameters(jab_int32 para_number, jab_char* para[])
 			jab_int32 file_size;
 			fseek(fp, 0, SEEK_END);
 			file_size = ftell(fp);
+			if(data) free(data);
             data = (jab_data *)malloc(sizeof(jab_data) + file_size * sizeof(jab_char));
             if(!data)
             {

@@ -68,7 +68,7 @@ typedef struct {
 extern void getAveVar(jab_byte* rgb, jab_double* ave, jab_double* var);
 extern void getMinMax(jab_byte* rgb, jab_byte* min, jab_byte* mid, jab_byte* max, jab_int32* index_min, jab_int32* index_mid, jab_int32* index_max);
 extern void balanceRGB(jab_bitmap* bitmap);
-extern jab_boolean binarizerRGB(jab_bitmap* bitmap, jab_bitmap* rgb[3]);
+extern jab_boolean binarizerRGB(jab_bitmap* bitmap, jab_bitmap* rgb[3], jab_float* blk_ths);
 extern jab_bitmap* binarizer(jab_bitmap* bitmap, jab_int32 channel);
 extern jab_bitmap* binarizerHist(jab_bitmap* bitmap, jab_int32 channel);
 extern jab_bitmap* binarizerHard(jab_bitmap* bitmap, jab_int32 channel, jab_int32 threshold);

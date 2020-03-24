@@ -598,9 +598,10 @@ void getMinMax(jab_byte* rgb, jab_byte* min, jab_byte* mid, jab_byte* max, jab_i
  * @brief Binarize a color channel of a bitmap using local binarization algorithm
  * @param bitmap the input bitmap
  * @param rgb the binarized RGB channels
+ * @param blk_ths the black color thresholds for RGB channels
  * @return JAB_SUCCESS | JAB_FAILURE
 */
-jab_boolean binarizerRGB(jab_bitmap* bitmap, jab_bitmap* rgb[3])
+jab_boolean binarizerRGB(jab_bitmap* bitmap, jab_bitmap* rgb[3], jab_float* blk_ths)
 {
 	for(jab_int32 i=0; i<3; i++)
 	{
@@ -620,59 +621,74 @@ jab_boolean binarizerRGB(jab_bitmap* bitmap, jab_bitmap* rgb[3])
 	jab_int32 bytes_per_pixel = bitmap->bits_per_pixel / 8;
     jab_int32 bytes_per_row = bitmap->width * bytes_per_pixel;
 
-	//calculate the average pixel value, block-wise
-	jab_int32 max_block_size = MAX(bitmap->width, bitmap->height) / 2;
-	jab_int32 block_num_x = (bitmap->width % max_block_size) != 0 ? (bitmap->width / max_block_size) + 1 : (bitmap->width / max_block_size);
-	jab_int32 block_num_y = (bitmap->height% max_block_size) != 0 ? (bitmap->height/ max_block_size) + 1 : (bitmap->height/ max_block_size);
-	jab_int32 block_size_x = bitmap->width / block_num_x;
-	jab_int32 block_size_y = bitmap->height/ block_num_y;
+    //calculate the average pixel value, block-wise
+    jab_int32 max_block_size = MAX(bitmap->width, bitmap->height) / 2;
+    jab_int32 block_num_x = (bitmap->width % max_block_size) != 0 ? (bitmap->width / max_block_size) + 1 : (bitmap->width / max_block_size);
+    jab_int32 block_num_y = (bitmap->height% max_block_size) != 0 ? (bitmap->height/ max_block_size) + 1 : (bitmap->height/ max_block_size);
+    jab_int32 block_size_x = bitmap->width / block_num_x;
+    jab_int32 block_size_y = bitmap->height/ block_num_y;
+    jab_float pixel_ave[block_num_x*block_num_y][3];
+    memset(pixel_ave, 0, sizeof(jab_float)*block_num_x*block_num_y*3);
+    if(blk_ths == 0)
+    {
+        for(jab_int32 i=0; i<block_num_y; i++)
+        {
+            for(jab_int32 j=0; j<block_num_x; j++)
+            {
+                jab_int32 block_index = i*block_num_x + j;
 
-	jab_float pixel_ave[block_num_x*block_num_y][3];
-	memset(pixel_ave, 0, sizeof(jab_float)*block_num_x*block_num_y*3);
-	for(jab_int32 i=0; i<block_num_y; i++)
-	{
-		for(jab_int32 j=0; j<block_num_x; j++)
-		{
-			jab_int32 block_index = i*block_num_x + j;
-
-			jab_int32 sx = j * block_size_x;
-			jab_int32 ex = (j == block_num_x-1) ? bitmap->width : (sx + block_size_x);
-			jab_int32 sy = i * block_size_y;
-			jab_int32 ey = (i == block_num_y-1) ? bitmap->height: (sy + block_size_y);
-			jab_int32 counter = 0;
-			for(jab_int32 y=sy; y<ey; y++)
-			{
-				for(jab_int32 x=sx; x<ex; x++)
-				{
-					jab_int32 offset = y * bytes_per_row + x * bytes_per_pixel;
-					pixel_ave[block_index][0] += bitmap->pixel[offset + 0];
-					pixel_ave[block_index][1] += bitmap->pixel[offset + 1];
-					pixel_ave[block_index][2] += bitmap->pixel[offset + 2];
-					counter++;
-				}
-			}
-			pixel_ave[block_index][0] /= counter;
-			pixel_ave[block_index][1] /= counter;
-			pixel_ave[block_index][2] /= counter;
-		}
-	}
+                jab_int32 sx = j * block_size_x;
+                jab_int32 ex = (j == block_num_x-1) ? bitmap->width : (sx + block_size_x);
+                jab_int32 sy = i * block_size_y;
+                jab_int32 ey = (i == block_num_y-1) ? bitmap->height: (sy + block_size_y);
+                jab_int32 counter = 0;
+                for(jab_int32 y=sy; y<ey; y++)
+                {
+                    for(jab_int32 x=sx; x<ex; x++)
+                    {
+                        jab_int32 offset = y * bytes_per_row + x * bytes_per_pixel;
+                        pixel_ave[block_index][0] += bitmap->pixel[offset + 0];
+                        pixel_ave[block_index][1] += bitmap->pixel[offset + 1];
+                        pixel_ave[block_index][2] += bitmap->pixel[offset + 2];
+                        counter++;
+                    }
+                }
+                pixel_ave[block_index][0] /= (jab_float)counter;
+                pixel_ave[block_index][1] /= (jab_float)counter;
+                pixel_ave[block_index][2] /= (jab_float)counter;
+            }
+        }
+    }
 
 	//binarize each pixel in each channel
 	jab_double ths_std = 0.08;
+	jab_float rgb_ths[3] = {0, 0, 0};
     for(jab_int32 i=0; i<bitmap->height; i++)
 	{
 		for(jab_int32 j=0; j<bitmap->width; j++)
 		{
 			jab_int32 offset = i * bytes_per_row + j * bytes_per_pixel;
 			//check black pixel
-			jab_int32 block_index = MIN(i/block_size_y, block_num_y-1) * block_num_x + MIN(j/block_size_x, block_num_x-1);
-			if(bitmap->pixel[offset + 0] < pixel_ave[block_index][0] && bitmap->pixel[offset + 1] < pixel_ave[block_index][1] && bitmap->pixel[offset + 2] < pixel_ave[block_index][2])
-			{
-				rgb[0]->pixel[i*bitmap->width + j] = 0;
-				rgb[1]->pixel[i*bitmap->width + j] = 0;
-				rgb[2]->pixel[i*bitmap->width + j] = 0;
-				continue;
-			}
+			if(blk_ths == 0)
+            {
+                jab_int32 block_index = MIN(i/block_size_y, block_num_y-1) * block_num_x + MIN(j/block_size_x, block_num_x-1);
+                rgb_ths[0] = pixel_ave[block_index][0];
+                rgb_ths[1] = pixel_ave[block_index][1];
+                rgb_ths[2] = pixel_ave[block_index][2];
+            }
+            else
+            {
+                rgb_ths[0] = blk_ths[0];
+                rgb_ths[1] = blk_ths[1];
+                rgb_ths[2] = blk_ths[2];
+            }
+			if(bitmap->pixel[offset + 0] < rgb_ths[0] && bitmap->pixel[offset + 1] < rgb_ths[1] && bitmap->pixel[offset + 2] < rgb_ths[2])
+            {
+                rgb[0]->pixel[i*bitmap->width + j] = 0;
+                rgb[1]->pixel[i*bitmap->width + j] = 0;
+                rgb[2]->pixel[i*bitmap->width + j] = 0;
+                continue;
+            }
 
 			jab_double ave, var;
 			getAveVar(&bitmap->pixel[offset], &ave, &var);
@@ -682,7 +698,7 @@ jab_boolean binarizerRGB(jab_bitmap* bitmap, jab_bitmap* rgb[3])
 			getMinMax(&bitmap->pixel[offset], &min, &mid, &max, &index_min, &index_mid, &index_max);
 			std /= (jab_double)max;	//normalize std
 
-			if(std < ths_std && (bitmap->pixel[offset + 0] > pixel_ave[block_index][0] && bitmap->pixel[offset + 1] > pixel_ave[block_index][1] && bitmap->pixel[offset + 2] > pixel_ave[block_index][2]))
+			if(std < ths_std && (bitmap->pixel[offset + 0] > rgb_ths[0] && bitmap->pixel[offset + 1] > rgb_ths[1] && bitmap->pixel[offset + 2] > rgb_ths[2]))
 			{
 				rgb[0]->pixel[i*bitmap->width + j] = 255;
 				rgb[1]->pixel[i*bitmap->width + j] = 255;

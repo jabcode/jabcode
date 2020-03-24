@@ -1116,16 +1116,6 @@ jab_finder_pattern getBestPattern(jab_finder_pattern* fps, jab_int32 fp_count)
 */
 jab_int32 selectBestPatterns(jab_finder_pattern* fps, jab_int32 fp_count, jab_int32* fp_type_count)
 {
-	//check if more than one finder pattern type not found
-	jab_int32 missing_fp_type_count = 0;
-	for(jab_int32 i=FP0; i<=FP3; i++)
-	{
-		if(fp_type_count[i] == 0)
-			missing_fp_type_count++;
-	}
-	if(missing_fp_type_count > 1)
-		return missing_fp_type_count;
-
     //classify finder patterns into four types
     jab_finder_pattern fps0[fp_type_count[FP0]];
     jab_finder_pattern fps1[fp_type_count[FP1]];
@@ -1135,6 +1125,9 @@ jab_int32 selectBestPatterns(jab_finder_pattern* fps, jab_int32 fp_count, jab_in
 
     for(jab_int32 i=0; i<fp_count; i++)
     {
+        //abandon the finder patterns which are founds less than 3 times,
+        //which means a module shall not be smaller than 3 pixels.
+        if(fps[i].found_count < 3) continue;
         switch (fps[i].type)
         {
             case FP0:
@@ -1181,24 +1174,24 @@ jab_int32 selectBestPatterns(jab_finder_pattern* fps, jab_int32 fp_count, jab_in
 	else
 		memset(&fps[3], 0, sizeof(jab_finder_pattern));
 
-	//check finder patterns' direction
-	//if the direction of fp0 and fp1 not consistent, abandon the one with smaller found_count
-/*	if(fps[0].found_count > 0 && fps[1].found_count > 0 && fps[0].found_count != fps[1].found_count && fps[0].direction != fps[1].direction)
-	{
-		if(fps[0].found_count < fps[1].found_count)
-			fps[0].found_count = 0;
-		else
-			fps[1].found_count = 0;
-	}
-	//if the direction of fp2 and fp3 not consistent, abandon the one with smaller found_count
-	if(fps[2].found_count > 0 && fps[3].found_count > 0 && fps[2].found_count != fps[3].found_count && fps[2].direction != fps[3].direction)
-	{
-		if(fps[2].found_count < fps[3].found_count)
-			fps[2].found_count = 0;
-		else
-			fps[3].found_count = 0;
-	}
-*/
+    //if the found-count of a FP is smaller than the half of the max-found-count, abandon it
+    jab_int32 max_found_count = 0;
+    for(jab_int32 i=0; i<4; i++)
+    {
+        if(fps[i].found_count > max_found_count)
+        {
+            max_found_count = fps[i].found_count;
+        }
+    }
+    for(jab_int32 i=0; i<4; i++)
+    {
+        if(fps[i].found_count > 0)
+        {
+            if(fps[i].found_count < (0.5*max_found_count))
+                memset(&fps[i], 0, sizeof(jab_finder_pattern));
+        }
+    }
+
 	//check how many finder patterns are not found
 	jab_int32 missing_fp_count = 0;
 	for(jab_int32 i=0; i<4; i++)
@@ -1344,18 +1337,8 @@ void scanPatternVertical(jab_bitmap* ch[], jab_int32 min_module_size, jab_finder
 */
 void seekMissingFinderPattern(jab_bitmap* bitmap, jab_finder_pattern* fps, jab_int32 miss_fp_index)
 {
-	//calculate the average module size
-	jab_float ave_module_size = 0;
-	for(jab_int32 i=0; i<4; i++)
-	{
-		if(fps[i].found_count > 1)
-		{
-			ave_module_size += fps[i].module_size;
-		}
-	}
-	ave_module_size /= 3;
 	//determine the search area
-	jab_int32 radius = ave_module_size * 5;	//search radius
+	jab_float radius = fps[miss_fp_index].module_size * 5;	//search radius
 	jab_int32 start_x = (fps[miss_fp_index].center.x - radius) >= 0 ? (fps[miss_fp_index].center.x - radius) : 0;
 	jab_int32 start_y = (fps[miss_fp_index].center.y - radius) >= 0 ? (fps[miss_fp_index].center.y - radius) : 0;
 	jab_int32 end_x	  = (fps[miss_fp_index].center.x + radius) <= (bitmap->width - 1) ? (fps[miss_fp_index].center.x + radius) : (bitmap->width - 1);
@@ -1394,9 +1377,9 @@ void seekMissingFinderPattern(jab_bitmap* bitmap, jab_finder_pattern* fps, jab_i
 			pixel_sum[2] += bitmap->pixel[offset + 2];
 		}
 	}
-	pixel_ave[0] = pixel_sum[0] / (area_width * area_height);
-	pixel_ave[1] = pixel_sum[1] / (area_width * area_height);
-	pixel_ave[2] = pixel_sum[2] / (area_width * area_height);
+	pixel_ave[0] = pixel_sum[0] / (jab_float)(area_width * area_height);
+	pixel_ave[1] = pixel_sum[1] / (jab_float)(area_width * area_height);
+	pixel_ave[2] = pixel_sum[2] / (jab_float)(area_width * area_height);
 
 	//quantize the pixels inside the search area to black, cyan and yellow
 	for(jab_int32 i=start_y, y=0; i<end_y; i++, y++)
@@ -1558,21 +1541,24 @@ void seekMissingFinderPattern(jab_bitmap* bitmap, jab_finder_pattern* fps, jab_i
             }
         }while(startx < rgb[0]->width && endx < rgb[0]->width);
     }
-	//get the best found
-	jab_int32 max_found = 0;
-	jab_int32 max_index = 0;
-	for(jab_int32 i=0; i<total_finder_patterns; i++)
-	{
-		if(fps_miss[i].found_count > max_found)
-		{
-			max_found = fps_miss[i].found_count;
-			max_index = i;
-		}
-	}
-	fps[miss_fp_index] = fps_miss[max_index];
-	//recover the coordinates in bitmap
-	fps[miss_fp_index].center.x += start_x;
-	fps[miss_fp_index].center.y += start_y;
+	//if the missing FP is found, get the best found
+	if(total_finder_patterns > 0)
+    {
+        jab_int32 max_found = 0;
+        jab_int32 max_index = 0;
+        for(jab_int32 i=0; i<total_finder_patterns; i++)
+        {
+            if(fps_miss[i].found_count > max_found)
+            {
+                max_found = fps_miss[i].found_count;
+                max_index = i;
+            }
+        }
+        fps[miss_fp_index] = fps_miss[max_index];
+        //recover the coordinates in bitmap
+        fps[miss_fp_index].center.x += start_x;
+        fps[miss_fp_index].center.y += start_y;
+    }
 }
 
 /**
@@ -1580,9 +1566,10 @@ void seekMissingFinderPattern(jab_bitmap* bitmap, jab_finder_pattern* fps, jab_i
  * @param bitmap the image bitmap
  * @param ch the binarized color channels of the image
  * @param mode the detection mode
+ * @param status the detection status
  * @return the finder pattern list | NULL
 */
-jab_finder_pattern* findMasterSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_detect_mode mode)
+jab_finder_pattern* findMasterSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_detect_mode mode, jab_int32* status)
 {
     //suppose the code size is minimally 1/4 image size
     jab_int32 min_module_size = ch[0]->height / (2 * MAX_SYMBOL_ROWS * MAX_MODULES);
@@ -1592,6 +1579,7 @@ jab_finder_pattern* findMasterSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_d
     if(fps == NULL)
     {
         reportError("Memory allocation for finder patterns failed");
+        *status = FATAL_ERROR;
         return NULL;
     }
     jab_int32 total_finder_patterns = 0;
@@ -1737,14 +1725,6 @@ jab_finder_pattern* findMasterSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_d
     saveImage(test_mode_bitmap, "jab_detector_result_fp.png");
 #endif
 
-    //if less than 3 finder patterns are found, detection fails
-    if(total_finder_patterns < 3)
-    {
-        reportError("Too few finder patterns found");
-        free(fps);
-        return NULL;
-    }
-
     //set finder patterns' direction
 	for(jab_int32 i=0; i<total_finder_patterns; i++)
 	{
@@ -1756,9 +1736,9 @@ jab_finder_pattern* findMasterSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_d
 	//if more than one finder patterns are missing, detection fails
 	if(missing_fp_count > 1)
 	{
-		reportError("Too few finder pattern types found");
-		free(fps);
-		return NULL;
+		reportError("Too few finder pattern found");
+		*status = JAB_FAILURE;
+		return fps;
 	}
 
     //if only one finder pattern is missing, try anyway by estimating the missing one
@@ -1819,13 +1799,14 @@ jab_finder_pattern* findMasterSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_d
 		   fps[miss_fp].center.y < 0 || fps[miss_fp].center.y > ch[0]->height - 1)
 		{
 			JAB_REPORT_ERROR(("Finder pattern %d out of image", miss_fp))
-			free(fps);
-			return NULL;
+			fps[miss_fp].found_count = 0;
+			*status = JAB_FAILURE;
+			return fps;
 		}
 
 		//try to find the missing finder pattern by a local search at the estimated position
 #if TEST_MODE
-		JAB_REPORT_INFO(("Trying to confirm the missing finder pattern by a local search..."))
+		JAB_REPORT_INFO(("Trying to confirm the missing finder pattern by a local search"))
 #endif
 		seekMissingFinderPattern(bitmap, fps, miss_fp);
     }
@@ -1839,6 +1820,7 @@ jab_finder_pattern* findMasterSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_d
 	drawFoundFinderPatterns(fps, 4, 0xff0000);
 	saveImage(test_mode_bitmap, "jab_detector_result_fp.png");
 #endif
+    *status = JAB_SUCCESS;
     return fps;
 }
 
@@ -3269,6 +3251,74 @@ jab_bitmap* sampleSymbolByAlignmentPattern(jab_bitmap* bitmap, jab_bitmap* ch[],
 }
 
 /**
+ * @brief Get the average pixel value around the found finder patterns
+ * @param bitmap the image bitmap
+ * @param fps the finder patterns
+ * @param rgb_ave the average pixel value
+*/
+void getAveragePixelValue(jab_bitmap* bitmap, jab_finder_pattern* fps, jab_float* rgb_ave)
+{
+    jab_float r_ave[4] = {0, 0, 0, 0};
+    jab_float g_ave[4] = {0, 0, 0, 0};
+    jab_float b_ave[4] = {0, 0, 0, 0};
+
+    //calculate average pixel value around each found FP
+    for(jab_int32 i=0; i<4; i++)
+    {
+        if(fps[i].found_count <= 0) continue;
+
+        jab_float radius = fps[i].module_size * 4;
+        jab_int32 start_x = (fps[i].center.x - radius) >= 0 ? (fps[i].center.x - radius) : 0;
+        jab_int32 start_y = (fps[i].center.y - radius) >= 0 ? (fps[i].center.y - radius) : 0;
+        jab_int32 end_x	  = (fps[i].center.x + radius) <= (bitmap->width - 1) ? (fps[i].center.x + radius) : (bitmap->width - 1);
+        jab_int32 end_y   = (fps[i].center.y + radius) <= (bitmap->height- 1) ? (fps[i].center.y + radius) : (bitmap->height- 1);
+        jab_int32 area_width = end_x - start_x;
+        jab_int32 area_height= end_y - start_y;
+
+        jab_int32 bytes_per_pixel = bitmap->bits_per_pixel / 8;
+        jab_int32 bytes_per_row = bitmap->width * bytes_per_pixel;
+        for(jab_int32 y=start_y; y<end_y; y++)
+        {
+            for(jab_int32 x=start_x; x<end_x; x++)
+            {
+                jab_int32 offset = y * bytes_per_row + x * bytes_per_pixel;
+                r_ave[i] += bitmap->pixel[offset + 0];
+                g_ave[i] += bitmap->pixel[offset + 1];
+                b_ave[i] += bitmap->pixel[offset + 2];
+            }
+        }
+        r_ave[i] /= (jab_float)(area_width * area_height);
+        g_ave[i] /= (jab_float)(area_width * area_height);
+        b_ave[i] /= (jab_float)(area_width * area_height);
+    }
+
+    //calculate the average values of the average pixel values
+    jab_float rgb_sum[3] = {0, 0, 0};
+    jab_int32 rgb_count[3] = {0, 0, 0};
+    for(jab_int32 i=0; i<4; i++)
+    {
+        if(r_ave[i] > 0)
+        {
+            rgb_sum[0] += r_ave[i];
+            rgb_count[0]++;
+        }
+        if(g_ave[i] > 0)
+        {
+            rgb_sum[1] += g_ave[i];
+            rgb_count[1]++;
+        }
+        if(b_ave[i] > 0)
+        {
+            rgb_sum[2] += b_ave[i];
+            rgb_count[2]++;
+        }
+    }
+    if(rgb_count[0] > 0) rgb_ave[0] = rgb_sum[0] / (jab_float)rgb_count[0];
+    if(rgb_count[1] > 0) rgb_ave[1] = rgb_sum[1] / (jab_float)rgb_count[1];
+    if(rgb_count[2] > 0) rgb_ave[2] = rgb_sum[2] / (jab_float)rgb_count[2];
+}
+
+/**
  * @brief Detect and decode a master symbol
  * @param bitmap the image bitmap
  * @param ch the binarized color channels of the image
@@ -3279,10 +3329,31 @@ jab_boolean detectMaster(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_symbo
 {
     //find master symbol
     jab_finder_pattern* fps;
-    fps = findMasterSymbol(bitmap, ch, INTENSIVE_DETECT);
-    if(fps == NULL)
+    jab_int32 status;
+    fps = findMasterSymbol(bitmap, ch, INTENSIVE_DETECT, &status);
+    if(status == FATAL_ERROR) return JAB_FAILURE;
+    else if(status == JAB_FAILURE)
     {
-        return JAB_FAILURE;
+#if TEST_MODE
+        JAB_REPORT_INFO(("Trying to detect more finder patterns based on the found ones"))
+#endif
+        //calculate the average pixel value around the found FPs
+        jab_float rgb_ave[3];
+        getAveragePixelValue(bitmap, fps, rgb_ave);
+        free(fps);
+        //binarize the bitmap using the average pixel values as thresholds
+        for(jab_int32 i=0; i<3; free(ch[i++]));
+        if(!binarizerRGB(bitmap, ch, rgb_ave))
+        {
+            return JAB_FAILURE;
+        }
+        //find master symbol
+        fps = findMasterSymbol(bitmap, ch, INTENSIVE_DETECT, &status);
+        if(status == JAB_FAILURE || status == FATAL_ERROR)
+        {
+            free(fps);
+            return JAB_FAILURE;
+        }
     }
 
     //calculate the master symbol side size
@@ -3488,7 +3559,7 @@ jab_data* decodeJABCodeEx(jab_bitmap* bitmap, jab_int32 mode, jab_int32* status,
 	//binarize r, g, b channels
 	jab_bitmap* ch[3];
 	balanceRGB(bitmap);
-    if(!binarizerRGB(bitmap, ch))
+    if(!binarizerRGB(bitmap, ch, 0))
 	{
 		return NULL;
 	}
