@@ -458,6 +458,7 @@ jab_int32* analyzeInputData(jab_data* input, jab_int32* encoded_length)
     //->>length will be increased by 13
     jab_int32 counter=0;
     jab_int32 seq_len=0;
+	jab_int32 modeswitch=0;
     encode_seq[curr_seq_counter]=current_mode;//prev_mode[(curr_seq_counter)*14+current_mode];//prev_mode[(curr_seq_counter+is_shift-1)*14+current_mode];
     seq_len+=character_size[encode_seq[curr_seq_counter]%7];
     for (jab_int32 i=curr_seq_counter;i>0;i--)
@@ -470,7 +471,38 @@ jab_int32* analyzeInputData(jab_data* input, jab_int32* encoded_length)
             {
                 encode_seq_length+=13;
                 seq_len+=13;
-                counter=0;
+
+				//--------------------------------
+				if(counter>8207) //2^13+15
+				{
+					if (encode_seq[i]==0 || encode_seq[i]==1 || encode_seq[i]==7 || encode_seq[i]==8)
+						modeswitch=11;
+					if (encode_seq[i]==2 || encode_seq[i]==9)
+						modeswitch=10;
+					if (encode_seq[i]==5 || encode_seq[i]==12)
+						modeswitch=12;
+					jab_int32 remain_in_byte_mode=counter/8207;
+					jab_int32 remain_in_byte_mode_residual=counter%8207;
+					encode_seq_length+=(remain_in_byte_mode) * modeswitch;
+					seq_len+=(remain_in_byte_mode) * modeswitch;
+					if(remain_in_byte_mode_residual<16)
+					{
+						encode_seq_length+=(remain_in_byte_mode-1) * 13;
+						seq_len+=(remain_in_byte_mode-1) * 13;
+					}
+					else
+					{
+						encode_seq_length+=remain_in_byte_mode * 13;
+						seq_len+=remain_in_byte_mode * 13;
+					}
+					if(remain_in_byte_mode_residual==0)
+					{
+						encode_seq_length-= modeswitch;
+						seq_len-= modeswitch;
+					}
+				}
+				//--------------------------------
+				counter=0;
             }
         }
         if (encode_seq[i]<14 && i-1!=0)
@@ -489,7 +521,33 @@ jab_int32* analyzeInputData(jab_data* input, jab_int32* encoded_length)
             {
                 encode_seq_length+=13;
                 seq_len+=13;
-                counter=0;
+
+				//--------------------------------
+				if(counter>8207) //2^13+15
+				{
+					modeswitch=11;
+					jab_int32 remain_in_byte_mode=counter/8207;
+					jab_int32 remain_in_byte_mode_residual=counter%8207;
+					encode_seq_length+=remain_in_byte_mode * modeswitch;
+					seq_len+=remain_in_byte_mode * modeswitch;
+					if(remain_in_byte_mode_residual<16)
+					{
+						encode_seq_length+=(remain_in_byte_mode-1) * 13;
+						seq_len+=(remain_in_byte_mode-1) * 13;
+					}
+					else
+					{
+						encode_seq_length+=remain_in_byte_mode * 13;
+						seq_len+=remain_in_byte_mode * 13;
+					}
+					if(remain_in_byte_mode_residual==0)
+					{
+						encode_seq_length-= modeswitch;
+						seq_len-= modeswitch;
+					}
+				}
+				//--------------------------------
+				counter=0;
             }
         }
         else
@@ -658,6 +716,7 @@ jab_data* encodeData(jab_data* data, jab_int32 encoded_length,jab_int32* encode_
     jab_int32 end_of_loop=data->length;
     jab_int32 byte_offset=0;
     jab_int32 byte_counter=0;
+	jab_int32 factor=1;
     //encoding starts in upper case mode
     for (jab_int32 i=0;i<end_of_loop;i++)
     {
@@ -747,11 +806,51 @@ jab_data* encodeData(jab_data* data, jab_int32 encoded_length,jab_int32* encode_
                     position+=4;
                     if(byte_counter > 15)
                     {
-                        convert_dec_to_bin(byte_counter-15-1,encoded_data->data,position,13);
+						if(byte_counter <= 8207)//8207=2^13+15; if number of bytes exceeds 8207, encoder shall shift to byte mode again from upper case mode && byte_counter < 8207
+						{
+							convert_dec_to_bin(byte_counter-15-1,encoded_data->data,position,13);
+						}
+						else
+						{
+							convert_dec_to_bin(8191,encoded_data->data,position,13);
+						}
                         position+=13;
                     }
                     byte_offset=byte_counter;
                 }
+				if(byte_offset-byte_counter==factor*8207) //byte mode exceeds 2^13 + 15
+				{
+					if(encode_seq[counter-(byte_offset-byte_counter)]==0 || encode_seq[counter-(byte_offset-byte_counter)]==7 || encode_seq[counter-(byte_offset-byte_counter)]==1|| encode_seq[counter-(byte_offset-byte_counter)]==8)
+					{
+						convert_dec_to_bin(124,encoded_data->data,position,7);// shift from upper case to byte
+						position+=7;
+					}
+					if(encode_seq[counter-(byte_offset-byte_counter)]==2 || encode_seq[counter-(byte_offset-byte_counter)]==9)
+					{
+						convert_dec_to_bin(60,encoded_data->data,position,5);// shift from numeric to byte
+						position+=5;
+					}
+					if(encode_seq[counter-(byte_offset-byte_counter)]==5 || encode_seq[counter-(byte_offset-byte_counter)]==12)
+					{
+						convert_dec_to_bin(252,encoded_data->data,position,8);// shift from alphanumeric to byte
+						position+=8;
+					}
+					convert_dec_to_bin(byte_counter > 15 ? 0 : byte_counter,encoded_data->data,position,4); //write the first 4 bits
+					position+=4;
+					if(byte_counter > 15) //if more than 15 bytes -> use the next 13 bits to wirte the length
+					{
+						if(byte_counter <= 8207)//8207=2^13+15; if number of bytes exceeds 8207, encoder shall shift to byte mode again from upper case mode && byte_counter < 8207
+						{
+							convert_dec_to_bin(byte_counter-15-1,encoded_data->data,position,13);
+						}
+						else //number exceeds 2^13 + 15
+						{
+							convert_dec_to_bin(8191,encoded_data->data,position,13);
+						}
+						position+=13;
+					}
+					factor++;
+				}
                 if (character_size[encode_seq[counter+1]%7] < ENC_MAX)
                     convert_dec_to_bin(tmp,encoded_data->data,position,character_size[encode_seq[counter+1]%7]);
                 else
@@ -774,6 +873,7 @@ jab_data* encodeData(jab_data* data, jab_int32 encoded_length,jab_int32* encode_
                 shift_back=0;
                 byte_offset=0;
             }
+
         }
         else
         {
@@ -2115,7 +2215,6 @@ jab_int32 generateJABCode(jab_encode* enc, jab_data* data)
     {
         return 1;
     }
-
     //set master symbol version if not given
     if(enc->symbol_number == 1 && (enc->symbol_versions[0].x == 0 || enc->symbol_versions[0].y == 0))
     {

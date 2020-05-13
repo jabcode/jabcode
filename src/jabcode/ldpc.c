@@ -1161,7 +1161,7 @@ jab_int32 decodeMessageBP(jab_float* enc, jab_int32* matrix, jab_int32 length, j
 }
 
 /**
- * @brief LDPC decoding to performe soft decision
+ * @brief LDPC decoding to perform soft decision
  * @param enc the probability value for each bit position
  * @param length the encoded data length
  * @param wc the number of '1's in each column
@@ -1176,8 +1176,8 @@ jab_int32 decodeLDPC(jab_float* enc, jab_int32 length, jab_int32 wc, jab_int32 w
     jab_int32 Pn, Pg, decoded_data_len = 0;
     if(wr > 3)
     {
-        Pg      = wr * (length / wr);
-        Pn      = Pg * (wr - wc) / wr;                //number of source symbols
+        Pg = wr * (length / wr);
+        Pn = Pg * (wr - wc) / wr; //number of source symbols
     }
     else
     {
