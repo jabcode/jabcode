@@ -8,7 +8,7 @@ JAB Code (Just Another Bar Code) is a high-capacity 2D color bar code, which can
 
 ## Introduction
 
-JAB Code is a color two-dimensional matrix symbology whose basic symbols are made of colorful square modules arranged in either square or rectangle grids. JAB Code has two types of basic symbols, named as master symbol and slave symbol. A JAB Code contains one master symbol and optionally multiple slave symbols. Master symbol contains four finder patterns located at the corners of the symbol, while slave symbol contains no finder pattern. A slave symbol can be docked to a master symbol or another docked slave symbol in either horizontal or vertical direction. JAB Code can encode from small to large amount of data correlated to user-specified percentages of error correction.
+JAB Code is a color two-dimensional matrix symbology whose basic symbols are made of colorful square modules arranged in either square or rectangle grids. JAB Code has two types of basic symbols, named as primary symbol and secondary symbol. A JAB Code contains one primary symbol and optionally multiple secondary symbols. Primary symbol contains four finder patterns located at the corners of the symbol, while secondary symbol contains no finder pattern. A secondary symbol can be docked to a primary symbol or another docked secondary symbol in either horizontal or vertical direction. JAB Code can encode from small to large amount of data correlated to user-specified percentages of error correction.
 
 A demo webinterface is [provided](https://jabcode.org/create) to evaluate the library:
 [![JAB Demo Webinterface](docs/img/jabcode_interface.png)](https://jabcode.org/create)
