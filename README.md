@@ -4,7 +4,7 @@
 
 # JAB Code
 
-JAB Code (Just Another Bar Code) is a high-capacity 2D color bar code, which can encode more data than traditional black/white (QR) codes. This repository contains a library for reading and writing JAB codes, along with sample applications. A demo webinterface is available at https://jabcode.org.
+JAB Code (Just Another Bar Code) is a high-capacity 2D color bar code, which can encode more data than traditional black/white codes. This repository contains a library for reading and writing JAB codes, along with sample applications. A demo webinterface is available at https://jabcode.org.
 
 ## Introduction
 
