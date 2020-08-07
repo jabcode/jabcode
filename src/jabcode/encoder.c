@@ -198,7 +198,7 @@ jab_encode* createEncode(jab_int32 color_number, jab_int32 symbol_number)
     if(enc->palette == NULL)
     {
         reportError("Memory allocation for palette failed");
-        return NULL;
+        goto freeEnc;
     }
     setDefaultPalette(enc->color_number, enc->palette);
     //allocate memory for symbol versions
@@ -206,14 +206,14 @@ jab_encode* createEncode(jab_int32 color_number, jab_int32 symbol_number)
     if(enc->symbol_versions == NULL)
     {
         reportError("Memory allocation for symbol versions failed");
-        return NULL;
+        goto freeEncSymbolsVersions;
     }
     //set default error correction levels
     enc->symbol_ecc_levels = (jab_byte *)calloc(symbol_number, sizeof(jab_byte));
     if(enc->symbol_ecc_levels == NULL)
     {
         reportError("Memory allocation for ecc levels failed");
-        return NULL;
+        goto freeEncSymbolsECCLevels;
     }
     setDefaultEccLevels(enc->symbol_number, enc->symbol_ecc_levels);
     //allocate memory for symbol positions
@@ -221,16 +221,28 @@ jab_encode* createEncode(jab_int32 color_number, jab_int32 symbol_number)
     if(enc->symbol_positions == NULL)
     {
         reportError("Memory allocation for symbol positions failed");
-        return NULL;
+        goto freeEncSymbolspositions;
     }
     //allocate memory for symbols
     enc->symbols = (jab_symbol *)calloc(symbol_number, sizeof(jab_symbol));
     if(enc->symbols == NULL)
     {
         reportError("Memory allocation for symbols failed");
-        return NULL;
+        goto freeEncSymbols;
     }
     return enc;
+
+freeEncSymbols:
+    free(enc->symbols);
+freeEncSymbolspositions:
+    free(enc->symbol_positions);
+freeEncSymbolsECCLevels:
+    free(enc->symbol_ecc_levels);
+freeEncSymbolsVersions:
+    free(enc->symbol_versions);
+freeEnc:
+    free(enc);
+    return NULL;
 }
 
 /**
