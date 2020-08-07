@@ -932,7 +932,7 @@ jab_boolean encodeMasterMetadata(jab_encode* enc)
 	if(partII == NULL)
 	{
 		reportError("Memory allocation for metadata Part II in master symbol failed");
-		return JAB_FAILURE;
+		goto freePartII;
 	}
 	partII->length = partII_length;
 	convert_dec_to_bin(V,   partII->data, 0, V_length);
@@ -947,23 +947,23 @@ jab_boolean encodeMasterMetadata(jab_encode* enc)
 	if(encoded_partI == NULL)
 	{
 		reportError("LDPC encoding master metadata Part I failed");
-		return JAB_FAILURE;
+        goto freeEncodedPartI;
 	}
 	//Part II
 	jab_data* encoded_partII  = encodeLDPC(partII, wcwr);
 	if(encoded_partII == NULL)
 	{
 		reportError("LDPC encoding master metadata Part II failed");
-		return JAB_FAILURE;
-	}
+        goto freeEncodedPartII;
+    }
 
 	jab_int32 encoded_metadata_length = encoded_partI->length + encoded_partII->length;
 	enc->symbols[0].metadata = (jab_data *)malloc(sizeof(jab_data) + encoded_metadata_length*sizeof(jab_char));
 	if(enc->symbols[0].metadata == NULL)
 	{
 		reportError("Memory allocation for encoded metadata in master symbol failed");
-		return JAB_FAILURE;
-	}
+        goto freeEncSymbolsMetadata;
+    }
 	enc->symbols[0].metadata->length = encoded_metadata_length;
 	//copy encoded parts into metadata
 	memcpy(enc->symbols[0].metadata->data, encoded_partI->data, encoded_partI->length);
@@ -974,6 +974,16 @@ jab_boolean encodeMasterMetadata(jab_encode* enc)
 	free(encoded_partI);
 	free(encoded_partII);
     return JAB_SUCCESS;
+
+freeEncSymbolsMetadata:
+    free(enc->symbols[0].metadata);
+freeEncodedPartII:
+    free(encoded_partII);
+freeEncodedPartI:
+    free(encoded_partI);
+freePartII:
+    free(partII);
+    return JAB_FAILURE;
 }
 
 /**
