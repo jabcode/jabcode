@@ -2419,6 +2419,10 @@ jab_boolean findSlaveSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_sy
         return JAB_FAILURE;
     }
 
+    //get slave symbol side size from its metadata
+    slave_symbol->side_size.x = VERSION2SIZE(slave_symbol->metadata.side_version.x);
+    slave_symbol->side_size.y = VERSION2SIZE(slave_symbol->metadata.side_version.y);
+
     //docked horizontally
     jab_float distx01 = host_symbol->pattern_positions[1].x - host_symbol->pattern_positions[0].x;
     jab_float disty01 = host_symbol->pattern_positions[1].y - host_symbol->pattern_positions[0].y;
@@ -2432,6 +2436,7 @@ jab_boolean findSlaveSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_sy
 
     jab_float alpha1 = 0.0f, alpha2 = 0.0f;
     jab_int32 sign = 1;
+    jab_int32 docked_side_size = 0, undocked_side_size;
     jab_int32 ap1 = 0, ap2 = 0, ap3 = 0, ap4 = 0, hp1 = 0, hp2 = 0;
     switch(docked_position)
     {
@@ -2446,6 +2451,8 @@ jab_boolean findSlaveSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_sy
             alpha1 = atan2(disty01, distx01);
             alpha2 = atan2(disty32, distx32);
             sign = 1;
+            docked_side_size   = slave_symbol->side_size.y;
+            undocked_side_size = slave_symbol->side_size.x;
             ap1 = AP0;	//ap[0]
             ap2 = AP3;	//ap[3]
             ap3 = AP1;	//ap[1]
@@ -2465,6 +2472,8 @@ jab_boolean findSlaveSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_sy
             alpha1 = atan2(disty32, distx32);
             alpha2 = atan2(disty01, distx01);
             sign = -1;
+            docked_side_size   = slave_symbol->side_size.y;
+            undocked_side_size = slave_symbol->side_size.x;
             ap1 = AP2;	//ap[2]
             ap2 = AP1;	//ap[1]
             ap3 = AP3;	//ap[3]
@@ -2491,6 +2500,8 @@ jab_boolean findSlaveSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_sy
             alpha1 = atan2(disty12, distx12);
             alpha2 = atan2(disty03, distx03);
             sign = 1;
+            docked_side_size   = slave_symbol->side_size.x;
+            undocked_side_size = slave_symbol->side_size.y;
             ap1 = AP1;	//ap[1]
             ap2 = AP0;	//ap[0]
             ap3 = AP2;	//ap[2]
@@ -2517,6 +2528,8 @@ jab_boolean findSlaveSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_sy
             alpha1 = atan2(disty03, distx03);
             alpha2 = atan2(disty12, distx12);
             sign = -1;
+            docked_side_size   = slave_symbol->side_size.x;
+            undocked_side_size = slave_symbol->side_size.y;
             ap1 = AP3;	//ap[3]
             ap2 = AP2;	//ap[2]
             ap3 = AP0;	//ap[0]
@@ -2548,28 +2561,17 @@ jab_boolean findSlaveSymbol(jab_bitmap* bitmap, jab_bitmap* ch[], jab_decoded_sy
         return JAB_FAILURE;
     }
 
-    //get slave symbol side size from its metadata
-    slave_symbol->side_size.x = VERSION2SIZE(slave_symbol->metadata.side_version.x);
-    slave_symbol->side_size.y = VERSION2SIZE(slave_symbol->metadata.side_version.y);
-
     //estimate the module size in the slave symbol
-    if(docked_position == 3 || docked_position == 2)
-    {
-        slave_symbol->module_size = DIST(aps[ap1].center.x, aps[ap1].center.y, aps[ap2].center.x, aps[ap2].center.y) / (slave_symbol->side_size.y - 7);
-    }
-    if(docked_position == 1 || docked_position == 0)
-    {
-        slave_symbol->module_size = DIST(aps[ap1].center.x, aps[ap1].center.y, aps[ap2].center.x, aps[ap2].center.y) / (slave_symbol->side_size.x - 7);
-    }
+    slave_symbol->module_size = DIST(aps[ap1].center.x, aps[ap1].center.y, aps[ap2].center.x, aps[ap2].center.y) / (docked_side_size - 7);
 
     //calculate the coordinate of ap3
-    aps[ap3].center.x = aps[ap1].center.x + sign * (slave_symbol->side_size.x - 7) * slave_symbol->module_size * cos(alpha1);
-    aps[ap3].center.y = aps[ap1].center.y + sign * (slave_symbol->side_size.y - 7) * slave_symbol->module_size * sin(alpha1);
+    aps[ap3].center.x = aps[ap1].center.x + sign * (undocked_side_size - 7) * slave_symbol->module_size * cos(alpha1);
+    aps[ap3].center.y = aps[ap1].center.y + sign * (undocked_side_size - 7) * slave_symbol->module_size * sin(alpha1);
     //find alignment pattern around ap3
     aps[ap3] = findAlignmentPattern(ch, aps[ap3].center.x, aps[ap3].center.y, slave_symbol->module_size, ap3);
     //calculate the coordinate of ap4
-    aps[ap4].center.x = aps[ap2].center.x + sign * (slave_symbol->side_size.x - 7) * slave_symbol->module_size * cos(alpha2);
-    aps[ap4].center.y = aps[ap2].center.y + sign * (slave_symbol->side_size.y - 7) * slave_symbol->module_size * sin(alpha2);
+    aps[ap4].center.x = aps[ap2].center.x + sign * (undocked_side_size - 7) * slave_symbol->module_size * cos(alpha2);
+    aps[ap4].center.y = aps[ap2].center.y + sign * (undocked_side_size - 7) * slave_symbol->module_size * sin(alpha2);
     //find alignment pattern around ap4
     aps[ap4] = findAlignmentPattern(ch, aps[ap4].center.x, aps[ap4].center.y, slave_symbol->module_size, ap4);
 

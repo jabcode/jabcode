@@ -430,21 +430,21 @@ jab_byte decodeModuleHD(jab_bitmap* matrix, jab_byte* palette, jab_int32 color_n
 	}
 	if(palette)
 	{
+	    //normalize the RGB values
+        jab_float rgb_max = MAX(rgb[0], MAX(rgb[1], rgb[2]));
+        jab_float r = (jab_float)rgb[0] / rgb_max;
+        jab_float g = (jab_float)rgb[1] / rgb_max;
+        jab_float b = (jab_float)rgb[2] / rgb_max;
+        //jab_float l = ((rgb[0] + rgb[1] + rgb[2]) / 3.0f) / 255.0f;
+
 		jab_float min1 = 255*255*3, min2 = 255*255*3;
 		for(jab_int32 i=0; i<color_number; i++)
 		{
-			//normalize the RGB values
-			jab_float rgb_max = MAX(rgb[0], MAX(rgb[1], rgb[2]));
-			jab_float r = (jab_float)rgb[0] / rgb_max;
-			jab_float g = (jab_float)rgb[1] / rgb_max;
-			jab_float b = (jab_float)rgb[2] / rgb_max;
-			jab_float l = ((rgb[0] + rgb[1] + rgb[2]) / 3.0f) / 255.0f;
-
 			//normalize the color values in color palette
 			jab_float pr = norm_palette[color_number*4*p_index + i*4 + 0];
 			jab_float pg = norm_palette[color_number*4*p_index + i*4 + 1];
 			jab_float pb = norm_palette[color_number*4*p_index + i*4 + 2];
-			jab_float pl = norm_palette[color_number*4*p_index + i*4 + 3];
+			//jab_float pl = norm_palette[color_number*4*p_index + i*4 + 3];
 
 			//compare the normalized module color with palette
 			jab_float diff = (pr - r) * (pr - r) + (pg - g) * (pg - g) + (pb - b) * (pb - b);// + (pl - l) * (pl - l);
