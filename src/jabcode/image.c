@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "jabcode.h"
-#include "png.h"
+#include <png.h>
 #include "tiffio.h"
 
 /**
@@ -187,18 +187,18 @@ jab_boolean saveImageCMYK(jab_bitmap* bitmap, jab_boolean isCMYK, jab_char* file
 jab_bitmap* readImage(jab_char* filename)
 {
 	png_image image;
-    memset(&image, 0, sizeof(image));
-    image.version = PNG_IMAGE_VERSION;
+	memset(&image, 0, sizeof(image));
+	image.version = PNG_IMAGE_VERSION;
 
 	jab_bitmap* bitmap;
 
-    if(png_image_begin_read_from_file(&image, filename))
+	if(png_image_begin_read_from_file(&image, filename))
 	{
 		image.format = PNG_FORMAT_RGBA;
 
 		bitmap = (jab_bitmap *)calloc(1, sizeof(jab_bitmap) + PNG_IMAGE_SIZE(image));
 		if(bitmap == NULL)
-        {
+		{
 			png_image_free(&image);
 			reportError("Memory allocation failed");
 			return NULL;
@@ -209,7 +209,7 @@ jab_bitmap* readImage(jab_char* filename)
 		bitmap->bits_per_pixel = BITMAP_BITS_PER_PIXEL;
 		bitmap->channel_count = BITMAP_CHANNEL_COUNT;
 
-        if(png_image_finish_read(&image,
+		if(png_image_finish_read(&image,
 								 NULL/*background*/,
 								 bitmap->pixel,
 								 0/*row_stride*/,
