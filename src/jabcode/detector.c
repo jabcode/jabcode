@@ -1353,6 +1353,13 @@ void seekMissingFinderPattern(jab_bitmap* bitmap, jab_finder_pattern* fps, jab_i
 		if(rgb[i] == NULL)
 		{
 			JAB_REPORT_INFO(("Memory allocation for binary bitmap failed, the missing finder pattern can not be found."))
+			if(i > 0)
+			{
+				for(jab_int32 j=i; j>=0; j--)
+				{
+					free(rgb[j]);
+				}
+			}
 			return;
 		}
 		rgb[i]->width = area_width;
@@ -1435,6 +1442,10 @@ void seekMissingFinderPattern(jab_bitmap* bitmap, jab_finder_pattern* fps, jab_i
     if(fps_miss == NULL)
     {
         reportError("Memory allocation for finder patterns failed, the missing finder pattern can not be found.");
+        for(jab_int32 i=2; i>=0; i--)
+        {
+            free(rgb[i]);
+        }
         return;
     }
     jab_int32 total_finder_patterns = 0;
@@ -1558,6 +1569,11 @@ void seekMissingFinderPattern(jab_bitmap* bitmap, jab_finder_pattern* fps, jab_i
         //recover the coordinates in bitmap
         fps[miss_fp_index].center.x += start_x;
         fps[miss_fp_index].center.y += start_y;
+    }
+    free(fps_miss);
+    for(jab_int32 i=2; i>=0; i--)
+    {
+        free(rgb[i]);
     }
 }
 
@@ -3136,6 +3152,7 @@ jab_bitmap* sampleSymbolByAlignmentPattern(jab_bitmap* bitmap, jab_bitmap* ch[],
 	if(matrix == NULL)
 	{
 		reportError("Memory allocation for symbol bitmap matrix failed");
+		free(aps);
 		return NULL;
 	}
 	matrix->channel_count = bitmap->channel_count;
@@ -3204,8 +3221,8 @@ jab_bitmap* sampleSymbolByAlignmentPattern(jab_bitmap* bitmap, jab_bitmap* ch[],
 					aps[rect[i+1].y*number_of_ap_x + rect[i+0].x].center.x, aps[rect[i+1].y*number_of_ap_x + rect[i+0].x].center.y);
 		if(pt == NULL)
 		{
-			free(aps);
 			free(matrix);
+			free(aps);
 			return NULL;
 		}
 		//sample the current block
@@ -3217,8 +3234,8 @@ jab_bitmap* sampleSymbolByAlignmentPattern(jab_bitmap* bitmap, jab_bitmap* ch[],
 		if(block == NULL)
 		{
 			reportError("Sampling block failed");
-			free(aps);
 			free(matrix);
+			free(aps);
 			return NULL;
 		}
 		//save the sampled block in the matrix
