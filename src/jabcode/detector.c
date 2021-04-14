@@ -48,7 +48,7 @@ jab_boolean checkPatternCross(jab_int32* state_count, jab_float* module_size)
 					 fabs(layer_size - (jab_float)state_count[3]) < layer_tolerance &&
 					 (jab_float)state_count[0] > 0.5 * layer_tolerance && //the two outside layers can be larger than layer_size
 					 (jab_float)state_count[4] > 0.5 * layer_tolerance &&
-					 fabs(state_count[1] - state_count[3]) < layer_tolerance; //layer 1 and layer 3 shall be of the same size
+					 (jab_float)abs(state_count[1] - state_count[3]) < layer_tolerance; //layer 1 and layer 3 shall be of the same size
 
     return size_condition;
 }
