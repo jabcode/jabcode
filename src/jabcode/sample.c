@@ -64,13 +64,21 @@ jab_bitmap* sampleSymbol(jab_bitmap* bitmap, jab_perspective_transform* pt, jab_
 			{
 				if(mapped_x == -1) mapped_x = 0;
 				else if(mapped_x ==  bitmap->width) mapped_x = bitmap->width - 1;
-				else return NULL;
+				else
+				{
+					free(matrix);
+					return NULL;
+				}
 			}
 			if(mapped_y < 0 || mapped_y > bitmap->height-1)
 			{
 				if(mapped_y == -1) mapped_y = 0;
 				else if(mapped_y ==  bitmap->height) mapped_y = bitmap->height - 1;
-				else return NULL;
+				else
+				{
+					free(matrix);
+					return NULL;
+				}
 			}
 			for(jab_int32 c=0; c<matrix->channel_count; c++)
 			{
@@ -144,13 +152,21 @@ jab_bitmap* sampleCrossArea(jab_bitmap* bitmap, jab_perspective_transform* pt)
 			{
 				if(mapped_x == -1) mapped_x = 0;
 				else if(mapped_x ==  bitmap->width) mapped_x = bitmap->width - 1;
-				else return NULL;
+				else
+				{
+					free(matrix);
+					return NULL;
+				}
 			}
 			if(mapped_y < 0 || mapped_y > bitmap->height-1)
 			{
 				if(mapped_y == -1) mapped_y = 0;
 				else if(mapped_y ==  bitmap->height) mapped_y = bitmap->height - 1;
-				else return NULL;
+				else
+				{
+					free(matrix);
+					return NULL;
+				}
 			}
 			for(jab_int32 c=0; c<matrix->channel_count; c++)
 			{
