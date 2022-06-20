@@ -198,7 +198,7 @@ jab_encode* createEncode(jab_int32 color_number, jab_int32 symbol_number)
     if(enc->palette == NULL)
     {
         reportError("Memory allocation for palette failed");
-        return NULL;
+        goto freeEnc;
     }
     setDefaultPalette(enc->color_number, enc->palette);
     //allocate memory for symbol versions
@@ -206,14 +206,14 @@ jab_encode* createEncode(jab_int32 color_number, jab_int32 symbol_number)
     if(enc->symbol_versions == NULL)
     {
         reportError("Memory allocation for symbol versions failed");
-        return NULL;
+        goto freeEncSymbolsVersions;
     }
     //set default error correction levels
     enc->symbol_ecc_levels = (jab_byte *)calloc(symbol_number, sizeof(jab_byte));
     if(enc->symbol_ecc_levels == NULL)
     {
         reportError("Memory allocation for ecc levels failed");
-        return NULL;
+        goto freeEncSymbolsECCLevels;
     }
     setDefaultEccLevels(enc->symbol_number, enc->symbol_ecc_levels);
     //allocate memory for symbol positions
@@ -221,16 +221,28 @@ jab_encode* createEncode(jab_int32 color_number, jab_int32 symbol_number)
     if(enc->symbol_positions == NULL)
     {
         reportError("Memory allocation for symbol positions failed");
-        return NULL;
+        goto freeEncSymbolspositions;
     }
     //allocate memory for symbols
     enc->symbols = (jab_symbol *)calloc(symbol_number, sizeof(jab_symbol));
     if(enc->symbols == NULL)
     {
         reportError("Memory allocation for symbols failed");
-        return NULL;
+        goto freeEncSymbols;
     }
     return enc;
+
+freeEncSymbols:
+    free(enc->symbols);
+freeEncSymbolspositions:
+    free(enc->symbol_positions);
+freeEncSymbolsECCLevels:
+    free(enc->symbol_ecc_levels);
+freeEncSymbolsVersions:
+    free(enc->symbol_versions);
+freeEnc:
+    free(enc);
+    return NULL;
 }
 
 /**
@@ -920,7 +932,7 @@ jab_boolean encodeMasterMetadata(jab_encode* enc)
 	if(partII == NULL)
 	{
 		reportError("Memory allocation for metadata Part II in master symbol failed");
-		return JAB_FAILURE;
+		goto freePartII;
 	}
 	partII->length = partII_length;
 	convert_dec_to_bin(V,   partII->data, 0, V_length);
@@ -935,23 +947,23 @@ jab_boolean encodeMasterMetadata(jab_encode* enc)
 	if(encoded_partI == NULL)
 	{
 		reportError("LDPC encoding master metadata Part I failed");
-		return JAB_FAILURE;
+        goto freeEncodedPartI;
 	}
 	//Part II
 	jab_data* encoded_partII  = encodeLDPC(partII, wcwr);
 	if(encoded_partII == NULL)
 	{
 		reportError("LDPC encoding master metadata Part II failed");
-		return JAB_FAILURE;
-	}
+        goto freeEncodedPartII;
+    }
 
 	jab_int32 encoded_metadata_length = encoded_partI->length + encoded_partII->length;
 	enc->symbols[0].metadata = (jab_data *)malloc(sizeof(jab_data) + encoded_metadata_length*sizeof(jab_char));
 	if(enc->symbols[0].metadata == NULL)
 	{
 		reportError("Memory allocation for encoded metadata in master symbol failed");
-		return JAB_FAILURE;
-	}
+        goto freeEncSymbolsMetadata;
+    }
 	enc->symbols[0].metadata->length = encoded_metadata_length;
 	//copy encoded parts into metadata
 	memcpy(enc->symbols[0].metadata->data, encoded_partI->data, encoded_partI->length);
@@ -962,6 +974,16 @@ jab_boolean encodeMasterMetadata(jab_encode* enc)
 	free(encoded_partI);
 	free(encoded_partII);
     return JAB_SUCCESS;
+
+freeEncSymbolsMetadata:
+    free(enc->symbols[0].metadata);
+freeEncodedPartII:
+    free(encoded_partII);
+freeEncodedPartI:
+    free(encoded_partI);
+freePartII:
+    free(partII);
+    return JAB_FAILURE;
 }
 
 /**
