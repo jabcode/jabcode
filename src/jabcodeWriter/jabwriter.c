@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "jabcode.h"
-#include "jabwriter.h"
 
 jab_data* 		data = 0;
 jab_char* 		filename = 0;
@@ -20,12 +19,20 @@ jab_int32 		symbol_ecc_levels_number = 0;
 jab_int32		color_space = 0;
 
 /**
+ * @brief Print version of JABCode writer
+*/
+void printVersion()
+{
+	printf("jabcodeWriter (Version %s Build date: %s) - Fraunhofer SIT\n", VERSION, BUILD_DATE);
+}
+
+/**
  * @brief Print usage of JABCode writer
 */
 void printUsage()
 {
 	printf("\n");
-	printf("jabcodeWriter (Version %s Build date: %s) - Fraunhofer SIT\n\n", VERSION, BUILD_DATE);
+	printVersion();
 	printf("Usage:\n\n");
 	printf("jabcodeWriter --input message-to-encode --output output-image [options]\n");
 	printf("\n");
@@ -49,6 +56,7 @@ void printUsage()
 							  "multi-symbol code.\n");
 	printf("--color-space\t\tColor space of output image (0:RGB,1:CMYK,default:0).\n\t\t\t"
 							"RGB image is saved as PNG and CMYK image as TIFF.\n");
+    printf("--version\t\t\tPrint version info.\n");
     printf("--help\t\t\tPrint this help.\n");
     printf("\n");
     printf("Example for 1-symbol-code: \n");
@@ -69,7 +77,7 @@ jab_boolean parseCommandLineParameters(jab_int32 para_number, jab_char* para[])
 	for (jab_int32 loop=1; loop<para_number; loop++)
 	{
 		if (0 == strcmp(para[loop],"--input"))
-        {
+		{
 			if(loop + 1 > para_number - 1)
 			{
 				printf("Value for option '%s' missing.\n", para[loop]);
@@ -428,10 +436,15 @@ void cleanMemory()
 */
 int main(int argc, char *argv[])
 {
-    if(argc < 2 || (0 == strcmp(argv[1],"--help")))
+	if(argc < 2 || (0 == strcmp(argv[1], "--help")))
 	{
 		printUsage();
 		return 1;
+	}
+	if(argc < 2 || (0 == strcmp(argv[1], "--version")))
+	{
+		printVersion();
+		return 0;
 	}
 	if(!parseCommandLineParameters(argc, argv))
 	{
