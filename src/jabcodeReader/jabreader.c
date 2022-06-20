@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 		printf("\n");
 	}
 
-	free(bitmap);
 	free(decoded_data);
+	free(bitmap);
     return 0;
 }
