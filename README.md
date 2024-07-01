@@ -62,6 +62,46 @@ Step 5: Run "make" in mingw-64 in the folder "jabcode".
 
 Step 6: Find the built DLL library "libjabcode.dll" in the folder "jabcode/build".
 
+## Docker
+
+You can use the published build on github:
+
+```bash
+# Change ${PWD} to appropriate directory path.
+docker run --rm \
+    -v ${PWD}:/jabcode nuvious/jabcode:latest \
+    jabcodeWriter --input 'Hello World!' --output hello-world.png
+docker run --rm \
+    -v ${PWD}:/jabcode nuvious/jabcode:latest \
+    jabcodeReader hello-world.png
+```
+
+### Build Docker Container
+
+You can build a docker container with jabcodeWriter and jabcodeReader as well.
+
+```bash
+docker build -t jabcode .
+```
+
+### Create a JAB Code
+
+```bash
+# Change ${PWD} to appropriate directory path.
+docker run --rm \
+    -v ${PWD}:/jabcode jabcode \
+    jabcodeWriter --input 'Hello World!' --output hello-world.png
+```
+
+### Read a JAB Code
+
+```bash
+# Change ${PWD} to appropriate directory path.
+docker run --rm \
+    -v ${PWD}:/jabcode jabcode \
+    jabcodeReader hello-world.png
+```
+
 ## Documentation
 * The API documentation is available at [Documentation](https://jabcode.github.io/jabcode/)
 * The technical specification of JAB Code is available as [ISO/IEC 23634:2022](https://www.iso.org/standard/76478.html)
