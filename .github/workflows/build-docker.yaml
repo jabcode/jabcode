@@ -1,0 +1,60 @@
+name: Publish Docker image
+
+on:  
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+  workflow_run:
+    workflows: [Weekly Build]
+    types:
+      - completed
+
+jobs:
+  push_to_registry:
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: 'Get Previous tag'
+        id: previoustag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+        with:
+          fallback: latest # Optional fallback tag to use when no tag can be found
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: nuvious/jabcode:${{ steps.previoustag.outputs.tag }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: nuvious/jabcode:${{ steps.previoustag.outputs.tag }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+
+      - name: Docker Hub Description
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: nuvious/jabcode
