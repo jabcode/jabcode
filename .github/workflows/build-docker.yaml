@@ -4,11 +4,6 @@ on:
   push:
     tags:
       - '*'
-  workflow_dispatch:
-  workflow_run:
-    workflows: [Weekly Build]
-    types:
-      - completed
 
 jobs:
   push_to_registry:
