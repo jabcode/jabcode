@@ -64,6 +64,18 @@ Step 6: Find the built DLL library "libjabcode.dll" in the folder "jabcode/build
 
 ## Docker
 
+You can use the published build on github:
+
+```bash
+# Change ${PWD} to appropriate directory path.
+docker run --rm \
+    -v ${PWD}:/jabcode nuvious/jabcode:latest \
+    jabcodeWriter --input 'Hello World!' --output hello-world.png
+docker run --rm \
+    -v ${PWD}:/jabcode nuvious/jabcode:latest \
+    jabcodeReader hello-world.png
+```
+
 ### Build Docker Container
 
 You can build a docker container with jabcodeWriter and jabcodeReader as well.
@@ -76,7 +88,7 @@ docker build -t jabcode .
 
 ```bash
 # Change ${PWD} to appropriate directory path.
-docker run --rm -it \
+docker run --rm \
     -v ${PWD}:/jabcode jabcode \
     jabcodeWriter --input 'Hello World!' --output hello-world.png
 ```
@@ -85,7 +97,7 @@ docker run --rm -it \
 
 ```bash
 # Change ${PWD} to appropriate directory path.
-docker run --rm -it \
+docker run --rm \
     -v ${PWD}:/jabcode jabcode \
     jabcodeReader hello-world.png
 ```
