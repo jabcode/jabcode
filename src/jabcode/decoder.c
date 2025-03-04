@@ -431,11 +431,11 @@ jab_byte decodeModuleHD(jab_bitmap* matrix, jab_byte* palette, jab_int32 color_n
 	if(palette)
 	{
 	    //normalize the RGB values
-        jab_float rgb_max = MAX(rgb[0], MAX(rgb[1], rgb[2]));
+        jab_float rgb_max = MAX(1.0, MAX(rgb[0], MAX(rgb[1], rgb[2])));
         jab_float r = (jab_float)rgb[0] / rgb_max;
         jab_float g = (jab_float)rgb[1] / rgb_max;
         jab_float b = (jab_float)rgb[2] / rgb_max;
-        //jab_float l = ((rgb[0] + rgb[1] + rgb[2]) / 3.0f) / 255.0f;
+        jab_float l = ((rgb[0] + rgb[1] + rgb[2]) / 3.0f) / 255.0f;
 
 		jab_float min1 = 255*255*3, min2 = 255*255*3;
 		for(jab_int32 i=0; i<color_number; i++)
@@ -444,10 +444,10 @@ jab_byte decodeModuleHD(jab_bitmap* matrix, jab_byte* palette, jab_int32 color_n
 			jab_float pr = norm_palette[color_number*4*p_index + i*4 + 0];
 			jab_float pg = norm_palette[color_number*4*p_index + i*4 + 1];
 			jab_float pb = norm_palette[color_number*4*p_index + i*4 + 2];
-			//jab_float pl = norm_palette[color_number*4*p_index + i*4 + 3];
+			jab_float pl = norm_palette[color_number*4*p_index + i*4 + 3];
 
 			//compare the normalized module color with palette
-			jab_float diff = (pr - r) * (pr - r) + (pg - g) * (pg - g) + (pb - b) * (pb - b);// + (pl - l) * (pl - l);
+			jab_float diff = (pr - r) * (pr - r) + (pg - g) * (pg - g) + (pb - b) * (pb - b) + (pl - l) * (pl - l);
 
 			if(diff < min1)
 			{
@@ -573,7 +573,7 @@ void getPaletteThreshold(jab_byte* palette, jab_int32 color_number, jab_float* p
 		palette_ths[1] = (cpg0 + cpg1) / 2.0f;
 		palette_ths[2] = (cpb0 + cpb1) / 2.0f;
 	}
-	else if(color_number == 8)
+	else if(color_number == 8 || color_number == 16)
 	{
 		jab_int32 cpr0 = MAX(MAX(MAX(palette[0], palette[3]), palette[6]), palette[9]);
 		jab_int32 cpr1 = MIN(MIN(MIN(palette[12], palette[15]), palette[18]), palette[21]);
@@ -721,12 +721,12 @@ jab_int32 decodeSlaveMetadata(jab_decoded_symbol* host_symbol, jab_int32 docked_
 */
 jab_byte decodeNcModuleColor(jab_byte module1_color, jab_byte module2_color)
 {
-	for(jab_int32 i=0; i<8; i++)
+	for(jab_int32 i=0; i< NC_COLOR_ENCODE_TABLE_NUMBER/*8*/; i++)
 	{
 		if(module1_color == nc_color_encode_table[i][0] && module2_color == nc_color_encode_table[i][1])
 			return i;
 	}
-	return 8; //if no match, return an invalid value
+	return NC_COLOR_ENCODE_TABLE_NUMBER; //if no match, return an invalid value
 }
 
 /**
@@ -751,13 +751,13 @@ jab_int32 decodeMasterMetadataPartI(jab_bitmap* matrix, jab_decoded_symbol* symb
 		//decode bit out of the module at (x,y)
 		mtx_offset = (*y) * mtx_bytes_per_row + (*x) * mtx_bytes_per_pixel;
 		jab_byte rgb =  decodeModuleNc(&matrix->pixel[mtx_offset]);
-		if(rgb != 0 && rgb != 3 && rgb != 6)
+		/*if (rgb != 1 && rgb != 3 && rgb != 5 && rgb != 7)
 		{
 #if TEST_MODE
 		reportError("Invalid module color in primary metadata part 1 found");
 #endif
 			return DECODE_METADATA_FAILED;
-		}
+		}*/
 		module_color[*module_count] = rgb;
 		//set data map
 		data_map[(*y) * matrix->width + (*x)] = 1;
@@ -770,7 +770,7 @@ jab_int32 decodeMasterMetadataPartI(jab_bitmap* matrix, jab_decoded_symbol* symb
 	jab_byte bits[2];
 	bits[0] = decodeNcModuleColor(module_color[0], module_color[1]);	//the first 3 bits
 	bits[1] = decodeNcModuleColor(module_color[2], module_color[3]);	//the last 3 bits
-	if(bits[0] > 7 || bits[1] > 7)
+	if(bits[0] == NC_COLOR_ENCODE_TABLE_NUMBER || bits[1] == NC_COLOR_ENCODE_TABLE_NUMBER)
 	{
 #if TEST_MODE
 		reportError("Invalid color combination in primary metadata part 1 found");
@@ -1293,10 +1293,11 @@ void normalizeColorPalette(jab_decoded_symbol* symbol, jab_float* norm_palette, 
 {
 	for(jab_int32 i=0; i<(color_number * COLOR_PALETTE_NUMBER); i++)
 	{
-		jab_float rgb_max = MAX(symbol->palette[i*3 + 0], MAX(symbol->palette[i*3 + 1], symbol->palette[i*3 + 2]));
-		norm_palette[i*4 + 0] = (jab_float)symbol->palette[i*3 + 0] / rgb_max;
-		norm_palette[i*4 + 1] = (jab_float)symbol->palette[i*3 + 1] / rgb_max;
-		norm_palette[i*4 + 2] = (jab_float)symbol->palette[i*3 + 2] / rgb_max;
+		jab_float rgb_max_byte = MAX(symbol->palette[i*3 + 0], MAX(symbol->palette[i*3 + 1], symbol->palette[i*3 + 2]));
+		jab_float rgb_max_float = MAX(rgb_max_byte, 1);
+		norm_palette[i*4 + 0] = (jab_float)symbol->palette[i*3 + 0] / rgb_max_float;
+		norm_palette[i*4 + 1] = (jab_float)symbol->palette[i*3 + 1] / rgb_max_float;
+		norm_palette[i*4 + 2] = (jab_float)symbol->palette[i*3 + 2] / rgb_max_float;
 		norm_palette[i*4 + 3] = ((symbol->palette[i*3 + 0] + symbol->palette[i*3 + 1] + symbol->palette[i*3 + 2]) / 3.0f) / 255.0f; ;
 	}
 }
@@ -1355,7 +1356,7 @@ jab_int32 decodeMaster(jab_bitmap* matrix, jab_decoded_symbol* symbol)
 
 	//normalize the RGB values in color palettes
 	jab_int32 color_number = (jab_int32)pow(2, symbol->metadata.Nc + 1);
-	jab_float norm_palette[color_number * 4 * COLOR_PALETTE_NUMBER];	//each color contains 4 normalized values, i.e. R, G, B and Luminance
+	jab_float norm_palette[256 * 4 * COLOR_PALETTE_NUMBER];	//each color contains 4 normalized values, i.e. R, G, B and Luminance
 	normalizeColorPalette(symbol, norm_palette, color_number);
 
 	//get the palette RGB thresholds
@@ -1410,7 +1411,7 @@ jab_int32 decodeSlave(jab_bitmap* matrix, jab_decoded_symbol* symbol)
 
 	//normalize the RGB values in color palettes
 	jab_int32 color_number = (jab_int32)pow(2, symbol->metadata.Nc + 1);
-	jab_float norm_palette[color_number * 4 * COLOR_PALETTE_NUMBER];	//each color contains 4 normalized values, i.e. R, G, B and Luminance
+	jab_float norm_palette[256 * 4 * COLOR_PALETTE_NUMBER];	//each color contains 4 normalized values, i.e. R, G, B and Luminance
 	normalizeColorPalette(symbol, norm_palette, color_number);
 
 	//get the palette RGB thresholds

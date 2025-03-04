@@ -124,7 +124,7 @@ jab_bitmap* convertRGB2CMYK(jab_bitmap* rgb)
  * @param isCMYK set TRUE if the code bitmap is already in CMYK
  * @param filename the image filename
  * @return JAB_SUCCESS | JAB_FAILURE
-*/
+
 jab_boolean saveImageCMYK(jab_bitmap* bitmap, jab_boolean isCMYK, jab_char* filename)
 {
 	jab_bitmap* cmyk = 0;
@@ -178,7 +178,7 @@ jab_boolean saveImageCMYK(jab_bitmap* bitmap, jab_boolean isCMYK, jab_char* file
 	if(!isCMYK)	free(cmyk);
 	return status;
 }
-
+*/
 /**
  * @brief Read image into code bitmap
  * @param filename the image filename

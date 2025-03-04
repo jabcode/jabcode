@@ -101,8 +101,8 @@ void setDefaultPalette(jab_int32 color_number, jab_byte* palette)
     	memcpy(palette + 6, jab_default_palette + FP2_CORE_COLOR * 3, 3);	//yellow  110 for 10
     	memcpy(palette + 9, jab_default_palette + FP3_CORE_COLOR * 3, 3);	//cyan    011 for 11
     }
-    else if(color_number == 8)
-    {
+	else if (color_number == 8 || color_number == 16)
+	{
         for(jab_int32 i=0; i<color_number*3; i++)
         {
             palette[i] = jab_default_palette[i];
@@ -1034,12 +1034,12 @@ void placeMasterMetadataPartII(jab_encode* enc)
 	jab_int32 partII_bit_start = MASTER_METADATA_PART1_LENGTH;
 	jab_int32 partII_bit_end = MASTER_METADATA_PART1_LENGTH + MASTER_METADATA_PART2_LENGTH;
 	jab_int32 metadata_index = partII_bit_start;
-	while(metadata_index <= partII_bit_end)
+	while(metadata_index </*=*/ partII_bit_end)
 	{
     	jab_byte color_index = enc->symbols[0].matrix[y*enc->symbols[0].side_size.x + x];
 		for(jab_int32 j=0; j<nb_of_bits_per_mod; j++)
 		{
-			if(metadata_index <= partII_bit_end)
+			if(metadata_index </*=*/ partII_bit_end)
 			{
 				jab_byte bit = enc->symbols[0].metadata->data[metadata_index];
 				if(bit == 0)
@@ -1073,7 +1073,7 @@ void getColorPaletteIndex(jab_byte* index, jab_int32 index_size, jab_int32 color
 	if(color_number < 128)
 		return;
 
-	jab_byte tmp[color_number];
+	jab_byte tmp[256];
 	for(jab_int32 i=0; i<color_number; i++)
 	{
 		tmp[i] = i;
@@ -1301,7 +1301,7 @@ jab_boolean createMatrix(jab_encode* enc, jab_int32 index, jab_data* ecc_encoded
 
     //get color index for color palette
     jab_int32 palette_index_size = enc->color_number > 64 ? 64 : enc->color_number;
-	jab_byte palette_index[palette_index_size];
+	jab_byte palette_index[1024];
 	getColorPaletteIndex(palette_index, palette_index_size, enc->color_number);
 
     if(index == 0)//place metadata and color palette in master symbol
@@ -1901,8 +1901,8 @@ void updateSlaveMetadataE(jab_encode* enc, jab_int32 host_index, jab_int32 slave
 jab_boolean fitDataIntoSymbols(jab_encode* enc, jab_data* encoded_data)
 {
 	//calculate the net capacity of each symbol and the total net capacity
-	jab_int32 capacity[enc->symbol_number];
-	jab_int32 net_capacity[enc->symbol_number];
+	jab_int32 capacity[1024];
+	jab_int32 net_capacity[1024];
 	jab_int32 total_net_capacity = 0;
 	for(jab_int32 i=0; i<enc->symbol_number; i++)
 	{

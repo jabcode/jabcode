@@ -1031,7 +1031,7 @@ void drawFoundFinderPatterns(jab_finder_pattern* fps, jab_int32 number, jab_int3
 void removeBadPatterns(jab_finder_pattern* fps, jab_int32 fp_count, jab_float mean, jab_float threshold)
 {
     jab_int32 remove_count = 0;
-    jab_int32 backup[fp_count];
+    jab_int32 backup[1024];
     for(jab_int32 i=0; i<fp_count; i++)
     {
         if( fps[i].found_count < 2 || fabs(fps[i].module_size - mean) > threshold )
@@ -1117,10 +1117,15 @@ jab_finder_pattern getBestPattern(jab_finder_pattern* fps, jab_int32 fp_count)
 jab_int32 selectBestPatterns(jab_finder_pattern* fps, jab_int32 fp_count, jab_int32* fp_type_count)
 {
     //classify finder patterns into four types
-    jab_finder_pattern fps0[fp_type_count[FP0]];
-    jab_finder_pattern fps1[fp_type_count[FP1]];
-    jab_finder_pattern fps2[fp_type_count[FP2]];
-    jab_finder_pattern fps3[fp_type_count[FP3]];
+    //jab_finder_pattern fps0[fp_type_count[FP0]];
+    //jab_finder_pattern fps1[fp_type_count[FP1]];
+    //jab_finder_pattern fps2[fp_type_count[FP2]];
+    //jab_finder_pattern fps3[fp_type_count[FP3]];
+    //. ????
+    jab_finder_pattern* fps0 = (jab_finder_pattern*)malloc(fp_type_count[FP0] * sizeof(jab_finder_pattern));
+    jab_finder_pattern* fps1 = (jab_finder_pattern*)malloc(fp_type_count[FP1] * sizeof(jab_finder_pattern));
+    jab_finder_pattern* fps2 = (jab_finder_pattern*)malloc(fp_type_count[FP2] * sizeof(jab_finder_pattern));
+    jab_finder_pattern* fps3 = (jab_finder_pattern*)malloc(fp_type_count[FP3] * sizeof(jab_finder_pattern));
     jab_int32 counter0 = 0, counter1 = 0, counter2 = 0, counter3 = 0;
 
     for(jab_int32 i=0; i<fp_count; i++)
@@ -1199,7 +1204,13 @@ jab_int32 selectBestPatterns(jab_finder_pattern* fps, jab_int32 fp_count, jab_in
 		if(fps[i].found_count == 0)
 			missing_fp_count++;
 	}
-	return missing_fp_count;
+
+    if (fps0) free(fps0);
+    if (fps1) free(fps1);
+    if (fps2) free(fps2);
+    if (fps3) free(fps3);
+    
+    return missing_fp_count;
 }
 
 /**
@@ -3050,7 +3061,7 @@ jab_bitmap* sampleSymbolByAlignmentPattern(jab_bitmap* bitmap, jab_bitmap* ch[],
 
 	//determine the minimal sampling rectangle for each block
 	jab_int32 block_number = (number_of_ap_x-1) * (number_of_ap_y-1);
-	jab_vector2d rect[block_number * 2];
+	jab_vector2d rect[10240 * 2];
 	jab_int32 rect_index = 0;
 	for(jab_int32 i=0; i<number_of_ap_y-1; i++)
 	{
