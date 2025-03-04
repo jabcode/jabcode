@@ -47,7 +47,7 @@ jab_bitmap* sampleSymbol(jab_bitmap* bitmap, jab_perspective_transform* pt, jab_
 	jab_int32 bmp_bytes_per_pixel = bitmap->bits_per_pixel / 8;
 	jab_int32 bmp_bytes_per_row = bitmap->width * bmp_bytes_per_pixel;
 
-	jab_point points[side_size.x];
+	jab_point points[VERSION2SIZE(32)];
     for(jab_int32 i=0; i<side_size.y; i++)
     {
 		for(jab_int32 j=0; j<side_size.x; j++)
