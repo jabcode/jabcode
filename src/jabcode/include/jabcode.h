@@ -48,8 +48,13 @@
 
 #define VERSION2SIZE(x)		(x * 4 + 17)
 #define SIZE2VERSION(x)		((x - 17) / 4)
-#define MAX(a,b) 			({__typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b;})
-#define MIN(a,b) 			({__typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b;})
+
+#if !defined(MAX)
+	#define MAX(a,b) 		({__typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b;})
+#endif
+#if !defined(MIN)
+	#define MIN(a,b) 		({__typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b;})
+#endif
 
 #define JAB_REPORT_ERROR(x)	{ printf("JABCode Error: "); printf x; printf("\n"); }
 #define JAB_REPORT_INFO(x)	{ printf("JABCode Info: "); printf x; printf("\n"); }
