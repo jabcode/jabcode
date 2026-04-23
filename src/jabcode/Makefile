@@ -2,7 +2,7 @@ PREFIX 	=
 CC 	= $(PREFIX)gcc
 AR 	= $(PREFIX)ar
 RANLIB	= $(PREFIX)ranlib
-CFLAGS	= -O2 -std=c11
+CFLAGS	= -O2 -std=c11 -fPIC
 
 TARGET = build/libjabcode.a
 
@@ -13,7 +13,7 @@ $(TARGET): $(OBJECTS)
 	$(RANLIB) $@
 
 $(OBJECTS): %.o: %.c
-	$(CC) -c -I. -I./include $(CFLAGS) $< -o $@
+	$(CC) -c -I. -I./include -I/usr/include $(CFLAGS) $< -o $@
 
 clean:
 	rm -f $(TARGET) $(OBJECTS)
